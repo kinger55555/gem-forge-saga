@@ -1,7 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Pickaxe } from './Pickaxe';
 import { MiningArea } from './MiningArea';
 import { CrystalInventory } from './CrystalInventory';
+import { AdminPanel } from './AdminPanel';
+import { PickaxeHelp } from './PickaxeHelp';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -12,12 +14,14 @@ import {
   Pickaxe as PickaxeType, 
   Crystal 
 } from '@/types/game';
+import { AdminState, PickaxeLink } from '@/types/admin';
 import { 
   generateCrystal, 
   getRarityColor, 
   getRarityName 
 } from '@/utils/crystalUtils';
-import { Plus, RotateCcw } from 'lucide-react';
+import { parsePickaxeFromUrl } from '@/utils/linkUtils';
+import { Plus, RotateCcw, Gift } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function GameInterface() {
@@ -33,6 +37,72 @@ export function GameInterface() {
     currentCrystal: null,
     coins: 0,
   });
+
+  const [adminState, setAdminState] = useState<AdminState>({
+    isAdminMode: false,
+    pickaxeLinks: [],
+  });
+
+  const activatePickaxeFromCode = useCallback((code: string) => {
+    const link = adminState.pickaxeLinks.find(l => l.code === code && !l.used);
+    
+    if (!link) {
+      toast.error('Недействительная или уже использованная ссылка на кирку!');
+      return;
+    }
+
+    // Mark link as used
+    setAdminState(prev => ({
+      ...prev,
+      pickaxeLinks: prev.pickaxeLinks.map(l => 
+        l.id === link.id 
+          ? { ...l, used: true, usedAt: new Date() }
+          : l
+      )
+    }));
+
+    // Add pickaxe to inventory
+    const newPickaxe: PickaxeType = {
+      id: crypto.randomUUID(),
+      type: link.type,
+      name: link.name,
+      used: false
+    };
+
+    setGameState(prev => ({
+      ...prev,
+      pickaxes: [...prev.pickaxes, newPickaxe]
+    }));
+
+    toast.success(
+      `🎁 Получена новая кирка: ${link.name}!`,
+      { duration: 4000 }
+    );
+  }, [adminState.pickaxeLinks]);
+
+  // Check for pickaxe activation on component mount
+  useEffect(() => {
+    const pickaxeCode = parsePickaxeFromUrl();
+    if (pickaxeCode) {
+      activatePickaxeFromCode(pickaxeCode);
+      // Clean URL after activation
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [activatePickaxeFromCode]);
+
+  const handleCreateLink = useCallback((link: PickaxeLink) => {
+    setAdminState(prev => ({
+      ...prev,
+      pickaxeLinks: [...prev.pickaxeLinks, link]
+    }));
+  }, []);
+
+  const handleToggleAdmin = useCallback((isAdmin: boolean) => {
+    setAdminState(prev => ({
+      ...prev,
+      isAdminMode: isAdmin
+    }));
+  }, []);
 
   const selectPickaxe = useCallback((pickaxe: PickaxeType) => {
     if (pickaxe.used) {
@@ -131,6 +201,15 @@ export function GameInterface() {
             </div>
             
             <div className="flex items-center gap-4">
+              <PickaxeHelp />
+              
+              <AdminPanel
+                pickaxeLinks={adminState.pickaxeLinks}
+                onCreateLink={handleCreateLink}
+                isAdminMode={adminState.isAdminMode}
+                onToggleAdmin={handleToggleAdmin}
+              />
+              
               <Button
                 onClick={resetPickaxes}
                 variant="outline"
