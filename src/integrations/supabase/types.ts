@@ -14,7 +14,194 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      admin_links: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          type: string
+          used: boolean
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          type: string
+          used?: boolean
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          type?: string
+          used?: boolean
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
+      crystal_transfers: {
+        Row: {
+          claimed: boolean
+          claimed_at: string | null
+          created_at: string
+          crystal_id: string
+          from_user_id: string
+          id: string
+          to_user_id: string | null
+          transfer_code: string
+        }
+        Insert: {
+          claimed?: boolean
+          claimed_at?: string | null
+          created_at?: string
+          crystal_id: string
+          from_user_id: string
+          id?: string
+          to_user_id?: string | null
+          transfer_code: string
+        }
+        Update: {
+          claimed?: boolean
+          claimed_at?: string | null
+          created_at?: string
+          crystal_id?: string
+          from_user_id?: string
+          id?: string
+          to_user_id?: string | null
+          transfer_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crystal_transfers_crystal_id_fkey"
+            columns: ["crystal_id"]
+            isOneToOne: false
+            referencedRelation: "crystals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crystals: {
+        Row: {
+          blue: number
+          color: string
+          created_at: string
+          green: number
+          id: string
+          price: number
+          rarity: number
+          red: number
+          user_id: string
+        }
+        Insert: {
+          blue: number
+          color: string
+          created_at?: string
+          green: number
+          id?: string
+          price: number
+          rarity: number
+          red: number
+          user_id: string
+        }
+        Update: {
+          blue?: number
+          color?: string
+          created_at?: string
+          green?: number
+          id?: string
+          price?: number
+          rarity?: number
+          red?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      game_state: {
+        Row: {
+          clicker_earnings: number
+          coins: number
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          clicker_earnings?: number
+          coins?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          clicker_earnings?: number
+          coins?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pickaxes: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          type: string
+          used: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          type: string
+          used?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          type?: string
+          used?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
