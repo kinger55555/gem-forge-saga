@@ -10,6 +10,7 @@ interface MiningAreaProps {
   rarityColor?: string;
   crystalColor?: string;
   canMine: boolean;
+  language?: 'en' | 'ru';
 }
 
 export function MiningArea({ 
@@ -17,7 +18,8 @@ export function MiningArea({
   onMine, 
   rarityColor, 
   crystalColor,
-  canMine 
+  canMine,
+  language = 'ru'
 }: MiningAreaProps) {
   return (
     <Card className="relative p-8 bg-gradient-cave border-2 border-border/50 min-h-[300px] overflow-hidden">

@@ -53,9 +53,12 @@ export function getRarityColor(rarity: number): string {
   return 'hsl(var(--rarity-legendary))'; // Yellow/Gold for 3+
 }
 
-export function getRarityName(rarity: number): string {
-  if (rarity === 0) return 'Обычный';
-  if (rarity === 1) return 'Необычный';
-  if (rarity === 2) return 'Редкий';
-  return 'Легендарный';
+export function getRarityName(rarity: number, language: 'en' | 'ru' = 'ru'): string {
+  const names = {
+    en: ['Common', 'Uncommon', 'Rare', 'Legendary'],
+    ru: ['Обычный', 'Необычный', 'Редкий', 'Легендарный']
+  };
+  
+  const index = Math.min(rarity, 3);
+  return names[language][index];
 }

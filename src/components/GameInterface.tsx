@@ -1,15 +1,19 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { useGameData } from '@/hooks/useGameData';
+import { supabase } from '@/integrations/supabase/client';
 import { Pickaxe } from './Pickaxe';
 import { MiningArea } from './MiningArea';
 import { CrystalInventory } from './CrystalInventory';
 import { AdminPanel } from './AdminPanel';
 import { PickaxeHelp } from './PickaxeHelp';
+import { Shop } from './Shop';
+import { Clicker } from './Clicker';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { 
-  GameState, 
   MiningState, 
   Pickaxe as PickaxeType, 
   Crystal 
@@ -21,64 +25,89 @@ import {
   getRarityName 
 } from '@/utils/crystalUtils';
 import { parsePickaxeFromUrl } from '@/utils/linkUtils';
-import { Plus, RotateCcw, Gift } from 'lucide-react';
+import { Plus, Gift, LogOut, Globe, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function GameInterface() {
-  const [gameState, setGameState] = useState<GameState>({
-    pickaxes: [
-      { id: '1', type: 'normal', name: 'Обычная кирка #1', used: false },
-      { id: '2', type: 'normal', name: 'Обычная кирка #2', used: false },
-      { id: '3', type: 'legendary', name: 'Легендарная кирка', used: false },
-    ],
-    crystals: [],
-    currentPickaxe: null,
-    miningState: MiningState.IDLE,
-    currentCrystal: null,
-    coins: 0,
-  });
+  const { user, signOut } = useAuth();
+  const gameData = useGameData();
+  const [language, setLanguage] = useState<'en' | 'ru'>('ru');
+  const [currentPickaxe, setCurrentPickaxe] = useState<PickaxeType | null>(null);
+  const [miningState, setMiningState] = useState<MiningState>(MiningState.IDLE);
+  const [currentCrystal, setCurrentCrystal] = useState<Crystal | null>(null);
+  const [showMiningModal, setShowMiningModal] = useState(false);
 
   const [adminState, setAdminState] = useState<AdminState>({
     isAdminMode: false,
     pickaxeLinks: [],
   });
 
-  const activatePickaxeFromCode = useCallback((code: string) => {
-    const link = adminState.pickaxeLinks.find(l => l.code === code && !l.used);
-    
-    if (!link) {
-      toast.error('Недействительная или уже использованная ссылка на кирку!');
-      return;
+  const translations = {
+    en: {
+      title: 'Gem Forge Saga',
+      subtitle: 'Mine crystals and collect them!',
+      pickaxes: 'Pickaxes',
+      selected: 'Selected',
+      signOut: 'Sign Out',
+      chooseLang: 'Language'
+    },
+    ru: {
+      title: 'Gem Forge Saga',
+      subtitle: 'Добывайте кристаллы и собирайте коллекцию!',
+      pickaxes: 'Кирки',
+      selected: 'Выбрана',
+      signOut: 'Выйти',
+      chooseLang: 'Язык'
     }
+  };
 
-    // Mark link as used
-    setAdminState(prev => ({
-      ...prev,
-      pickaxeLinks: prev.pickaxeLinks.map(l => 
-        l.id === link.id 
-          ? { ...l, used: true, usedAt: new Date() }
-          : l
-      )
-    }));
+  const t = translations[language];
 
-    // Add pickaxe to inventory
-    const newPickaxe: PickaxeType = {
-      id: crypto.randomUUID(),
-      type: link.type,
-      name: link.name,
-      used: false
-    };
+  const activatePickaxeFromCode = useCallback(async (code: string) => {
+    if (!user) return;
 
-    setGameState(prev => ({
-      ...prev,
-      pickaxes: [...prev.pickaxes, newPickaxe]
-    }));
+    try {
+      const { data: link, error } = await supabase
+        .from('admin_links')
+        .select('*')
+        .eq('code', code)
+        .eq('used', false)
+        .single();
 
-    toast.success(
-      `🎁 Получена новая кирка: ${link.name}!`,
-      { duration: 4000 }
-    );
-  }, [adminState.pickaxeLinks]);
+      if (error || !link) {
+        toast.error('Invalid or already used pickaxe link!');
+        return;
+      }
+
+      const [updateLinkRes, insertPickaxeRes] = await Promise.all([
+        supabase
+          .from('admin_links')
+          .update({ 
+            used: true, 
+            used_by: user.id, 
+            used_at: new Date().toISOString() 
+          })
+          .eq('id', link.id),
+        supabase
+          .from('pickaxes')
+          .insert({
+            user_id: user.id,
+            type: link.type,
+            name: link.name,
+            used: false
+          })
+      ]);
+
+      if (updateLinkRes.error) throw updateLinkRes.error;
+      if (insertPickaxeRes.error) throw insertPickaxeRes.error;
+
+      gameData.refreshData();
+      toast.success(`🎁 Received new pickaxe: ${link.name}!`, { duration: 4000 });
+    } catch (error: any) {
+      console.error('Error activating pickaxe:', error);
+      toast.error('Failed to activate pickaxe');
+    }
+  }, [user, gameData]);
 
   // Check for pickaxe activation on component mount
   useEffect(() => {
@@ -106,29 +135,27 @@ export function GameInterface() {
 
   const selectPickaxe = useCallback((pickaxe: PickaxeType) => {
     if (pickaxe.used) {
-      toast.error('Эта кирка уже использована!');
+      toast.error(language === 'en' ? 'This pickaxe is already used!' : 'Эта кирка уже использована!');
       return;
     }
     
-    setGameState(prev => ({
-      ...prev,
-      currentPickaxe: pickaxe,
-      miningState: MiningState.IDLE,
-      currentCrystal: null
-    }));
+    setCurrentPickaxe(pickaxe);
+    setMiningState(MiningState.IDLE);
+    setCurrentCrystal(null);
+    setShowMiningModal(true);
     
-    toast.success(`Выбрана ${pickaxe.type === 'legendary' ? 'легендарная' : 'обычная'} кирка`);
-  }, []);
+    toast.success(`Selected ${pickaxe.type === 'legendary' ? 'legendary' : 'normal'} pickaxe`);
+  }, [language]);
 
   const mine = useCallback(() => {
-    if (!gameState.currentPickaxe) return;
+    if (!currentPickaxe) return;
 
-    if (gameState.miningState === MiningState.IDLE) {
+    if (miningState === MiningState.IDLE) {
       // Generate crystal and show rarity
       let crystal = generateCrystal();
       
       // For legendary pickaxe, reroll if rarity is 0
-      if (gameState.currentPickaxe.type === 'legendary' && crystal.rarity === 0) {
+      if (currentPickaxe.type === 'legendary' && crystal.rarity === 0) {
         crystal = generateCrystal();
         // Keep rerolling until we get a non-common crystal
         while (crystal.rarity === 0) {
@@ -136,54 +163,47 @@ export function GameInterface() {
         }
       }
 
-      setGameState(prev => ({
-        ...prev,
-        miningState: MiningState.SHOWING_RARITY,
-        currentCrystal: crystal
-      }));
+      setMiningState(MiningState.SHOWING_RARITY);
+      setCurrentCrystal(crystal);
       
-      toast.success(`Найден ${getRarityName(crystal.rarity).toLowerCase()} кристалл!`);
+      toast.success(`Found ${getRarityName(crystal.rarity, language).toLowerCase()} crystal!`);
     } 
-    else if (gameState.miningState === MiningState.SHOWING_RARITY) {
+    else if (miningState === MiningState.SHOWING_RARITY) {
       // Show the actual crystal
-      setGameState(prev => ({
-        ...prev,
-        miningState: MiningState.SHOWING_CRYSTAL
-      }));
+      setMiningState(MiningState.SHOWING_CRYSTAL);
     }
-    else if (gameState.miningState === MiningState.SHOWING_CRYSTAL && gameState.currentCrystal) {
+    else if (miningState === MiningState.SHOWING_CRYSTAL && currentCrystal) {
       // Collect the crystal
-      setGameState(prev => ({
-        ...prev,
-        crystals: [...prev.crystals, gameState.currentCrystal!],
-        coins: prev.coins + gameState.currentCrystal!.price,
-        pickaxes: prev.pickaxes.map(p => 
-          p.id === prev.currentPickaxe!.id 
-            ? { ...p, used: true }
-            : p
-        ),
-        currentPickaxe: null,
-        miningState: MiningState.IDLE,
-        currentCrystal: null
-      }));
+      gameData.saveCrystal(currentCrystal);
+      gameData.usePickaxe(currentPickaxe.id);
       
-      toast.success(
-        `Кристалл добыт! +${gameState.currentCrystal.price.toLocaleString()} монет`
-      );
+      setCurrentPickaxe(null);
+      setMiningState(MiningState.IDLE);
+      setCurrentCrystal(null);
+      setShowMiningModal(false);
+      
+      toast.success(`Crystal mined! It will be added to your collection.`);
     }
-  }, [gameState.currentPickaxe, gameState.miningState, gameState.currentCrystal]);
+  }, [currentPickaxe, miningState, currentCrystal, gameData, language]);
 
-  const resetPickaxes = useCallback(() => {
-    setGameState(prev => ({
-      ...prev,
-      pickaxes: prev.pickaxes.map(p => ({ ...p, used: false })),
-      currentPickaxe: null,
-      miningState: MiningState.IDLE,
-      currentCrystal: null
-    }));
-    
-    toast.success('Все кирки восстановлены!');
-  }, []);
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  const handleClickerClick = () => {
+    gameData.addClickerEarnings(0.1);
+  };
+
+  if (gameData.loading) {
+    return (
+      <div className="min-h-screen bg-gradient-cave flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-cave">
@@ -193,72 +213,87 @@ export function GameInterface() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                Gem Forge Saga
+                {t.title}
               </h1>
               <p className="text-muted-foreground">
-                Добывайте кристаллы и собирайте коллекцию!
+                {t.subtitle}
               </p>
             </div>
             
             <div className="flex items-center gap-4">
-              <PickaxeHelp />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLanguage(language === 'en' ? 'ru' : 'en')}
+                className="gap-2"
+              >
+                <Globe className="w-4 h-4" />
+                {language === 'en' ? 'RU' : 'EN'}
+              </Button>
+
+              <PickaxeHelp language={language} />
               
               <AdminPanel
                 pickaxeLinks={adminState.pickaxeLinks}
                 onCreateLink={handleCreateLink}
                 isAdminMode={adminState.isAdminMode}
                 onToggleAdmin={handleToggleAdmin}
+                language={language}
               />
               
+              {currentPickaxe && (
+                <Badge variant="outline" className="px-3 py-1">
+                  {t.selected}: {currentPickaxe.name}
+                </Badge>
+              )}
+
               <Button
-                onClick={resetPickaxes}
+                onClick={handleSignOut}
                 variant="outline"
                 size="sm"
                 className="gap-2"
               >
-                <RotateCcw className="w-4 h-4" />
-                Сброс кирок
+                <LogOut className="w-4 h-4" />
+                {t.signOut}
               </Button>
-              
-              {gameState.currentPickaxe && (
-                <Badge variant="outline" className="px-3 py-1">
-                  Выбрана: {gameState.currentPickaxe.name}
-                </Badge>
-              )}
             </div>
           </div>
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Panel - Pickaxes and Mining */}
+          {/* Left Panel - Pickaxes */}
           <div className="lg:col-span-2 space-y-6">
             {/* Pickaxes */}
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <Plus className="w-5 h-5" />
-                Кирки
+                {t.pickaxes}
               </h2>
               
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {gameState.pickaxes.map((pickaxe) => (
+                {gameData.pickaxes.map((pickaxe) => (
                   <Pickaxe
                     key={pickaxe.id}
                     pickaxe={pickaxe}
                     onSelect={selectPickaxe}
-                    isSelected={gameState.currentPickaxe?.id === pickaxe.id}
+                    isSelected={currentPickaxe?.id === pickaxe.id}
                     disabled={pickaxe.used}
+                    language={language}
                   />
                 ))}
               </div>
             </Card>
 
-            {/* Mining Area */}
-            <MiningArea
-              miningState={gameState.miningState}
-              onMine={mine}
-              rarityColor={gameState.currentCrystal ? getRarityColor(gameState.currentCrystal.rarity) : undefined}
-              crystalColor={gameState.currentCrystal?.color}
-              canMine={gameState.currentPickaxe !== null}
+            {/* Shop */}
+            <Shop 
+              coins={gameData.coins}
+              onBuyPickaxe={gameData.buyPickaxe}
+            />
+
+            {/* Clicker */}
+            <Clicker 
+              clickerEarnings={gameData.clickerEarnings}
+              onClick={handleClickerClick}
             />
           </div>
 
@@ -266,12 +301,28 @@ export function GameInterface() {
           <div>
             <Card className="p-6">
               <CrystalInventory 
-                crystals={gameState.crystals}
-                coins={gameState.coins}
+                crystals={gameData.crystals}
+                coins={gameData.coins}
+                onSellCrystal={gameData.sellCrystal}
+                language={language}
               />
             </Card>
           </div>
         </div>
+
+        {/* Mining Modal */}
+        <Dialog open={showMiningModal} onOpenChange={setShowMiningModal}>
+          <DialogContent className="max-w-2xl">
+            <MiningArea
+              miningState={miningState}
+              onMine={mine}
+              rarityColor={currentCrystal ? getRarityColor(currentCrystal.rarity) : undefined}
+              crystalColor={currentCrystal?.color}
+              canMine={currentPickaxe !== null}
+              language={language}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

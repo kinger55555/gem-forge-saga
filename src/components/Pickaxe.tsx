@@ -8,9 +8,10 @@ interface PickaxeProps {
   onSelect: (pickaxe: PickaxeType) => void;
   isSelected: boolean;
   disabled?: boolean;
+  language?: 'en' | 'ru';
 }
 
-export function Pickaxe({ pickaxe, onSelect, isSelected, disabled }: PickaxeProps) {
+export function Pickaxe({ pickaxe, onSelect, isSelected, disabled, language = 'ru' }: PickaxeProps) {
   const isLegendary = pickaxe.type === 'legendary';
   
   return (

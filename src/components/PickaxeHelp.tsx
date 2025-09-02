@@ -16,7 +16,7 @@ import {
   ExternalLink 
 } from 'lucide-react';
 
-export function PickaxeHelp() {
+export function PickaxeHelp({ language = 'ru' }: { language?: 'en' | 'ru' }) {
   return (
     <Dialog>
       <DialogTrigger asChild>

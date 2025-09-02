@@ -1,0 +1,231 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './useAuth';
+import { Crystal, Pickaxe as PickaxeType } from '@/types/game';
+import { toast } from 'sonner';
+
+interface GameData {
+  pickaxes: PickaxeType[];
+  crystals: Crystal[];
+  coins: number;
+  clickerEarnings: number;
+  loading: boolean;
+}
+
+export function useGameData() {
+  const { user } = useAuth();
+  const [gameData, setGameData] = useState<GameData>({
+    pickaxes: [],
+    crystals: [],
+    coins: 0,
+    clickerEarnings: 0,
+    loading: true
+  });
+
+  const loadGameData = async () => {
+    if (!user) return;
+
+    try {
+      const [pickaxesRes, crystalsRes, gameStateRes] = await Promise.all([
+        supabase.from('pickaxes').select('*').eq('user_id', user.id),
+        supabase.from('crystals').select('*').eq('user_id', user.id),
+        supabase.from('game_state').select('*').eq('user_id', user.id).single()
+      ]);
+
+      if (pickaxesRes.error) throw pickaxesRes.error;
+      if (crystalsRes.error) throw crystalsRes.error;
+      if (gameStateRes.error) throw gameStateRes.error;
+
+      setGameData({
+        pickaxes: pickaxesRes.data.map(p => ({
+          id: p.id,
+          type: p.type as 'normal' | 'legendary',
+          name: p.name,
+          used: p.used
+        })),
+        crystals: crystalsRes.data.map(c => ({
+          id: c.id,
+          red: c.red,
+          green: c.green,
+          blue: c.blue,
+          rarity: c.rarity,
+          price: c.price,
+          color: c.color
+        })),
+        coins: Number(gameStateRes.data.coins),
+        clickerEarnings: Number(gameStateRes.data.clicker_earnings),
+        loading: false
+      });
+    } catch (error: any) {
+      console.error('Error loading game data:', error);
+      toast.error('Failed to load game data');
+      setGameData(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      loadGameData();
+    } else {
+      setGameData({
+        pickaxes: [],
+        crystals: [],
+        coins: 0,
+        clickerEarnings: 0,
+        loading: false
+      });
+    }
+  }, [user]);
+
+  const saveCrystal = async (crystal: Crystal) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase.from('crystals').insert({
+        user_id: user.id,
+        red: crystal.red,
+        green: crystal.green,
+        blue: crystal.blue,
+        rarity: crystal.rarity,
+        price: crystal.price,
+        color: crystal.color
+      });
+
+      if (error) throw error;
+
+      setGameData(prev => ({
+        ...prev,
+        crystals: [...prev.crystals, crystal]
+      }));
+    } catch (error: any) {
+      console.error('Error saving crystal:', error);
+      toast.error('Failed to save crystal');
+    }
+  };
+
+  const usePickaxe = async (pickaxeId: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('pickaxes')
+        .update({ used: true })
+        .eq('id', pickaxeId);
+
+      if (error) throw error;
+
+      setGameData(prev => ({
+        ...prev,
+        pickaxes: prev.pickaxes.map(p => 
+          p.id === pickaxeId ? { ...p, used: true } : p
+        )
+      }));
+    } catch (error: any) {
+      console.error('Error using pickaxe:', error);
+      toast.error('Failed to use pickaxe');
+    }
+  };
+
+  const sellCrystal = async (crystalId: string, price: number) => {
+    if (!user) return;
+
+    try {
+      const [deleteRes, updateRes] = await Promise.all([
+        supabase.from('crystals').delete().eq('id', crystalId),
+        supabase.from('game_state')
+          .update({ coins: gameData.coins + price })
+          .eq('user_id', user.id)
+      ]);
+
+      if (deleteRes.error) throw deleteRes.error;
+      if (updateRes.error) throw updateRes.error;
+
+      setGameData(prev => ({
+        ...prev,
+        crystals: prev.crystals.filter(c => c.id !== crystalId),
+        coins: prev.coins + price
+      }));
+
+      toast.success(`Sold crystal for ${price.toLocaleString()} coins!`);
+    } catch (error: any) {
+      console.error('Error selling crystal:', error);
+      toast.error('Failed to sell crystal');
+    }
+  };
+
+  const buyPickaxe = async (type: 'normal' | 'legendary', price: number) => {
+    if (!user || gameData.coins < price) return false;
+
+    try {
+      const name = type === 'normal' ? 'Normal Pickaxe' : 'Legendary Pickaxe';
+      
+      const [insertRes, updateRes] = await Promise.all([
+        supabase.from('pickaxes').insert({
+          user_id: user.id,
+          type,
+          name,
+          used: false
+        }).select().single(),
+        supabase.from('game_state')
+          .update({ coins: gameData.coins - price })
+          .eq('user_id', user.id)
+      ]);
+
+      if (insertRes.error) throw insertRes.error;
+      if (updateRes.error) throw updateRes.error;
+
+      const newPickaxe: PickaxeType = {
+        id: insertRes.data.id,
+        type: insertRes.data.type as 'normal' | 'legendary',
+        name: insertRes.data.name,
+        used: insertRes.data.used
+      };
+
+      setGameData(prev => ({
+        ...prev,
+        pickaxes: [...prev.pickaxes, newPickaxe],
+        coins: prev.coins - price
+      }));
+
+      toast.success(`Bought ${name} for ${price.toLocaleString()} coins!`);
+      return true;
+    } catch (error: any) {
+      console.error('Error buying pickaxe:', error);
+      toast.error('Failed to buy pickaxe');
+      return false;
+    }
+  };
+
+  const addClickerEarnings = async (amount: number) => {
+    if (!user) return;
+
+    try {
+      const newEarnings = gameData.clickerEarnings + amount;
+      
+      const { error } = await supabase
+        .from('game_state')
+        .update({ clicker_earnings: newEarnings })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setGameData(prev => ({
+        ...prev,
+        clickerEarnings: newEarnings
+      }));
+    } catch (error: any) {
+      console.error('Error updating clicker earnings:', error);
+      toast.error('Failed to update clicker earnings');
+    }
+  };
+
+  return {
+    ...gameData,
+    saveCrystal,
+    usePickaxe,
+    sellCrystal,
+    buyPickaxe,
+    addClickerEarnings,
+    refreshData: loadGameData
+  };
+}

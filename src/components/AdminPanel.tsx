@@ -36,13 +36,15 @@ interface AdminPanelProps {
   onCreateLink: (link: PickaxeLink) => void;
   isAdminMode: boolean;
   onToggleAdmin: (isAdmin: boolean) => void;
+  language?: 'en' | 'ru';
 }
 
 export function AdminPanel({ 
   pickaxeLinks, 
   onCreateLink, 
   isAdminMode, 
-  onToggleAdmin 
+  onToggleAdmin,
+  language = 'ru'
 }: AdminPanelProps) {
   const [adminPassword, setAdminPassword] = useState('');
   const [newPickaxeName, setNewPickaxeName] = useState('');
