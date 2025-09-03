@@ -6,8 +6,7 @@ export function generateCrystal(): Crystal {
   const blue = Math.floor(Math.random() * 256);
   
   const rarity = calculateRarity(red, green, blue);
-  const basePrice = 5;
-  const price = basePrice * Math.pow(10, rarity);
+  const price = calculatePrice(red, green, blue, rarity);
   
   const color = `rgb(${red}, ${green}, ${blue})`;
   
@@ -61,4 +60,36 @@ export function getRarityName(rarity: number, language: 'en' | 'ru' = 'ru'): str
   
   const index = Math.min(rarity, 3);
   return names[language][index];
+}
+
+export function calculatePrice(red: number, green: number, blue: number, rarity: number): number {
+  // Check if it's a perfect crystal (255, 255, 255)
+  if (red === 255 && green === 255 && blue === 255) {
+    return 5000000000; // 5 billion for perfect white crystal
+  }
+  
+  // Check if it's a perfect black crystal (0, 0, 0)
+  if (red === 0 && green === 0 && blue === 0) {
+    return 1000000000; // 1 billion for perfect black crystal
+  }
+  
+  // Check for other perfect single colors
+  const perfectColors = [
+    [255, 0, 0], // Pure red
+    [0, 255, 0], // Pure green
+    [0, 0, 255]  // Pure blue
+  ];
+  
+  for (const [r, g, b] of perfectColors) {
+    if (red === r && green === g && blue === b) {
+      return 100000000; // 100 million for perfect primary colors
+    }
+  }
+  
+  // Enhanced pricing for high rarity crystals
+  const basePrice = 5;
+  if (rarity >= 8) return basePrice * Math.pow(10, 8); // Cap very high rarity at 500M
+  if (rarity >= 6) return basePrice * Math.pow(10, rarity + 1); // Bonus for very rare
+  
+  return basePrice * Math.pow(10, rarity);
 }

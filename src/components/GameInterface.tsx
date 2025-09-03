@@ -9,6 +9,7 @@ import { AdminPanel } from './AdminPanel';
 import { PickaxeHelp } from './PickaxeHelp';
 import { Shop } from './Shop';
 import { Clicker } from './Clicker';
+import { PickaxeCodeInput } from './PickaxeCodeInput';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -294,6 +295,12 @@ export function GameInterface() {
             <Clicker 
               clickerEarnings={gameData.clickerEarnings}
               onClick={handleClickerClick}
+            />
+
+            {/* Pickaxe Code Input */}
+            <PickaxeCodeInput 
+              onRedeemCode={activatePickaxeFromCode}
+              language={language}
             />
           </div>
 

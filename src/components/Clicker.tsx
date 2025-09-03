@@ -28,7 +28,7 @@ export function Clicker({ clickerEarnings, onClick }: ClickerProps) {
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-2">
           <DollarSign className="w-5 h-5 text-green-500" />
-          <span className="text-2xl font-bold">${clickerEarnings.toFixed(1)}</span>
+          <span className="text-2xl font-bold">+0.1 coins per click</span>
         </div>
         
         <Button
@@ -38,11 +38,11 @@ export function Clicker({ clickerEarnings, onClick }: ClickerProps) {
           }`}
           variant="outline"
         >
-          Click for $0.1
+          Click for 0.1 coins
         </Button>
         
         <Badge variant="secondary" className="text-sm">
-          Each click = $0.1
+          Each click = 0.1 coins
         </Badge>
       </div>
     </Card>

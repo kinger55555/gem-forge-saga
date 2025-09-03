@@ -200,22 +200,22 @@ export function useGameData() {
     if (!user) return;
 
     try {
-      const newEarnings = gameData.clickerEarnings + amount;
+      const newCoins = gameData.coins + amount;
       
       const { error } = await supabase
         .from('game_state')
-        .update({ clicker_earnings: newEarnings })
+        .update({ coins: newCoins })
         .eq('user_id', user.id);
 
       if (error) throw error;
 
       setGameData(prev => ({
         ...prev,
-        clickerEarnings: newEarnings
+        coins: newCoins
       }));
     } catch (error: any) {
-      console.error('Error updating clicker earnings:', error);
-      toast.error('Failed to update clicker earnings');
+      console.error('Error updating coins from clicker:', error);
+      toast.error('Failed to update coins');
     }
   };
 
