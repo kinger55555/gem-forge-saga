@@ -219,6 +219,31 @@ export function useGameData() {
     }
   };
 
+  const buySoda = async () => {
+    if (!user || gameData.coins < 200) return false;
+
+    try {
+      const { error } = await supabase
+        .from('game_state')
+        .update({ coins: gameData.coins - 200 })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setGameData(prev => ({
+        ...prev,
+        coins: prev.coins - 200
+      }));
+
+      toast.success('🥤 Bought soda! *refreshing*');
+      return true;
+    } catch (error: any) {
+      console.error('Error buying soda:', error);
+      toast.error('Failed to buy soda');
+      return false;
+    }
+  };
+
   return {
     ...gameData,
     saveCrystal,
@@ -226,6 +251,7 @@ export function useGameData() {
     sellCrystal,
     buyPickaxe,
     addClickerEarnings,
+    buySoda,
     refreshData: loadGameData
   };
 }

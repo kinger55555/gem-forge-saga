@@ -124,6 +124,33 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_rewards: {
+        Row: {
+          claimed: boolean
+          created_at: string
+          id: string
+          reward_date: string
+          reward_type: string
+          user_id: string
+        }
+        Insert: {
+          claimed?: boolean
+          created_at?: string
+          id?: string
+          reward_date?: string
+          reward_type?: string
+          user_id: string
+        }
+        Update: {
+          claimed?: boolean
+          created_at?: string
+          id?: string
+          reward_date?: string
+          reward_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       game_state: {
         Row: {
           clicker_earnings: number
@@ -199,6 +226,30 @@ export type Database = {
           updated_at?: string
           user_id?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      special_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          used_date: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          used_date?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          used_date?: string
+          user_id?: string
         }
         Relationships: []
       }

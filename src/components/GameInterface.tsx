@@ -10,6 +10,7 @@ import { PickaxeHelp } from './PickaxeHelp';
 import { Shop } from './Shop';
 import { Clicker } from './Clicker';
 import { PickaxeCodeInput } from './PickaxeCodeInput';
+import { DailyRewards } from './DailyRewards';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -297,9 +298,17 @@ export function GameInterface() {
               onClick={handleClickerClick}
             />
 
+            {/* Daily Rewards */}
+            <DailyRewards 
+              onRewardClaimed={gameData.refreshData}
+              language={language}
+            />
+
             {/* Pickaxe Code Input */}
             <PickaxeCodeInput 
               onRedeemCode={activatePickaxeFromCode}
+              coins={gameData.coins}
+              onBuySoda={gameData.buySoda}
               language={language}
             />
           </div>
