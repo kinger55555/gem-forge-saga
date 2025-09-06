@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
@@ -19,6 +19,24 @@ export function PickaxeCodeInput({ onRedeemCode, coins, onBuySoda, language = 'r
   const { user } = useAuth();
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [canBuySoda, setCanBuySoda] = useState(false);
+
+  useEffect(() => {
+    const checkSodaAccess = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('special_codes')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('code', 'soda')
+        .maybeSingle();
+        
+      setCanBuySoda(!!data);
+    };
+    
+    checkSodaAccess();
+  }, [user]);
 
   const handleSpecialCode = async (codeValue: string) => {
     if (!user) return;
@@ -68,6 +86,42 @@ export function PickaxeCodeInput({ onRedeemCode, coins, onBuySoda, language = 'r
         return true;
       } catch (error: any) {
         console.error('Error with mod67 code:', error);
+        toast.error(language === 'ru' ? 'Ошибка активации кода' : 'Failed to activate code');
+        return false;
+      }
+    }
+
+    if (codeValue === 'soda') {
+      try {
+        // Check if already used
+        const { data: existing } = await supabase
+          .from('special_codes')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('code', 'soda')
+          .maybeSingle();
+
+        if (existing) {
+          toast.error(language === 'ru' ? 'Код soda уже использован!' : 'Code soda already used!');
+          return false;
+        }
+
+        // Record usage
+        const { error } = await supabase
+          .from('special_codes')
+          .insert({
+            user_id: user.id,
+            code: 'soda',
+            used_date: new Date().toISOString().split('T')[0]
+          });
+
+        if (error) throw error;
+
+        setCanBuySoda(true);
+        toast.success(language === 'ru' ? '🥤 Разблокирована покупка газировки!' : '🥤 Soda purchase unlocked!');
+        return true;
+      } catch (error: any) {
+        console.error('Error with soda code:', error);
         toast.error(language === 'ru' ? 'Ошибка активации кода' : 'Failed to activate code');
         return false;
       }
@@ -136,29 +190,31 @@ export function PickaxeCodeInput({ onRedeemCode, coins, onBuySoda, language = 'r
         
         <p className="text-sm text-muted-foreground">
           {language === 'ru' 
-            ? 'Введите код для получения кирки или попробуйте "mod67"' 
-            : 'Enter a code to get a pickaxe or try "mod67"'
+            ? 'Введите код для получения кирки или других предметов' 
+            : 'Enter a code to get a pickaxe or other items'
           }
         </p>
         
-        <div className="border-t pt-4">
-          <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
-            <div>
-              <h4 className="font-medium">🥤 Soda</h4>
-              <p className="text-xs text-muted-foreground">
-                {language === 'ru' ? 'Освежающий напиток (ничего не делает)' : 'Refreshing drink (does nothing)'}
-              </p>
+        {canBuySoda && (
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+              <div>
+                <h4 className="font-medium">🥤 Soda</h4>
+                <p className="text-xs text-muted-foreground">
+                  {language === 'ru' ? 'Освежающий напиток (ничего не делает)' : 'Refreshing drink (does nothing)'}
+                </p>
+              </div>
+              <Button 
+                onClick={onBuySoda}
+                disabled={coins < 200}
+                size="sm"
+                variant="outline"
+              >
+                200 coins
+              </Button>
             </div>
-            <Button 
-              onClick={onBuySoda}
-              disabled={coins < 200}
-              size="sm"
-              variant="outline"
-            >
-              200 coins
-            </Button>
           </div>
-        </div>
+        )}
       </div>
     </Card>
   );
