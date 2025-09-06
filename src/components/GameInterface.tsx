@@ -20,7 +20,6 @@ import {
   Pickaxe as PickaxeType, 
   Crystal 
 } from '@/types/game';
-import { AdminState, PickaxeLink } from '@/types/admin';
 import { 
   generateCrystal, 
   getRarityColor, 
@@ -38,11 +37,7 @@ export function GameInterface() {
   const [miningState, setMiningState] = useState<MiningState>(MiningState.IDLE);
   const [currentCrystal, setCurrentCrystal] = useState<Crystal | null>(null);
   const [showMiningModal, setShowMiningModal] = useState(false);
-
-  const [adminState, setAdminState] = useState<AdminState>({
-    isAdminMode: false,
-    pickaxeLinks: [],
-  });
+  const [isAdminMode, setIsAdminMode] = useState(false);
 
   const translations = {
     en: {
@@ -121,18 +116,8 @@ export function GameInterface() {
     }
   }, [activatePickaxeFromCode]);
 
-  const handleCreateLink = useCallback((link: PickaxeLink) => {
-    setAdminState(prev => ({
-      ...prev,
-      pickaxeLinks: [...prev.pickaxeLinks, link]
-    }));
-  }, []);
-
   const handleToggleAdmin = useCallback((isAdmin: boolean) => {
-    setAdminState(prev => ({
-      ...prev,
-      isAdminMode: isAdmin
-    }));
+    setIsAdminMode(isAdmin);
   }, []);
 
   const selectPickaxe = useCallback((pickaxe: PickaxeType) => {
@@ -236,9 +221,7 @@ export function GameInterface() {
               <PickaxeHelp language={language} />
               
               <AdminPanel
-                pickaxeLinks={adminState.pickaxeLinks}
-                onCreateLink={handleCreateLink}
-                isAdminMode={adminState.isAdminMode}
+                isAdminMode={isAdminMode}
                 onToggleAdmin={handleToggleAdmin}
                 language={language}
               />

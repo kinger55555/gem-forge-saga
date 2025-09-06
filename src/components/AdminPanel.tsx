@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { PickaxeLink } from '@/types/admin';
 import { 
-  createPickaxeLink, 
+  generatePickaxeCode, 
   getActivationUrl, 
   validateAdminPassword 
 } from '@/utils/linkUtils';
@@ -30,18 +30,15 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AdminPanelProps {
-  pickaxeLinks: PickaxeLink[];
-  onCreateLink: (link: PickaxeLink) => void;
   isAdminMode: boolean;
   onToggleAdmin: (isAdmin: boolean) => void;
   language?: 'en' | 'ru';
 }
 
 export function AdminPanel({ 
-  pickaxeLinks, 
-  onCreateLink, 
   isAdminMode, 
   onToggleAdmin,
   language = 'ru'
@@ -49,6 +46,8 @@ export function AdminPanel({
   const [adminPassword, setAdminPassword] = useState('');
   const [newPickaxeName, setNewPickaxeName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [pickaxeLinks, setPickaxeLinks] = useState<PickaxeLink[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const handleAdminLogin = () => {
     if (validateAdminPassword(adminPassword)) {
@@ -60,12 +59,73 @@ export function AdminPanel({
     }
   };
 
-  const handleCreateLink = (type: 'normal' | 'legendary') => {
-    const link = createPickaxeLink(type, newPickaxeName || undefined);
-    onCreateLink(link);
-    setNewPickaxeName('');
-    toast.success(`Ссылка создана: ${link.code}`);
+  const loadAdminLinks = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('admin_links')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedLinks: PickaxeLink[] = data.map(link => ({
+        id: link.id,
+        code: link.code,
+        type: link.type as 'normal' | 'legendary',
+        name: link.name,
+        used: link.used,
+        createdAt: new Date(link.created_at),
+        usedAt: link.used_at ? new Date(link.used_at) : undefined
+      }));
+
+      setPickaxeLinks(formattedLinks);
+    } catch (error) {
+      console.error('Error loading admin links:', error);
+      toast.error('Ошибка загрузки ссылок');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleCreateLink = async (type: 'normal' | 'legendary') => {
+    try {
+      setLoading(true);
+      const code = generatePickaxeCode();
+      const defaultName = type === 'legendary' ? 'Легендарная кирка' : 'Обычная кирка';
+      const name = newPickaxeName || `${defaultName} (${code})`;
+
+      const { data, error } = await supabase
+        .from('admin_links')
+        .insert([
+          {
+            code,
+            type,
+            name,
+            used: false
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await loadAdminLinks(); // Reload the list
+      setNewPickaxeName('');
+      toast.success(`Ссылка создана: ${code}`);
+    } catch (error) {
+      console.error('Error creating admin link:', error);
+      toast.error('Ошибка создания ссылки');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAdminMode) {
+      loadAdminLinks();
+    }
+  }, [isAdminMode]);
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -158,6 +218,7 @@ export function AdminPanel({
             <Button 
               onClick={() => handleCreateLink('normal')}
               className="flex-1 gap-2"
+              disabled={loading}
             >
               <PickaxeIcon className="w-4 h-4" />
               Обычная кирка
@@ -166,6 +227,7 @@ export function AdminPanel({
               onClick={() => handleCreateLink('legendary')}
               variant="outline"
               className="flex-1 gap-2 border-rarity-legendary text-rarity-legendary hover:bg-rarity-legendary/10"
+              disabled={loading}
             >
               <Zap className="w-4 h-4" />
               Легендарная кирка
