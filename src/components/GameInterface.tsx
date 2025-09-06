@@ -74,7 +74,7 @@ export function GameInterface() {
         .select('*')
         .eq('code', code)
         .eq('used', false)
-        .single();
+        .maybeSingle();
 
       if (error || !link) {
         toast.error('Invalid or already used pickaxe link!');
@@ -309,6 +309,9 @@ export function GameInterface() {
               onRedeemCode={activatePickaxeFromCode}
               coins={gameData.coins}
               onBuySoda={gameData.buySoda}
+              onBuySodaPlus={gameData.buySodaPlus}
+              onBuySodaMinus={gameData.buySodaMinus}
+              onBuy7up={gameData.buy7up}
               language={language}
             />
           </div>
