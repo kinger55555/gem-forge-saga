@@ -34,7 +34,12 @@ export function PickaxeCodeInput({ onRedeemCode, coins, onBuySoda, onBuySodaPlus
         .eq('user_id', user.id)
         .in('code', ['soda', 'soda+', 'soda-', '7up']);
         
-      setUnlockedSodas(data?.map(d => d.code) || []);
+      const codes = data?.map(d => d.code) || [];
+      // Backwards compatibility: if user unlocked 'soda' before variants existed,
+      // also grant access to 'soda+'.
+      const augmented = new Set(codes);
+      if (augmented.has('soda')) augmented.add('soda+');
+      setUnlockedSodas(Array.from(augmented));
     };
     
     checkSodaAccess();
@@ -120,7 +125,12 @@ export function PickaxeCodeInput({ onRedeemCode, coins, onBuySoda, onBuySodaPlus
 
         if (error) throw error;
 
-        setUnlockedSodas(prev => [...prev, codeValue]);
+        setUnlockedSodas(prev => {
+          const next = new Set(prev);
+          next.add(codeValue);
+          if (codeValue === 'soda') next.add('soda+'); // auto-unlock Soda+ when Soda was used
+          return Array.from(next);
+        });
         const sodaNames = {
           soda: '🥤 Soda',
           'soda+': '🥤 Soda+', 
