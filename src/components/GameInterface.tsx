@@ -26,7 +26,7 @@ import {
   getRarityName 
 } from '@/utils/crystalUtils';
 import { parsePickaxeFromUrl } from '@/utils/linkUtils';
-import { Plus, Gift, LogOut, Globe, User } from 'lucide-react';
+import { Plus, Gift, LogOut, Globe, User, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function GameInterface() {
@@ -255,17 +255,33 @@ export function GameInterface() {
                 {t.pickaxes}
               </h2>
               
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {gameData.pickaxes.map((pickaxe) => (
-                  <Pickaxe
-                    key={pickaxe.id}
-                    pickaxe={pickaxe}
-                    onSelect={selectPickaxe}
-                    isSelected={currentPickaxe?.id === pickaxe.id}
-                    disabled={pickaxe.used}
-                    language={language}
-                  />
-                ))}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div></div>
+                  <Button
+                    onClick={gameData.clearUsedPickaxes}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    disabled={!gameData.pickaxes.some(p => p.used)}
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    {language === 'ru' ? 'Очистить использованные' : 'Clear used pickaxes'}
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {gameData.pickaxes.map((pickaxe) => (
+                    <Pickaxe
+                      key={pickaxe.id}
+                      pickaxe={pickaxe}
+                      onSelect={selectPickaxe}
+                      isSelected={currentPickaxe?.id === pickaxe.id}
+                      disabled={pickaxe.used}
+                      language={language}
+                    />
+                  ))}
+                </div>
               </div>
             </Card>
 

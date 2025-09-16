@@ -223,6 +223,19 @@ export function useGameData() {
     if (!user || gameData.coins < 200) return false;
 
     try {
+      // Check if already purchased
+      const { data: existing } = await supabase
+        .from('special_codes')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('code', 'soda')
+        .maybeSingle();
+
+      if (existing) {
+        toast.error('You already bought soda!');
+        return false;
+      }
+
       const { error } = await supabase
         .from('game_state')
         .update({ coins: gameData.coins - 200 })
@@ -248,6 +261,19 @@ export function useGameData() {
     if (!user || gameData.coins < 300) return false;
 
     try {
+      // Check if already purchased
+      const { data: existing } = await supabase
+        .from('special_codes')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('code', 'soda+')
+        .maybeSingle();
+
+      if (existing) {
+        toast.error('You already bought Soda+!');
+        return false;
+      }
+
       const { error } = await supabase
         .from('game_state')
         .update({ coins: gameData.coins - 300 })
@@ -273,6 +299,19 @@ export function useGameData() {
     if (!user || gameData.coins < 300) return false;
 
     try {
+      // Check if already purchased
+      const { data: existing } = await supabase
+        .from('special_codes')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('code', 'soda-')
+        .maybeSingle();
+
+      if (existing) {
+        toast.error('You already bought Soda-!');
+        return false;
+      }
+
       const { error } = await supabase
         .from('game_state')
         .update({ coins: gameData.coins - 300 })
@@ -298,6 +337,19 @@ export function useGameData() {
     if (!user || gameData.coins < 400) return false;
 
     try {
+      // Check if already purchased
+      const { data: existing } = await supabase
+        .from('special_codes')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('code', '7up')
+        .maybeSingle();
+
+      if (existing) {
+        toast.error('You already bought 7UP!');
+        return false;
+      }
+
       const { error } = await supabase
         .from('game_state')
         .update({ coins: gameData.coins - 400 })
@@ -319,6 +371,32 @@ export function useGameData() {
     }
   };
 
+  const clearUsedPickaxes = async () => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('pickaxes')
+        .update({ used: false })
+        .eq('user_id', user.id)
+        .eq('used', true);
+
+      if (error) throw error;
+
+      setGameData(prev => ({
+        ...prev,
+        pickaxes: prev.pickaxes.map(p => ({ ...p, used: false }))
+      }));
+
+      toast.success('All used pickaxes have been cleared!');
+      return true;
+    } catch (error: any) {
+      console.error('Error clearing used pickaxes:', error);
+      toast.error('Failed to clear used pickaxes');
+      return false;
+    }
+  };
+
   return {
     ...gameData,
     saveCrystal,
@@ -330,6 +408,7 @@ export function useGameData() {
     buySodaPlus,
     buySodaMinus,
     buy7up,
+    clearUsedPickaxes,
     refreshData: loadGameData
   };
 }
