@@ -19,52 +19,56 @@ export function Shop({ coins, onBuyPickaxe }: ShopProps) {
 
   return (
     <Card className="p-6">
-      <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-        <ShoppingCart className="w-5 h-5" />
-        Shop
-      </h2>
-      
-      <div className="space-y-4">
-        <div className="flex items-center justify-between p-4 border rounded-lg">
-          <div className="flex items-center gap-3">
-            <Pickaxe className="w-6 h-6 text-blue-500" />
-            <div>
-              <h3 className="font-semibold">Normal Pickaxe</h3>
-              <p className="text-sm text-muted-foreground">Standard mining tool</p>
+      <section aria-labelledby="shop-title">
+        <h2 id="shop-title" className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <ShoppingCart className="w-5 h-5" aria-hidden="true" />
+          Shop
+        </h2>
+        
+        <div className="space-y-4">
+          <article className="flex items-center justify-between p-4 border rounded-lg" aria-label="Normal Pickaxe">
+            <div className="flex items-center gap-3">
+              <Pickaxe className="w-6 h-6 text-blue-500" aria-hidden="true" />
+              <div>
+                <h3 className="font-semibold">Normal Pickaxe</h3>
+                <p className="text-sm text-muted-foreground">Standard mining tool</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline">100 coins</Badge>
-            <Button 
-              onClick={handleBuyNormal}
-              disabled={coins < 100}
-              size="sm"
-            >
-              Buy
-            </Button>
-          </div>
-        </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" aria-label="Price 100 coins">100 coins</Badge>
+              <Button 
+                onClick={handleBuyNormal}
+                disabled={coins < 100}
+                size="sm"
+                aria-label="Buy Normal Pickaxe for 100 coins"
+              >
+                Buy
+              </Button>
+            </div>
+          </article>
 
-        <div className="flex items-center justify-between p-4 border rounded-lg">
-          <div className="flex items-center gap-3">
-            <Pickaxe className="w-6 h-6 text-yellow-500" />
-            <div>
-              <h3 className="font-semibold">Legendary Pickaxe</h3>
-              <p className="text-sm text-muted-foreground">No common crystals</p>
+          <article className="flex items-center justify-between p-4 border rounded-lg" aria-label="Legendary Pickaxe">
+            <div className="flex items-center gap-3">
+              <Pickaxe className="w-6 h-6 text-yellow-500" aria-hidden="true" />
+              <div>
+                <h3 className="font-semibold">Legendary Pickaxe</h3>
+                <p className="text-sm text-muted-foreground">No common crystals</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline">500 coins</Badge>
-            <Button 
-              onClick={handleBuyLegendary}
-              disabled={coins < 500}
-              size="sm"
-            >
-              Buy
-            </Button>
-          </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" aria-label="Price 500 coins">500 coins</Badge>
+              <Button 
+                onClick={handleBuyLegendary}
+                disabled={coins < 500}
+                size="sm"
+                aria-label="Buy Legendary Pickaxe for 500 coins"
+              >
+                Buy
+              </Button>
+            </div>
+          </article>
         </div>
-      </div>
+      </section>
     </Card>
   );
 }

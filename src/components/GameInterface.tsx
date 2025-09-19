@@ -27,6 +27,15 @@ import {
 } from '@/utils/crystalUtils';
 import { parsePickaxeFromUrl } from '@/utils/linkUtils';
 import { Plus, Gift, LogOut, Globe, User, RotateCcw } from 'lucide-react';
+
+// SEO: semantic structure for main page
+const SeoHeader = () => (
+  <header>
+    <title>Gem Forge Saga - Mine crystals game</title>
+    <meta name="description" content="Gem Forge Saga mining crystals and collecting game" />
+    <link rel="canonical" href="/" />
+  </header>
+);
 import { toast } from 'sonner';
 
 export function GameInterface() {
@@ -194,6 +203,7 @@ export function GameInterface() {
 
   return (
     <div className="min-h-screen bg-gradient-cave">
+      <SeoHeader />
       <div className="container mx-auto p-4 space-y-6">
         {/* Header */}
         <Card className="p-6 bg-card/50 backdrop-blur-sm">
@@ -266,7 +276,7 @@ export function GameInterface() {
                     disabled={!gameData.pickaxes.some(p => p.used)}
                   >
                     <RotateCcw className="w-4 h-4" />
-                    {language === 'ru' ? 'Очистить использованные' : 'Clear used pickaxes'}
+                    {language === 'ru' ? 'Удалить использованные' : 'Delete used pickaxes'}
                   </Button>
                 </div>
                 
