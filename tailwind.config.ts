@@ -66,7 +66,8 @@ export default {
 					common: 'hsl(var(--rarity-common))',
 					uncommon: 'hsl(var(--rarity-uncommon))',
 					rare: 'hsl(var(--rarity-rare))',
-					legendary: 'hsl(var(--rarity-legendary))'
+					legendary: 'hsl(var(--rarity-legendary))',
+					'legendary-foreground': 'hsl(var(--rarity-legendary-foreground))'
 				}
 			},
 			backgroundImage: {

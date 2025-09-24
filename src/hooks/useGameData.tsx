@@ -345,6 +345,47 @@ export function useGameData() {
     }
   };
 
+  const addPickaxeFromCase = async (pickaxeData: { type: 'normal' | 'legendary'; name: string; used: boolean; pickaxeKey: string }) => {
+    if (!user || gameData.coins < 500) return false;
+
+    try {
+      const [insertRes, updateRes] = await Promise.all([
+        supabase.from('pickaxes').insert({
+          user_id: user.id,
+          type: pickaxeData.type,
+          name: pickaxeData.name,
+          used: false
+        }).select().single(),
+        supabase.from('game_state')
+          .update({ coins: gameData.coins - 500 })
+          .eq('user_id', user.id)
+      ]);
+
+      if (insertRes.error) throw insertRes.error;
+      if (updateRes.error) throw updateRes.error;
+
+      const newPickaxe: PickaxeType = {
+        id: insertRes.data.id,
+        type: insertRes.data.type as 'normal' | 'legendary',
+        name: insertRes.data.name,
+        used: insertRes.data.used
+      };
+
+      setGameData(prev => ({
+        ...prev,
+        pickaxes: [...prev.pickaxes, newPickaxe],
+        coins: prev.coins - 500
+      }));
+
+      toast.success(`Unboxed ${pickaxeData.name}!`);
+      return true;
+    } catch (error: any) {
+      console.error('Error opening case:', error);
+      toast.error('Failed to open case');
+      return false;
+    }
+  };
+
   return {
     ...gameData,
     saveCrystal,
@@ -357,6 +398,7 @@ export function useGameData() {
     buySodaMinus,
     buy7up,
     clearUsedPickaxes,
+    addPickaxeFromCase,
     refreshData: loadGameData
   };
 }

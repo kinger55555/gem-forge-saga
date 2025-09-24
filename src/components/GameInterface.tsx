@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useGameData } from '@/hooks/useGameData';
 import { supabase } from '@/integrations/supabase/client';
+import { PickaxeCase } from './PickaxeCase';
 import { Pickaxe } from './Pickaxe';
 import { MiningArea } from './MiningArea';
 import { CrystalInventory } from './CrystalInventory';
@@ -42,7 +43,7 @@ export function GameInterface() {
   const { user, signOut } = useAuth();
   const gameData = useGameData();
   const [language, setLanguage] = useState<'en' | 'ru'>('ru');
-  const [currentPickaxe, setCurrentPickaxe] = useState<PickaxeType | null>(null);
+  const [currentPickaxe, setCurrentPickaxe] = useState<(PickaxeType & { pickaxeKey?: string }) | null>(null);
   const [miningState, setMiningState] = useState<MiningState>(MiningState.IDLE);
   const [currentCrystal, setCurrentCrystal] = useState<Crystal | null>(null);
   const [showMiningModal, setShowMiningModal] = useState(false);
@@ -129,7 +130,7 @@ export function GameInterface() {
     setIsAdminMode(isAdmin);
   }, []);
 
-  const selectPickaxe = useCallback((pickaxe: PickaxeType) => {
+  const selectPickaxe = useCallback((pickaxe: PickaxeType & { pickaxeKey?: string }) => {
     if (pickaxe.used) {
       toast.error(language === 'en' ? 'This pickaxe is already used!' : 'Эта кирка уже использована!');
       return;
@@ -147,20 +148,13 @@ export function GameInterface() {
     if (!currentPickaxe) return;
 
     if (miningState === MiningState.IDLE) {
-      // Generate crystal and show rarity
-      let crystal = generateCrystal();
+      // First click → show rarity color cue based on rarity points
+      const crystal = generateCrystal(currentPickaxe.pickaxeKey);
       
-      // For legendary pickaxe, reroll if rarity is 0
-      if (currentPickaxe.type === 'legendary' && crystal.rarity === 0) {
-        crystal = generateCrystal();
-        // Keep rerolling until we get a non-common crystal
-        while (crystal.rarity === 0) {
-          crystal = generateCrystal();
-        }
-      }
-
       setMiningState(MiningState.SHOWING_RARITY);
       setCurrentCrystal(crystal);
+      
+      toast.success(`Found ${getRarityName(crystal.rarity, language).toLowerCase()} crystal!`);
       
       toast.success(`Found ${getRarityName(crystal.rarity, language).toLowerCase()} crystal!`);
     } 
@@ -294,6 +288,13 @@ export function GameInterface() {
                 </div>
               </div>
             </Card>
+
+            {/* Pickaxe Case */}
+            <PickaxeCase 
+              coins={gameData.coins}
+              onOpenCase={gameData.addPickaxeFromCase}
+              language={language}
+            />
 
             {/* Shop */}
             <Shop 
