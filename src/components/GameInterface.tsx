@@ -118,7 +118,7 @@ export function GameInterface() {
           
         case 'coins':
           // Add coins to user's balance
-          const coinAmount = link.value || 100;
+          const coinAmount = (link as any).value || 100;
           const { error: coinError } = await supabase
             .from('game_state')
             .update({ 
@@ -132,7 +132,7 @@ export function GameInterface() {
           
         case 'case':
           // Add coins equivalent to case value (100 coins per case)
-          const caseAmount = link.value || 1;
+          const caseAmount = (link as any).value || 1;
           const coinsFromCases = caseAmount * 100; // 100 coins per case
           const { error: caseError } = await supabase
             .from('game_state')
@@ -159,15 +159,15 @@ export function GameInterface() {
     }
   }, [user, gameData]);
 
-  // Check for pickaxe activation on component mount
+  // Check for admin link activation on component mount
   useEffect(() => {
-    const pickaxeCode = parsePickaxeFromUrl();
-    if (pickaxeCode) {
-      activatePickaxeFromCode(pickaxeCode);
+    const linkCode = parsePickaxeFromUrl();
+    if (linkCode) {
+      activateAdminLinkFromCode(linkCode);
       // Clean URL after activation
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, [activatePickaxeFromCode]);
+  }, [activateAdminLinkFromCode]);
 
   const handleToggleAdmin = useCallback((isAdmin: boolean) => {
     setIsAdminMode(isAdmin);
@@ -359,7 +359,7 @@ export function GameInterface() {
 
             {/* Pickaxe Code Input */}
             <PickaxeCodeInput 
-              onRedeemCode={activatePickaxeFromCode}
+              onRedeemCode={activateAdminLinkFromCode}
               language={language}
             />
           </div>

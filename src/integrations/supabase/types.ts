@@ -24,6 +24,7 @@ export type Database = {
           used: boolean
           used_at: string | null
           used_by: string | null
+          value: number | null
         }
         Insert: {
           code: string
@@ -34,6 +35,7 @@ export type Database = {
           used?: boolean
           used_at?: string | null
           used_by?: string | null
+          value?: number | null
         }
         Update: {
           code?: string
@@ -44,6 +46,7 @@ export type Database = {
           used?: boolean
           used_at?: string | null
           used_by?: string | null
+          value?: number | null
         }
         Relationships: []
       }
