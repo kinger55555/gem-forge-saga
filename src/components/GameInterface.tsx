@@ -70,7 +70,7 @@ export function GameInterface() {
 
   const t = translations[language];
 
-  const activatePickaxeFromCode = useCallback(async (code: string) => {
+  const activateAdminLinkFromCode = useCallback(async (code: string) => {
     if (!user) return;
 
     try {
@@ -82,37 +82,80 @@ export function GameInterface() {
         .maybeSingle();
 
       if (error || !link) {
-        toast.error('Invalid or already used pickaxe link!');
+        toast.error('Invalid or already used link!');
         return;
       }
 
-      const [updateLinkRes, insertPickaxeRes] = await Promise.all([
-        supabase
-          .from('admin_links')
-          .update({ 
-            used: true, 
-            used_by: user.id, 
-            used_at: new Date().toISOString() 
-          })
-          .eq('id', link.id),
-        supabase
-          .from('pickaxes')
-          .insert({
-            user_id: user.id,
-            type: link.type,
-            name: link.name,
-            used: false
-          })
-      ]);
+      // Mark link as used
+      const { error: updateError } = await supabase
+        .from('admin_links')
+        .update({ 
+          used: true, 
+          used_by: user.id, 
+          used_at: new Date().toISOString() 
+        })
+        .eq('id', link.id);
 
-      if (updateLinkRes.error) throw updateLinkRes.error;
-      if (insertPickaxeRes.error) throw insertPickaxeRes.error;
+      if (updateError) throw updateError;
 
+      // Handle different link types
+      switch (link.type) {
+        case 'normal':
+        case 'legendary':
+          // Insert pickaxe
+          const { error: pickaxeError } = await supabase
+            .from('pickaxes')
+            .insert({
+              user_id: user.id,
+              type: link.type,
+              name: link.name,
+              used: false
+            });
+
+          if (pickaxeError) throw pickaxeError;
+          toast.success(`🎁 Received new pickaxe: ${link.name}!`, { duration: 4000 });
+          break;
+          
+        case 'coins':
+          // Add coins to user's balance
+          const coinAmount = link.value || 100;
+          const { error: coinError } = await supabase
+            .from('game_state')
+            .update({ 
+              coins: (gameData.coins + coinAmount)
+            })
+            .eq('user_id', user.id);
+
+          if (coinError) throw coinError;
+          toast.success(`💰 Received ${coinAmount} coins!`, { duration: 4000 });
+          break;
+          
+        case 'case':
+          // Add coins equivalent to case value (100 coins per case)
+          const caseAmount = link.value || 1;
+          const coinsFromCases = caseAmount * 100; // 100 coins per case
+          const { error: caseError } = await supabase
+            .from('game_state')
+            .update({ 
+              coins: (gameData.coins + coinsFromCases)
+            })
+            .eq('user_id', user.id);
+
+          if (caseError) throw caseError;
+          toast.success(`📦 Received ${caseAmount} case${caseAmount > 1 ? 's' : ''} (${coinsFromCases} coins)!`, { duration: 4000 });
+          break;
+          
+        default:
+          toast.error('Unknown link type!');
+          return;
+      }
+
+      // Refresh game data
       gameData.refreshData();
-      toast.success(`🎁 Received new pickaxe: ${link.name}!`, { duration: 4000 });
+      
     } catch (error: any) {
-      console.error('Error activating pickaxe:', error);
-      toast.error('Failed to activate pickaxe');
+      console.error('Error activating link:', error);
+      toast.error('Failed to activate link');
     }
   }, [user, gameData]);
 

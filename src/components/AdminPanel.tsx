@@ -12,15 +12,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { validateAdminPassword, createPickaxeLink, getActivationUrl } from '@/utils/linkUtils';
-import { PickaxeLink } from '@/types/admin';
+import { validateAdminPassword, createAdminLink, getActivationUrl } from '@/utils/linkUtils';
+import { AdminLink } from '@/types/admin';
 import { 
   Settings, 
   Link,
   Copy,
   Trash2,
   Eye,
-  EyeOff
+  EyeOff,
+  Coins,
+  Package
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -37,8 +39,10 @@ export function AdminPanel({
 }: AdminPanelProps) {
   const [adminPassword, setAdminPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [pickaxeLinks, setPickaxeLinks] = useState<PickaxeLink[]>([]);
+  const [adminLinks, setAdminLinks] = useState<AdminLink[]>([]);
   const [customName, setCustomName] = useState('');
+  const [coinAmount, setCoinAmount] = useState('100');
+  const [caseAmount, setCaseAmount] = useState('1');
 
   const handleAdminLogin = () => {
     if (validateAdminPassword(adminPassword)) {
@@ -50,11 +54,36 @@ export function AdminPanel({
     }
   };
 
-  const handleCreateLink = (type: 'normal' | 'legendary') => {
-    const link = createPickaxeLink(type, customName);
-    setPickaxeLinks(prev => [...prev, link]);
+  const handleCreateLink = (type: 'normal' | 'legendary' | 'coins' | 'case') => {
+    let value: number | undefined;
+    
+    if (type === 'coins') {
+      value = parseInt(coinAmount) || 100;
+    } else if (type === 'case') {
+      value = parseInt(caseAmount) || 1;
+    }
+    
+    const link = createAdminLink(type, customName, value);
+    setAdminLinks(prev => [...prev, link]);
     setCustomName('');
-    toast.success(`Создана ссылка для ${type === 'legendary' ? 'легендарной' : 'обычной'} кирки!`);
+    
+    let successMessage = '';
+    switch (type) {
+      case 'normal':
+        successMessage = 'Создана ссылка для обычной кирки!';
+        break;
+      case 'legendary':
+        successMessage = 'Создана ссылка для легендарной кирки!';
+        break;
+      case 'coins':
+        successMessage = `Создана ссылка на ${value} монет!`;
+        break;
+      case 'case':
+        successMessage = `Создана ссылка на ${value} кейс${value > 1 ? 'а' : ''}!`;
+        break;
+    }
+    
+    toast.success(successMessage);
   };
 
   const handleCopyLink = (code: string) => {
@@ -64,8 +93,36 @@ export function AdminPanel({
   };
 
   const handleDeleteLink = (id: string) => {
-    setPickaxeLinks(prev => prev.filter(link => link.id !== id));
+    setAdminLinks(prev => prev.filter(link => link.id !== id));
     toast.success('Ссылка удалена!');
+  };
+
+  const getBadgeVariant = (type: AdminLink['type']) => {
+    switch (type) {
+      case 'legendary':
+        return 'default';
+      case 'coins':
+        return 'outline';
+      case 'case':
+        return 'secondary';
+      default:
+        return 'secondary';
+    }
+  };
+
+  const getTypeLabel = (link: AdminLink) => {
+    switch (link.type) {
+      case 'normal':
+        return 'Обычная кирка';
+      case 'legendary':
+        return 'Легендарная';
+      case 'coins':
+        return 'Монеты';
+      case 'case':
+        return 'Кейс';
+      default:
+        return link.type;
+    }
   };
 
   if (!isAdminMode) {
@@ -131,7 +188,7 @@ export function AdminPanel({
       </div>
 
       <div className="space-y-6">
-        {/* Create Pickaxe Link */}
+        {/* Create Pickaxe Links */}
         <div className="space-y-3">
           <h3 className="font-medium">Создать ссылку на кирку</h3>
           
@@ -141,7 +198,7 @@ export function AdminPanel({
               id="customName"
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
-              placeholder="Кастомное название кирки..."
+              placeholder="Кастомное название..."
               className="mt-1"
             />
           </div>
@@ -165,7 +222,65 @@ export function AdminPanel({
           </div>
         </div>
 
-        {pickaxeLinks.length > 0 && (
+        <Separator />
+
+        {/* Create Coin Links */}
+        <div className="space-y-3">
+          <h3 className="font-medium">Создать ссылку на монеты</h3>
+          
+          <div>
+            <Label htmlFor="coinAmount">Количество монет</Label>
+            <Input
+              id="coinAmount"
+              type="number"
+              value={coinAmount}
+              onChange={(e) => setCoinAmount(e.target.value)}
+              placeholder="100"
+              min="1"
+              className="mt-1"
+            />
+          </div>
+          
+          <Button 
+            onClick={() => handleCreateLink('coins')}
+            variant="outline"
+            className="w-full gap-2"
+          >
+            <Coins className="w-4 h-4" />
+            Создать ссылку на монеты
+          </Button>
+        </div>
+
+        <Separator />
+
+        {/* Create Case Links */}
+        <div className="space-y-3">
+          <h3 className="font-medium">Создать ссылку на кейсы</h3>
+          
+          <div>
+            <Label htmlFor="caseAmount">Количество кейсов</Label>
+            <Input
+              id="caseAmount"
+              type="number"
+              value={caseAmount}
+              onChange={(e) => setCaseAmount(e.target.value)}
+              placeholder="1"
+              min="1"
+              className="mt-1"
+            />
+          </div>
+          
+          <Button 
+            onClick={() => handleCreateLink('case')}
+            variant="outline"
+            className="w-full gap-2"
+          >
+            <Package className="w-4 h-4" />
+            Создать ссылку на кейсы
+          </Button>
+        </div>
+
+        {adminLinks.length > 0 && (
           <>
             <Separator />
 
@@ -174,17 +289,18 @@ export function AdminPanel({
               <h3 className="font-medium">Созданные ссылки</h3>
               
               <div className="space-y-2 max-h-60 overflow-y-auto">
-                {pickaxeLinks.map((link) => (
+                {adminLinks.map((link) => (
                   <div key={link.id} className="p-3 bg-muted/50 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <div className="font-medium text-sm">{link.name}</div>
-                      <Badge variant={link.type === 'legendary' ? 'default' : 'secondary'}>
-                        {link.type === 'legendary' ? 'Легендарная' : 'Обычная'}
+                      <Badge variant={getBadgeVariant(link.type)}>
+                        {getTypeLabel(link)}
                       </Badge>
                     </div>
                     
                     <div className="text-xs text-muted-foreground mb-2">
                       Код: {link.code}
+                      {link.value && ` • Значение: ${link.value}`}
                     </div>
                     
                     <div className="flex gap-2">
