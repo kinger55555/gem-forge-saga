@@ -17,11 +17,27 @@ export function Pickaxe({ pickaxe, onSelect, isSelected, disabled, language = 'r
   const rarity = (pickaxe as any).pickaxeKey ? getRarityFromPickaxe((pickaxe as any).pickaxeKey) : 
                 (pickaxe.type === 'legendary' ? 'legendary' : 'common');
   
-  const rarityColors = {
-    common: 'rarity-common',
-    rare: 'rarity-uncommon', 
-    epic: 'rarity-rare',
-    legendary: 'rarity-legendary'
+  const rarityStyles = {
+    common: {
+      bg: 'bg-secondary',
+      text: 'text-foreground',
+      border: 'border-border'
+    },
+    rare: {
+      bg: 'bg-pink-500/20',
+      text: 'text-pink-400',
+      border: 'border-pink-400/50'
+    },
+    epic: {
+      bg: 'bg-red-500/20',
+      text: 'text-red-400', 
+      border: 'border-red-400/50'
+    },
+    legendary: {
+      bg: 'bg-yellow-500/20',
+      text: 'text-yellow-400',
+      border: 'border-yellow-400/50'
+    }
   };
   
   const rarityLabels = {
@@ -31,7 +47,7 @@ export function Pickaxe({ pickaxe, onSelect, isSelected, disabled, language = 'r
     legendary: 'Легендарная'
   };
   
-  const rarityColor = rarityColors[rarity];
+  const rarityStyle = rarityStyles[rarity];
   const isLegendary = rarity === 'legendary';
   
   return (
@@ -39,7 +55,7 @@ export function Pickaxe({ pickaxe, onSelect, isSelected, disabled, language = 'r
       relative p-4 transition-all duration-300 cursor-pointer
       ${isSelected ? 'ring-2 ring-primary shadow-glow' : ''}
       ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-pickaxe'}
-      ${rarity !== 'common' ? `bg-gradient-to-br from-${rarityColor}/20 to-background border-${rarityColor}/50` : ''}
+      ${rarity !== 'common' ? `${rarityStyle.bg} ${rarityStyle.border}` : ''}
     `}>
       <Button
         variant="ghost"
@@ -50,12 +66,12 @@ export function Pickaxe({ pickaxe, onSelect, isSelected, disabled, language = 'r
         <div className="flex flex-col items-center gap-2 w-full">
           <div className={`
             relative p-3 rounded-lg
-            ${rarity !== 'common' ? `bg-${rarityColor}/20` : 'bg-secondary'}
+            ${rarity !== 'common' ? rarityStyle.bg : 'bg-secondary'}
           `}>
             <PickaxeIcon 
               className={`
                 w-8 h-8 transition-colors
-                ${rarity !== 'common' ? `text-${rarityColor}` : 'text-foreground'}
+                ${rarity !== 'common' ? rarityStyle.text : 'text-foreground'}
               `} 
             />
             {isLegendary && (
@@ -67,7 +83,7 @@ export function Pickaxe({ pickaxe, onSelect, isSelected, disabled, language = 'r
             <h3 className="font-medium text-sm">{pickaxe.name}</h3>
             <p className={`
               text-xs 
-              ${rarity !== 'common' ? `text-${rarityColor}` : 'text-muted-foreground'}
+              ${rarity !== 'common' ? rarityStyle.text : 'text-muted-foreground'}
             `}>
               {rarityLabels[rarity]}
             </p>
