@@ -196,7 +196,7 @@ export function useGameData() {
     }
   };
 
-  const addClickerEarnings = async (amount: number) => {
+  const addClickerEarnings = async (amount: number = 1) => {
     if (!user) return;
 
     try {

@@ -181,7 +181,7 @@ export function GameInterface() {
   };
 
   const handleClickerClick = () => {
-    gameData.addClickerEarnings(0.1);
+    gameData.addClickerEarnings(1);
   };
 
   if (gameData.loading) {
@@ -228,6 +228,9 @@ export function GameInterface() {
                 isAdminMode={isAdminMode}
                 onToggleAdmin={handleToggleAdmin}
                 language={language}
+                coins={gameData.coins}
+                onAddCoins={gameData.addClickerEarnings}
+                onAddCase={() => gameData.addClickerEarnings(500)}
               />
               
               {currentPickaxe && (
