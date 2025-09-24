@@ -25,6 +25,7 @@ import {
   Package
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AdminPanelProps {
   isAdminMode: boolean;
@@ -43,6 +44,49 @@ export function AdminPanel({
   const [customName, setCustomName] = useState('');
   const [coinAmount, setCoinAmount] = useState('100');
   const [caseAmount, setCaseAmount] = useState('1');
+  const [isLoadingLinks, setIsLoadingLinks] = useState(false);
+
+  // Load existing admin links when entering admin mode
+  useEffect(() => {
+    if (isAdminMode) {
+      loadAdminLinks();
+    }
+  }, [isAdminMode]);
+
+  const loadAdminLinks = async () => {
+    setIsLoadingLinks(true);
+    try {
+      const { data, error } = await supabase
+        .from('admin_links')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading admin links:', error);
+        toast.error('Ошибка при загрузке ссылок!');
+        return;
+      }
+
+      // Convert database records to AdminLink format
+      const links: AdminLink[] = (data || []).map(dbLink => ({
+        id: dbLink.id,
+        code: dbLink.code,
+        type: dbLink.type as AdminLink['type'],
+        name: dbLink.name,
+        used: dbLink.used,
+        createdAt: new Date(dbLink.created_at),
+        usedAt: dbLink.used_at ? new Date(dbLink.used_at) : undefined,
+        value: dbLink.value || undefined
+      }));
+
+      setAdminLinks(links);
+    } catch (error) {
+      console.error('Unexpected error loading links:', error);
+      toast.error('Неожиданная ошибка при загрузке ссылок!');
+    } finally {
+      setIsLoadingLinks(false);
+    }
+  };
 
   const handleAdminLogin = () => {
     console.log('Admin login attempt with password:', adminPassword);
@@ -59,7 +103,7 @@ export function AdminPanel({
     }
   };
 
-  const handleCreateLink = (type: 'normal' | 'legendary' | 'coins' | 'case') => {
+  const handleCreateLink = async (type: 'normal' | 'legendary' | 'coins' | 'case') => {
     console.log('Creating admin link of type:', type);
     
     let value: number | undefined;
@@ -76,27 +120,50 @@ export function AdminPanel({
     const link = createAdminLink(type, customName, value);
     console.log('Created link:', link);
     
-    setAdminLinks(prev => [...prev, link]);
-    setCustomName('');
-    
-    let successMessage = '';
-    switch (type) {
-      case 'normal':
-        successMessage = 'Создана ссылка для обычной кирки!';
-        break;
-      case 'legendary':
-        successMessage = 'Создана ссылка для легендарной кирки!';
-        break;
-      case 'coins':
-        successMessage = `Создана ссылка на ${value} монет!`;
-        break;
-      case 'case':
-        successMessage = `Создана ссылка на ${value} кейс${value > 1 ? 'а' : ''}!`;
-        break;
+    try {
+      // Save to database
+      const { error } = await supabase
+        .from('admin_links')
+        .insert({
+          code: link.code,
+          type: link.type,
+          name: link.name,
+          used: false,
+          value: link.value
+        });
+
+      if (error) {
+        console.error('Error saving link to database:', error);
+        toast.error('Ошибка при создании ссылки!');
+        return;
+      }
+
+      // Add to local state
+      setAdminLinks(prev => [...prev, link]);
+      setCustomName('');
+      
+      let successMessage = '';
+      switch (type) {
+        case 'normal':
+          successMessage = 'Создана ссылка для обычной кирки!';
+          break;
+        case 'legendary':
+          successMessage = 'Создана ссылка для легендарной кирки!';
+          break;
+        case 'coins':
+          successMessage = `Создана ссылка на ${value} монет!`;
+          break;
+        case 'case':
+          successMessage = `Создана ссылка на ${value} кейс${value > 1 ? 'а' : ''}!`;
+          break;
+      }
+      
+      console.log('Success message:', successMessage);
+      toast.success(successMessage);
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast.error('Неожиданная ошибка при создании ссылки!');
     }
-    
-    console.log('Success message:', successMessage);
-    toast.success(successMessage);
   };
 
   const handleCopyLink = (code: string) => {
@@ -105,9 +172,31 @@ export function AdminPanel({
     toast.success('Ссылка скопирована в буфер обмена!');
   };
 
-  const handleDeleteLink = (id: string) => {
-    setAdminLinks(prev => prev.filter(link => link.id !== id));
-    toast.success('Ссылка удалена!');
+  const handleDeleteLink = async (id: string) => {
+    try {
+      // Find the link to get its database ID
+      const linkToDelete = adminLinks.find(link => link.id === id);
+      if (!linkToDelete) return;
+
+      // Delete from database using the code (since we might not have the DB id)
+      const { error } = await supabase
+        .from('admin_links')
+        .delete()
+        .eq('code', linkToDelete.code);
+
+      if (error) {
+        console.error('Error deleting link from database:', error);
+        toast.error('Ошибка при удалении ссылки!');
+        return;
+      }
+
+      // Remove from local state
+      setAdminLinks(prev => prev.filter(link => link.id !== id));
+      toast.success('Ссылка удалена!');
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast.error('Неожиданная ошибка при удалении ссылки!');
+    }
   };
 
   const getBadgeVariant = (type: AdminLink['type']) => {
