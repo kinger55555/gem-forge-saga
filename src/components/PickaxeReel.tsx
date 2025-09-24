@@ -42,8 +42,8 @@ export function PickaxeReel({ winningPickaxe, onSpinComplete, isSpinning }: Pick
     const tileWidth = 144; // w-32 + gap
     const isLegendary = getRarityFromPickaxe(winningPickaxe) === 'legendary';
     
-    // Animation duration 3.7-4.1s
-    const duration = 3700 + Math.random() * 400;
+    // Animation duration 5.5-6.5s for more dramatic effect
+    const duration = 5500 + Math.random() * 1000;
     
     // Calculate positions for pixel-perfect centering
     const containerWidth = reel.parentElement?.offsetWidth || 800;
@@ -64,9 +64,11 @@ export function PickaxeReel({ winningPickaxe, onSpinComplete, isSpinning }: Pick
       tickCount++;
       const progress = tickCount / totalTicks;
       
-      // Slow down ticks as we approach the end
-      if (progress > 0.8) {
-        if (tickCount % 3 !== 0) return; // Skip some ticks to slow down
+      // Slow down ticks more dramatically as we approach the end
+      if (progress > 0.7) {
+        if (tickCount % 4 !== 0) return; // Skip more ticks to slow down earlier
+      } else if (progress > 0.9) {
+        if (tickCount % 6 !== 0) return; // Even slower near the very end
       }
       
       // Play tick sound (would be actual audio in real implementation)
@@ -79,7 +81,7 @@ export function PickaxeReel({ winningPickaxe, onSpinComplete, isSpinning }: Pick
     
     // Start CS2-style easing animation
     setTimeout(() => {
-      reel.style.transition = `transform ${duration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+      reel.style.transition = `transform ${duration}ms cubic-bezier(0.25, 0.46, 0.05, 0.98)`;
       reel.style.transform = `translateX(${endX}px)`;
       
       // Complete after animation
