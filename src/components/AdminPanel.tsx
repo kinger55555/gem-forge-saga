@@ -45,16 +45,23 @@ export function AdminPanel({
   const [caseAmount, setCaseAmount] = useState('1');
 
   const handleAdminLogin = () => {
+    console.log('Admin login attempt with password:', adminPassword);
+    console.log('Expected password:', 'gemforge2024');
+    
     if (validateAdminPassword(adminPassword)) {
+      console.log('Admin login successful');
       onToggleAdmin(true);
       toast.success('Добро пожаловать в админ-панель!');
       setAdminPassword('');
     } else {
+      console.log('Admin login failed - incorrect password');
       toast.error('Неверный пароль администратора!');
     }
   };
 
   const handleCreateLink = (type: 'normal' | 'legendary' | 'coins' | 'case') => {
+    console.log('Creating admin link of type:', type);
+    
     let value: number | undefined;
     
     if (type === 'coins') {
@@ -63,7 +70,12 @@ export function AdminPanel({
       value = parseInt(caseAmount) || 1;
     }
     
+    console.log('Link value:', value);
+    console.log('Custom name:', customName);
+    
     const link = createAdminLink(type, customName, value);
+    console.log('Created link:', link);
+    
     setAdminLinks(prev => [...prev, link]);
     setCustomName('');
     
@@ -83,6 +95,7 @@ export function AdminPanel({
         break;
     }
     
+    console.log('Success message:', successMessage);
     toast.success(successMessage);
   };
 
