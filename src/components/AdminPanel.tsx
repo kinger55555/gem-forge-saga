@@ -12,37 +12,33 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { validateAdminPassword } from '@/utils/linkUtils';
+import { validateAdminPassword, createPickaxeLink, getActivationUrl } from '@/utils/linkUtils';
+import { PickaxeLink } from '@/types/admin';
 import { 
   Settings, 
-  DollarSign,
-  Package,
+  Link,
+  Copy,
+  Trash2,
   Eye,
   EyeOff
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 interface AdminPanelProps {
   isAdminMode: boolean;
   onToggleAdmin: (isAdmin: boolean) => void;
   language?: 'en' | 'ru';
-  coins: number;
-  onAddCoins: (amount: number) => Promise<void>;
-  onAddCase: () => Promise<void>;
 }
 
 export function AdminPanel({ 
   isAdminMode, 
   onToggleAdmin,
-  language = 'ru',
-  coins,
-  onAddCoins,
-  onAddCase
+  language = 'ru'
 }: AdminPanelProps) {
   const [adminPassword, setAdminPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [coinsToAdd, setCoinsToAdd] = useState('1000');
+  const [pickaxeLinks, setPickaxeLinks] = useState<PickaxeLink[]>([]);
+  const [customName, setCustomName] = useState('');
 
   const handleAdminLogin = () => {
     if (validateAdminPassword(adminPassword)) {
@@ -54,28 +50,22 @@ export function AdminPanel({
     }
   };
 
-  const handleAddCoins = async () => {
-    const amount = parseInt(coinsToAdd);
-    if (isNaN(amount) || amount <= 0) {
-      toast.error('Введите корректное количество монет');
-      return;
-    }
-
-    try {
-      await onAddCoins(amount);
-      toast.success(`Добавлено ${amount} монет!`);
-    } catch (error) {
-      toast.error('Ошибка при добавлении монет');
-    }
+  const handleCreateLink = (type: 'normal' | 'legendary') => {
+    const link = createPickaxeLink(type, customName);
+    setPickaxeLinks(prev => [...prev, link]);
+    setCustomName('');
+    toast.success(`Создана ссылка для ${type === 'legendary' ? 'легендарной' : 'обычной'} кирки!`);
   };
 
-  const handleAddCase = async () => {
-    try {
-      await onAddCase();
-      toast.success('Добавлен кейс!');
-    } catch (error) {
-      toast.error('Ошибка при добавлении кейса');
-    }
+  const handleCopyLink = (code: string) => {
+    const url = getActivationUrl(code);
+    navigator.clipboard.writeText(url);
+    toast.success('Ссылка скопирована в буфер обмена!');
+  };
+
+  const handleDeleteLink = (id: string) => {
+    setPickaxeLinks(prev => prev.filter(link => link.id !== id));
+    toast.success('Ссылка удалена!');
   };
 
   if (!isAdminMode) {
@@ -141,60 +131,88 @@ export function AdminPanel({
       </div>
 
       <div className="space-y-6">
-        {/* Current Stats */}
-        <div className="p-4 bg-muted/50 rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="w-4 h-4" />
-            <span className="font-medium">Текущий баланс</span>
-          </div>
-          <p className="text-2xl font-bold">{coins.toLocaleString()} монет</p>
-        </div>
-
-        <Separator />
-
-        {/* Add Coins */}
+        {/* Create Pickaxe Link */}
         <div className="space-y-3">
-          <h3 className="font-medium">Добавить монеты</h3>
+          <h3 className="font-medium">Создать ссылку на кирку</h3>
           
           <div>
-            <Label htmlFor="coinsAmount">Количество монет</Label>
+            <Label htmlFor="customName">Название (необязательно)</Label>
             <Input
-              id="coinsAmount"
-              type="number"
-              value={coinsToAdd}
-              onChange={(e) => setCoinsToAdd(e.target.value)}
-              placeholder="1000"
+              id="customName"
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value)}
+              placeholder="Кастомное название кирки..."
               className="mt-1"
             />
           </div>
           
-          <Button 
-            onClick={handleAddCoins}
-            className="w-full gap-2"
-          >
-            <DollarSign className="w-4 h-4" />
-            Добавить монеты
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => handleCreateLink('normal')}
+              variant="outline"
+              className="flex-1 gap-2"
+            >
+              <Link className="w-4 h-4" />
+              Обычная кирка
+            </Button>
+            <Button 
+              onClick={() => handleCreateLink('legendary')}
+              className="flex-1 gap-2"
+            >
+              <Link className="w-4 h-4" />
+              Легендарная кирка
+            </Button>
+          </div>
         </div>
 
-        <Separator />
+        {pickaxeLinks.length > 0 && (
+          <>
+            <Separator />
 
-        {/* Add Case */}
-        <div className="space-y-3">
-          <h3 className="font-medium">Добавить кейс</h3>
-          <p className="text-sm text-muted-foreground">
-            Добавляет 500 монет (стоимость открытия кейса)
-          </p>
-          
-          <Button 
-            onClick={handleAddCase}
-            variant="outline"
-            className="w-full gap-2"
-          >
-            <Package className="w-4 h-4" />
-            Добавить кейс (500 монет)
-          </Button>
-        </div>
+            {/* Generated Links */}
+            <div className="space-y-3">
+              <h3 className="font-medium">Созданные ссылки</h3>
+              
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {pickaxeLinks.map((link) => (
+                  <div key={link.id} className="p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="font-medium text-sm">{link.name}</div>
+                      <Badge variant={link.type === 'legendary' ? 'default' : 'secondary'}>
+                        {link.type === 'legendary' ? 'Легендарная' : 'Обычная'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="text-xs text-muted-foreground mb-2">
+                      Код: {link.code}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={() => handleCopyLink(link.code)}
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 gap-1"
+                      >
+                        <Copy className="w-3 h-3" />
+                        Копировать ссылку
+                      </Button>
+                      <Button 
+                        onClick={() => handleDeleteLink(link.id)}
+                        size="sm"
+                        variant="destructive"
+                        className="gap-1"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Удалить
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </Card>
   );

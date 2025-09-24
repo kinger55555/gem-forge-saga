@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { PickaxeCaseTile } from './PickaxeCaseTile';
-import { generatePickaxeReelData } from '@/utils/pickaxeUtils';
+import { generatePickaxeReelData, getRarityFromPickaxe } from '@/utils/pickaxeUtils';
 
 interface PickaxeReelProps {
   winningPickaxe: string;
@@ -10,37 +10,45 @@ interface PickaxeReelProps {
 
 export function PickaxeReel({ winningPickaxe, onSpinComplete, isSpinning }: PickaxeReelProps) {
   const reelRef = useRef<HTMLDivElement>(null);
+  const pointerRef = useRef<HTMLDivElement>(null);
   const [reelData, setReelData] = useState<string[]>([]);
   const [winningIndex, setWinningIndex] = useState<number>(0);
+  const [showGoldSweep, setShowGoldSweep] = useState(false);
   
   // Generate reel data when component mounts or when spinning starts
   useEffect(() => {
     if (isSpinning) {
-      // Generate a reel with the winning pickaxe at a specific position
-      const reel = generatePickaxeReelData(50);
-      const centerIndex = Math.floor(reel.length / 2);
+      // Generate enough tiles for 6-8 full loops plus winning position
+      const tilesPerLoop = 15; // One of each pickaxe type
+      const totalLoops = 7;
+      const reel = generatePickaxeReelData(tilesPerLoop * totalLoops + 20);
       
-      // Place winning pickaxe in the center
-      reel[centerIndex] = winningPickaxe;
+      // Place winning pickaxe at a specific position near the end
+      const winIndex = reel.length - 10;
+      reel[winIndex] = winningPickaxe;
       
       setReelData(reel);
-      setWinningIndex(centerIndex);
+      setWinningIndex(winIndex);
+      setShowGoldSweep(false);
     }
   }, [isSpinning, winningPickaxe]);
 
-  // Handle spin animation
+  // Handle spin animation with CS2-style behavior
   useEffect(() => {
     if (!isSpinning || !reelRef.current || reelData.length === 0) return;
 
     const reel = reelRef.current;
-    const tileWidth = 144; // 32 (w-32) * 4 (px per rem) + gap
-    const totalWidth = reelData.length * tileWidth;
+    const pointer = pointerRef.current;
+    const tileWidth = 144; // w-32 + gap
+    const isLegendary = getRarityFromPickaxe(winningPickaxe) === 'legendary';
     
-    // Start position (show first few tiles)
-    const startX = 0;
+    // Animation duration 3.7-4.1s
+    const duration = 3700 + Math.random() * 400;
     
-    // End position (center the winning tile)
-    const endX = -(winningIndex * tileWidth - (reel.offsetWidth / 2) + (tileWidth / 2));
+    // Calculate positions for pixel-perfect centering
+    const containerWidth = reel.parentElement?.offsetWidth || 800;
+    const startX = containerWidth / 2; // Start centered
+    const endX = -(winningIndex * tileWidth - containerWidth / 2 + tileWidth / 2);
     
     // Reset to start position
     reel.style.transform = `translateX(${startX}px)`;
@@ -49,22 +57,68 @@ export function PickaxeReel({ winningPickaxe, onSpinComplete, isSpinning }: Pick
     // Force reflow
     reel.offsetHeight;
     
-    // Start animation after a short delay
+    // Tick sound simulation with timing
+    let tickCount = 0;
+    const totalTicks = Math.floor(duration / 50); // Start with fast ticks
+    const tickInterval = setInterval(() => {
+      tickCount++;
+      const progress = tickCount / totalTicks;
+      
+      // Slow down ticks as we approach the end
+      if (progress > 0.8) {
+        if (tickCount % 3 !== 0) return; // Skip some ticks to slow down
+      }
+      
+      // Play tick sound (would be actual audio in real implementation)
+      console.log(`Tick ${tickCount} - Speed: ${progress > 0.8 ? 'slow' : 'fast'}`);
+      
+      if (tickCount >= totalTicks) {
+        clearInterval(tickInterval);
+      }
+    }, 50);
+    
+    // Start CS2-style easing animation
     setTimeout(() => {
-      reel.style.transition = 'transform 6.5s cubic-bezier(0.25, 0.1, 0.25, 1)';
+      reel.style.transition = `transform ${duration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
       reel.style.transform = `translateX(${endX}px)`;
       
       // Complete after animation
       setTimeout(() => {
-        onSpinComplete(winningPickaxe);
-      }, 6500);
+        clearInterval(tickInterval);
+        
+        // Flash pointer
+        if (pointer) {
+          pointer.style.animation = 'flash 0.3s ease-in-out 2';
+        }
+        
+        // Play landing sound
+        console.log(isLegendary ? 'Legendary landing chime!' : 'Normal landing ping');
+        
+        // Show gold sweep for legendary
+        if (isLegendary) {
+          setShowGoldSweep(true);
+          setTimeout(() => setShowGoldSweep(false), 1500);
+        }
+        
+        setTimeout(() => {
+          onSpinComplete(winningPickaxe);
+        }, 500);
+      }, duration);
     }, 100);
   }, [isSpinning, reelData, winningIndex, winningPickaxe, onSpinComplete]);
 
   return (
     <div className="relative w-full h-48 overflow-hidden bg-card/30 rounded-lg border-2 border-border">
+      {/* Gold sweep overlay for legendary */}
+      {showGoldSweep && (
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-rarity-legendary/30 to-transparent animate-[sweep_1.5s_ease-out] z-20" />
+      )}
+      
       {/* Center pointer line */}
-      <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-primary/80 z-10 transform -translate-x-1/2">
+      <div 
+        ref={pointerRef}
+        className="absolute left-1/2 top-0 bottom-0 w-1 bg-primary/80 z-10 transform -translate-x-1/2"
+      >
         <div className="absolute top-1/2 left-1/2 w-0 h-0 border-l-4 border-r-4 border-b-6 border-l-transparent border-r-transparent border-b-primary transform -translate-x-1/2 -translate-y-3" />
         <div className="absolute bottom-1/2 left-1/2 w-0 h-0 border-l-4 border-r-4 border-t-6 border-l-transparent border-r-transparent border-t-primary transform -translate-x-1/2 translate-y-3" />
       </div>
