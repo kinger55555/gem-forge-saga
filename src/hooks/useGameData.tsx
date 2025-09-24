@@ -219,102 +219,52 @@ export function useGameData() {
     }
   };
 
-  const buySoda = async () => {
-    if (!user || gameData.coins < 200) return false;
+  const buySpecificPickaxe = async (pickaxeKey: string, price: number) => {
+    if (!user || gameData.coins < price) return false;
 
     try {
-      const { error } = await supabase
-        .from('game_state')
-        .update({ coins: gameData.coins - 200 })
-        .eq('user_id', user.id);
+      // Import pickaxe utils to get pickaxe data
+      const { PICKAXE_DEFINITIONS } = await import('@/utils/pickaxeUtils');
+      const definition = PICKAXE_DEFINITIONS[pickaxeKey];
+      
+      if (!definition) {
+        toast.error('Invalid pickaxe type');
+        return false;
+      }
 
-      if (error) throw error;
+      const [insertRes, updateRes] = await Promise.all([
+        supabase.from('pickaxes').insert({
+          user_id: user.id,
+          type: definition.type,
+          name: definition.name,
+          used: false
+        }).select().single(),
+        supabase.from('game_state')
+          .update({ coins: gameData.coins - price })
+          .eq('user_id', user.id)
+      ]);
+
+      if (insertRes.error) throw insertRes.error;
+      if (updateRes.error) throw updateRes.error;
+
+      const newPickaxe: PickaxeType = {
+        id: insertRes.data.id,
+        type: insertRes.data.type as 'normal' | 'legendary',
+        name: insertRes.data.name,
+        used: insertRes.data.used
+      };
 
       setGameData(prev => ({
         ...prev,
-        coins: prev.coins - 200
+        pickaxes: [...prev.pickaxes, newPickaxe],
+        coins: prev.coins - price
       }));
 
-      toast.success('🥤 Bought soda! *refreshing*');
+      toast.success(`Bought ${definition.name} for ${price.toLocaleString()} coins!`);
       return true;
     } catch (error: any) {
-      console.error('Error buying soda:', error);
-      toast.error('Failed to buy soda');
-      return false;
-    }
-  };
-
-  const buySodaPlus = async () => {
-    if (!user || gameData.coins < 300) return false;
-
-    try {
-      const { error } = await supabase
-        .from('game_state')
-        .update({ coins: gameData.coins - 300 })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      setGameData(prev => ({
-        ...prev,
-        coins: prev.coins - 300
-      }));
-
-      toast.success('🥤 Bought Soda+! *extra refreshing*');
-      return true;
-    } catch (error: any) {
-      console.error('Error buying soda+:', error);
-      toast.error('Failed to buy soda+');
-      return false;
-    }
-  };
-
-  const buySodaMinus = async () => {
-    if (!user || gameData.coins < 300) return false;
-
-    try {
-      const { error } = await supabase
-        .from('game_state')
-        .update({ coins: gameData.coins - 300 })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      setGameData(prev => ({
-        ...prev,
-        coins: prev.coins - 300
-      }));
-
-      toast.success('🥤 Bought Soda-! *diet refreshing*');
-      return true;
-    } catch (error: any) {
-      console.error('Error buying soda-:', error);
-      toast.error('Failed to buy soda-');
-      return false;
-    }
-  };
-
-  const buy7up = async () => {
-    if (!user || gameData.coins < 400) return false;
-
-    try {
-      const { error } = await supabase
-        .from('game_state')
-        .update({ coins: gameData.coins - 400 })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      setGameData(prev => ({
-        ...prev,
-        coins: prev.coins - 400
-      }));
-
-      toast.success('🥤 Bought 7UP! *lemon-lime refreshing*');
-      return true;
-    } catch (error: any) {
-      console.error('Error buying 7up:', error);
-      toast.error('Failed to buy 7up');
+      console.error('Error buying pickaxe:', error);
+      toast.error('Failed to buy pickaxe');
       return false;
     }
   };
@@ -393,10 +343,7 @@ export function useGameData() {
     sellCrystal,
     buyPickaxe,
     addClickerEarnings,
-    buySoda,
-    buySodaPlus,
-    buySodaMinus,
-    buy7up,
+    buySpecificPickaxe,
     clearUsedPickaxes,
     addPickaxeFromCase,
     refreshData: loadGameData

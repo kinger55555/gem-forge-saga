@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
@@ -10,40 +10,13 @@ import { toast } from 'sonner';
 
 interface PickaxeCodeInputProps {
   onRedeemCode: (code: string) => void;
-  coins: number;
-  onBuySoda: () => void;
-  onBuySodaPlus: () => void;
-  onBuySodaMinus: () => void;
-  onBuy7up: () => void;
   language?: 'en' | 'ru';
 }
 
-export function PickaxeCodeInput({ onRedeemCode, coins, onBuySoda, onBuySodaPlus, onBuySodaMinus, onBuy7up, language = 'ru' }: PickaxeCodeInputProps) {
+export function PickaxeCodeInput({ onRedeemCode, language = 'ru' }: PickaxeCodeInputProps) {
   const { user } = useAuth();
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [unlockedSodas, setUnlockedSodas] = useState<string[]>([]);
-
-  useEffect(() => {
-    const checkSodaAccess = async () => {
-      if (!user) return;
-      
-      const { data } = await supabase
-        .from('special_codes')
-        .select('code')
-        .eq('user_id', user.id)
-        .in('code', ['soda', 'soda+', 'soda-', '7up']);
-        
-      const codes = data?.map(d => d.code) || [];
-      // Backwards compatibility: if user unlocked 'soda' before variants existed,
-      // also grant access to 'soda+'.
-      const augmented = new Set(codes);
-      if (augmented.has('soda')) augmented.add('soda+');
-      setUnlockedSodas(Array.from(augmented));
-    };
-    
-    checkSodaAccess();
-  }, [user]);
 
   const handleSpecialCode = async (codeValue: string) => {
     if (!user) return;
@@ -93,54 +66,6 @@ export function PickaxeCodeInput({ onRedeemCode, coins, onBuySoda, onBuySodaPlus
         return true;
       } catch (error: any) {
         console.error('Error with mod67 code:', error);
-        toast.error(language === 'ru' ? 'Ошибка активации кода' : 'Failed to activate code');
-        return false;
-      }
-    }
-
-    const sodaCodes = ['soda', 'soda+', 'soda-', '7up'];
-    if (sodaCodes.includes(codeValue)) {
-      try {
-        // Check if already used
-        const { data: existing } = await supabase
-          .from('special_codes')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('code', codeValue)
-          .maybeSingle();
-
-        if (existing) {
-          toast.error(language === 'ru' ? `Код ${codeValue} уже использован!` : `Code ${codeValue} already used!`);
-          return false;
-        }
-
-        // Record usage
-        const { error } = await supabase
-          .from('special_codes')
-          .insert({
-            user_id: user.id,
-            code: codeValue,
-            used_date: new Date().toISOString().split('T')[0]
-          });
-
-        if (error) throw error;
-
-        setUnlockedSodas(prev => {
-          const next = new Set(prev);
-          next.add(codeValue);
-          if (codeValue === 'soda') next.add('soda+'); // auto-unlock Soda+ when Soda was used
-          return Array.from(next);
-        });
-        const sodaNames = {
-          soda: '🥤 Soda',
-          'soda+': '🥤 Soda+', 
-          'soda-': '🥤 Soda-',
-          '7up': '🥤 7UP'
-        };
-        toast.success(language === 'ru' ? `Разблокирована покупка ${sodaNames[codeValue as keyof typeof sodaNames]}!` : `${sodaNames[codeValue as keyof typeof sodaNames]} purchase unlocked!`);
-        return true;
-      } catch (error: any) {
-        console.error('Error with soda code:', error);
         toast.error(language === 'ru' ? 'Ошибка активации кода' : 'Failed to activate code');
         return false;
       }
@@ -213,88 +138,6 @@ export function PickaxeCodeInput({ onRedeemCode, coins, onBuySoda, onBuySodaPlus
             : 'Enter a code to get a pickaxe or other items'
           }
         </p>
-        
-        {unlockedSodas.length > 0 && (
-          <div className="border-t pt-4 space-y-2">
-            <h4 className="font-medium text-sm">{language === 'ru' ? 'Доступные напитки:' : 'Available drinks:'}</h4>
-            
-            {unlockedSodas.includes('soda') && (
-              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
-                <div>
-                  <h4 className="font-medium">🥤 Soda</h4>
-                  <p className="text-xs text-muted-foreground">
-                    {language === 'ru' ? 'Освежающий напиток (ничего не делает)' : 'Refreshing drink (does nothing)'}
-                  </p>
-                </div>
-                <Button 
-                  onClick={onBuySoda}
-                  disabled={coins < 200}
-                  size="sm"
-                  variant="outline"
-                >
-                  200 coins
-                </Button>
-              </div>
-            )}
-
-            {unlockedSodas.includes('soda+') && (
-              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
-                <div>
-                  <h4 className="font-medium">🥤 Soda+</h4>
-                  <p className="text-xs text-muted-foreground">
-                    {language === 'ru' ? 'Улучшенная газировка (ничего не делает)' : 'Enhanced soda (does nothing)'}
-                  </p>
-                </div>
-                <Button 
-                  onClick={onBuySodaPlus}
-                  disabled={coins < 300}
-                  size="sm"
-                  variant="outline"
-                >
-                  300 coins
-                </Button>
-              </div>
-            )}
-
-            {unlockedSodas.includes('soda-') && (
-              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
-                <div>
-                  <h4 className="font-medium">🥤 Soda-</h4>
-                  <p className="text-xs text-muted-foreground">
-                    {language === 'ru' ? 'Диетическая газировка (ничего не делает)' : 'Diet soda (does nothing)'}
-                  </p>
-                </div>
-                <Button 
-                  onClick={onBuySodaMinus}
-                  disabled={coins < 300}
-                  size="sm"
-                  variant="outline"
-                >
-                  300 coins
-                </Button>
-              </div>
-            )}
-
-            {unlockedSodas.includes('7up') && (
-              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
-                <div>
-                  <h4 className="font-medium">🥤 7UP</h4>
-                  <p className="text-xs text-muted-foreground">
-                    {language === 'ru' ? 'Лимонная газировка (ничего не делает)' : 'Lemon-lime soda (does nothing)'}
-                  </p>
-                </div>
-                <Button 
-                  onClick={onBuy7up}
-                  disabled={coins < 400}
-                  size="sm"
-                  variant="outline"
-                >
-                  400 coins
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </Card>
   );

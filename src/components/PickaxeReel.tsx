@@ -51,13 +51,13 @@ export function PickaxeReel({ winningPickaxe, onSpinComplete, isSpinning }: Pick
     
     // Start animation after a short delay
     setTimeout(() => {
-      reel.style.transition = 'transform 3.8s cubic-bezier(0.25, 0.1, 0.25, 1)';
+      reel.style.transition = 'transform 6.5s cubic-bezier(0.25, 0.1, 0.25, 1)';
       reel.style.transform = `translateX(${endX}px)`;
       
       // Complete after animation
       setTimeout(() => {
         onSpinComplete(winningPickaxe);
-      }, 3800);
+      }, 6500);
     }, 100);
   }, [isSpinning, reelData, winningIndex, winningPickaxe, onSpinComplete]);
 

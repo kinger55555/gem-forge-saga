@@ -299,7 +299,7 @@ export function GameInterface() {
             {/* Shop */}
             <Shop 
               coins={gameData.coins}
-              onBuyPickaxe={gameData.buyPickaxe}
+              onBuySpecificPickaxe={gameData.buySpecificPickaxe}
             />
 
             {/* Clicker */}
@@ -317,11 +317,6 @@ export function GameInterface() {
             {/* Pickaxe Code Input */}
             <PickaxeCodeInput 
               onRedeemCode={activatePickaxeFromCode}
-              coins={gameData.coins}
-              onBuySoda={gameData.buySoda}
-              onBuySodaPlus={gameData.buySodaPlus}
-              onBuySodaMinus={gameData.buySodaMinus}
-              onBuy7up={gameData.buy7up}
               language={language}
             />
           </div>
