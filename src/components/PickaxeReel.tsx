@@ -57,6 +57,31 @@ export function PickaxeReel({ winningPickaxe, onSpinComplete, isSpinning }: Pick
     // Force reflow
     reel.offsetHeight;
     
+    // Create audio context and oscillator for tick sounds
+    const createTickSound = () => {
+      try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.1);
+      } catch (error) {
+        // Fallback if audio context fails
+        console.log('Tick sound');
+      }
+    };
+
     // Tick sound simulation with timing
     let tickCount = 0;
     const totalTicks = Math.floor(duration / 50); // Start with fast ticks
@@ -71,7 +96,8 @@ export function PickaxeReel({ winningPickaxe, onSpinComplete, isSpinning }: Pick
         if (tickCount % 6 !== 0) return; // Even slower near the very end
       }
       
-      // Play tick sound (would be actual audio in real implementation)
+      // Play tick sound
+      createTickSound();
       console.log(`Tick ${tickCount} - Speed: ${progress > 0.8 ? 'slow' : 'fast'}`);
       
       if (tickCount >= totalTicks) {

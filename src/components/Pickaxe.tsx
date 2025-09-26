@@ -24,19 +24,19 @@ export function Pickaxe({ pickaxe, onSelect, isSelected, disabled, language = 'r
       border: 'border-border'
     },
     rare: {
-      bg: 'bg-pink-500/20',
-      text: 'text-pink-400',
-      border: 'border-pink-400/50'
+      bg: 'bg-rarity-uncommon/20',
+      text: 'text-rarity-uncommon',
+      border: 'border-rarity-uncommon/50'
     },
     epic: {
-      bg: 'bg-red-500/20',
-      text: 'text-red-400', 
-      border: 'border-red-400/50'
+      bg: 'bg-rarity-rare/20',
+      text: 'text-rarity-rare', 
+      border: 'border-rarity-rare/50'
     },
     legendary: {
-      bg: 'bg-yellow-500/20',
-      text: 'text-yellow-400',
-      border: 'border-yellow-400/50'
+      bg: 'bg-rarity-legendary/20',
+      text: 'text-rarity-legendary',
+      border: 'border-rarity-legendary/50'
     }
   };
   
