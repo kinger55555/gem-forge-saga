@@ -57,28 +57,47 @@ export function PickaxeReel({ winningPickaxe, onSpinComplete, isSpinning }: Pick
     // Force reflow
     reel.offsetHeight;
     
-    // Create audio context and oscillator for tick sounds
+    // Create simple beep sound
     const createTickSound = () => {
       try {
+        // Create audio context only when needed
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        
+        // Resume context if it's suspended (required by browsers)
+        if (audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+        
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
         
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
         
-        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-        oscillator.type = 'sine';
+        // Higher frequency for more noticeable tick
+        oscillator.frequency.setValueAtTime(1200, audioContext.currentTime);
+        oscillator.type = 'square'; // More distinctive sound
         
+        // Quick volume envelope
         gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.01);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+        gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.005);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.08);
         
         oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.1);
+        oscillator.stop(audioContext.currentTime + 0.08);
+        
+        // Close context after use to prevent memory leaks
+        setTimeout(() => {
+          audioContext.close();
+        }, 100);
       } catch (error) {
-        // Fallback if audio context fails
-        console.log('Tick sound');
+        // Simple fallback beep using HTML5 audio
+        try {
+          const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGO1vLJeSkAACh+0OzEbytsFABqhspnyMo8AAsXcr3g6dR4CD8AELHe69Z5ZKem1+TccA4cABSUAtCgzNW4BfQaYrDOACVZdDA8AD8AcLgkYGA=');
+          audio.play();
+        } catch (fallbackError) {
+          console.log('Tick sound');
+        }
       }
     };
 
