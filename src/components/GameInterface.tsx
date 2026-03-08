@@ -294,6 +294,7 @@ export function GameInterface() {
                     crystals={gameData.crystals}
                     coins={gameData.coins}
                     onSellCrystal={gameData.sellCrystal}
+                    onPlayInTemple={handlePlayInTemple}
                     language={language}
                   />
                 </Card>
@@ -318,6 +319,7 @@ export function GameInterface() {
                     crystals={gameData.crystals}
                     coins={gameData.coins}
                     onSellCrystal={gameData.sellCrystal}
+                    onPlayInTemple={handlePlayInTemple}
                     language={language}
                   />
                 </Card>
