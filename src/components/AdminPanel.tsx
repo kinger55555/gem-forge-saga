@@ -44,6 +44,13 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
   const [coinAmount, setCoinAmount] = useState('100');
   const [isLoadingLinks, setIsLoadingLinks] = useState(false);
 
+  // Crystal link state
+  const [crystalMode, setCrystalMode] = useState<'rgb' | 'rarity'>('rarity');
+  const [crystalR, setCrystalR] = useState('128');
+  const [crystalG, setCrystalG] = useState('0');
+  const [crystalB, setCrystalB] = useState('255');
+  const [crystalRarity, setCrystalRarity] = useState('5');
+
   // Moderator state
   const [targetEmail, setTargetEmail] = useState('');
   const [modCoinAmount, setModCoinAmount] = useState('100');
