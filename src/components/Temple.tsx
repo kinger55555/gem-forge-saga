@@ -240,7 +240,7 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
                   +{bonus.toLocaleString()}
                 </Badge>
                 <span className="text-[10px] text-muted-foreground">
-                  {t.cups}: {diff.cups} · {t.shuffles}: {diff.shuffles}
+                  {t.cups}: {diff.cups} · {t.shuffles}: {diff.swaps + diff.spins}
                 </span>
               </button>
             );
