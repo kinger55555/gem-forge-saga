@@ -282,10 +282,10 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
           )}
         </div>
 
-        {/* Cups area */}
+        {/* Cups area — 4 columns × 2 rows */}
         <div
           className="relative mx-auto mb-8"
-          style={{ width: totalWidth, height: cupWidth + 20 }}
+          style={{ width: 4 * cupWidth + 3 * cupGap, height: 2 * cupWidth + cupGap + 20 }}
         >
           {cups.map((rune, i) => {
             const pos = positions[i];
