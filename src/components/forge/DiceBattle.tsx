@@ -3,9 +3,9 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Dice, DiceFace, BATTLE_DIFFICULTIES, BattleDifficulty, rollDie, getDiceFaceIcon, getDiceFaceName, DICE_TIERS } from '@/types/dice';
+import { Dice, DiceFace, BATTLE_DIFFICULTIES, BattleDifficulty, rollDie, getDiceFaceIcon, DICE_TIERS, getTierName } from '@/types/dice';
 import { DiceInventory } from './DiceInventory';
-import { Swords, Heart, ArrowLeft, Dices } from 'lucide-react';
+import { Swords, Heart, ArrowLeft } from 'lucide-react';
 
 interface DiceBattleProps {
   dice: Dice[];
@@ -13,27 +13,34 @@ interface DiceBattleProps {
   language: 'en' | 'ru';
 }
 
-type Phase = 'select-deck' | 'select-difficulty' | 'battle' | 'result';
+type Phase = 'select-deck' | 'select-difficulty' | 'rolling' | 'result-round' | 'game-over';
+
+interface RolledDie {
+  tier: number;
+  color: string;
+  face: DiceFace;
+  alive: boolean;
+  isArtifact: boolean;
+  bonusFace?: DiceFace;
+  bonusTier?: number;
+}
 
 interface BattleState {
   playerHP: number;
   monsterHP: number;
-  playerDeck: { id: string; tier: number; alive: boolean }[];
-  monsterDeck: { tier: number; alive: boolean }[];
+  playerDice: { id: string; tier: number; color: string; alive: boolean }[];
+  monsterDice: { tier: number; alive: boolean }[];
   round: number;
-  log: { text: string; type: 'player' | 'monster' | 'info' }[];
-  playerRoll: { face: DiceFace; dieIndex: number } | null;
-  monsterRoll: { face: DiceFace; dieIndex: number } | null;
-  bonusRolls: { tier: number; face: DiceFace }[];
+  playerRolled: RolledDie[];
+  monsterRolled: RolledDie[];
+  log: string[];
 }
 
 const t = {
   en: {
     selectDeck: 'Select 5 dice for battle',
     selectDiff: 'Choose difficulty',
-    fight: 'Fight!',
-    roll: 'Roll',
-    yourTurn: 'Pick a die to roll',
+    rollAll: 'Roll All Dice!',
     playerHP: 'Your HP',
     monsterHP: 'Monster HP',
     victory: '🎉 Victory!',
@@ -43,20 +50,15 @@ const t = {
     lost: 'You lost your dice...',
     back: 'Back',
     continue: 'Continue',
+    nextRound: 'Next Round',
     round: 'Round',
     recommended: 'Recommended',
-    startBattle: 'Start Battle',
-    bonusRoll: 'Bonus roll!',
-    dieDestroyed: 'Die destroyed by rot!',
-    blocked: 'Blocked!',
-    damage: 'damage!',
+    needMore: 'You need at least 5 dice to battle',
   },
   ru: {
     selectDeck: 'Выбери 5 кубиков для боя',
     selectDiff: 'Выбери сложность',
-    fight: 'В бой!',
-    roll: 'Бросить',
-    yourTurn: 'Выбери кубик для броска',
+    rollAll: 'Бросить все кубики!',
     playerHP: 'Твои HP',
     monsterHP: 'HP Монстра',
     victory: '🎉 Победа!',
@@ -66,13 +68,10 @@ const t = {
     lost: 'Ты потерял свои кубики...',
     back: 'Назад',
     continue: 'Продолжить',
+    nextRound: 'Следующий раунд',
     round: 'Раунд',
     recommended: 'Рекомендуется',
-    startBattle: 'Начать бой',
-    bonusRoll: 'Бонусный бросок!',
-    dieDestroyed: 'Кубик уничтожен гнилью!',
-    blocked: 'Заблокировано!',
-    damage: 'урон!',
+    needMore: 'Нужно минимум 5 кубиков для боя',
   },
 };
 
@@ -95,141 +94,136 @@ export function DiceBattle({ dice, onBattleEnd, language }: DiceBattleProps) {
     setBattle({
       playerHP: 5,
       monsterHP: 5,
-      playerDeck: selectedDiceIds.map(id => {
+      playerDice: selectedDiceIds.map(id => {
         const d = dice.find(x => x.id === id)!;
-        return { id: d.id, tier: d.tier, alive: true };
+        return { id: d.id, tier: d.tier, color: d.color, alive: true };
       }),
-      monsterDeck: diff.monsterDice.map(tier => ({ tier, alive: true })),
+      monsterDice: diff.monsterDice.map(tier => ({ tier, alive: true })),
       round: 1,
+      playerRolled: [],
+      monsterRolled: [],
       log: [],
-      playerRoll: null,
-      monsterRoll: null,
-      bonusRolls: [],
     });
-    setPhase('battle');
+    setPhase('rolling');
   };
 
-  const rollPlayerDie = (dieIndex: number) => {
+  const rollAllDice = () => {
     if (!battle || rolling) return;
-    const pDie = battle.playerDeck[dieIndex];
-    if (!pDie.alive) return;
-
     setRolling(true);
-
-    // Player rolls
-    const pFace = rollDie(pDie.tier);
-
-    // Monster picks a random alive die
-    const aliveMonster = battle.monsterDeck
-      .map((d, i) => ({ ...d, index: i }))
-      .filter(d => d.alive);
-    const mPick = aliveMonster[Math.floor(Math.random() * aliveMonster.length)];
-    const mFace = mPick ? rollDie(mPick.tier) : 'rot' as DiceFace;
 
     setTimeout(() => {
       setBattle(prev => {
         if (!prev) return prev;
         const next = { ...prev };
-        next.playerRoll = { face: pFace, dieIndex };
-        next.monsterRoll = mPick ? { face: mFace, dieIndex: mPick.index } : null;
-        next.log = [...prev.log];
-        next.playerDeck = prev.playerDeck.map(d => ({ ...d }));
-        next.monsterDeck = prev.monsterDeck.map(d => ({ ...d }));
-        next.bonusRolls = [];
+        next.log = [];
 
-        // Resolve player roll
-        if (pFace === 'rot') {
-          next.playerDeck[dieIndex].alive = false;
-          next.log.push({ text: `${getDiceFaceIcon('rot')} ${l.dieDestroyed}`, type: 'info' });
-        }
-        if (mFace === 'rot' && mPick) {
-          next.monsterDeck[mPick.index].alive = false;
-          next.log.push({ text: `${getDiceFaceIcon('rot')} Monster ${l.dieDestroyed}`, type: 'info' });
-        }
-
-        // Damage resolution
-        let playerDmg = pFace === 'sword' ? 1 : 0;
-        let monsterDmg = mFace === 'sword' ? 1 : 0;
-
-        if (playerDmg > 0 && mFace === 'shield') {
-          playerDmg = 0;
-          next.log.push({ text: `🛡️ ${l.blocked}`, type: 'monster' });
-        }
-        if (monsterDmg > 0 && pFace === 'shield') {
-          monsterDmg = 0;
-          next.log.push({ text: `🛡️ ${l.blocked}`, type: 'player' });
-        }
-
-        if (playerDmg > 0) {
-          next.monsterHP = Math.max(0, prev.monsterHP - playerDmg);
-          next.log.push({ text: `⚔️ 1 ${l.damage}`, type: 'player' });
-        }
-        if (monsterDmg > 0) {
-          next.playerHP = Math.max(0, prev.playerHP - monsterDmg);
-          next.log.push({ text: `⚔️ 1 ${l.damage}`, type: 'monster' });
-        }
-
-        // Tree bonus rolls
-        if (pFace === 'tree' && pDie.tier > 1) {
-          const bonusTier = pDie.tier - 1;
-          const bonusFace = rollDie(bonusTier);
-          next.bonusRolls.push({ tier: bonusTier, face: bonusFace });
-          next.log.push({ text: `🌳 ${l.bonusRoll} T${bonusTier}: ${getDiceFaceIcon(bonusFace)}`, type: 'player' });
-          if (bonusFace === 'sword') {
-            // Check if monster has shield this round - simplified: no double shield
-            next.monsterHP = Math.max(0, next.monsterHP - 1);
+        // Roll all alive player dice
+        const pRolled: RolledDie[] = prev.playerDice.map(d => {
+          if (!d.alive) return { tier: d.tier, color: d.color, face: 'rot' as DiceFace, alive: false, isArtifact: false };
+          const face = rollDie(d.tier);
+          const isArtifact = d.tier === 10;
+          const rolled: RolledDie = { tier: d.tier, color: d.color, face, alive: true, isArtifact };
+          // Tree bonus
+          if (face === 'tree' && d.tier > 1) {
+            rolled.bonusTier = d.tier - 1;
+            rolled.bonusFace = rollDie(d.tier - 1);
           }
-        }
-        if (mFace === 'tree' && mPick && mPick.tier > 1) {
-          const bonusTier = mPick.tier - 1;
-          const bonusFace = rollDie(bonusTier);
-          next.log.push({ text: `🌳 Monster ${l.bonusRoll} T${bonusTier}: ${getDiceFaceIcon(bonusFace)}`, type: 'monster' });
-          if (bonusFace === 'sword') {
-            next.playerHP = Math.max(0, next.playerHP - 1);
-          }
-        }
+          return rolled;
+        });
 
+        // Roll all alive monster dice
+        const mRolled: RolledDie[] = prev.monsterDice.map(d => {
+          if (!d.alive) return { tier: d.tier, color: '#666', face: 'rot' as DiceFace, alive: false, isArtifact: false };
+          const face = rollDie(d.tier);
+          const rolled: RolledDie = { tier: d.tier, color: '#666', face, alive: true, isArtifact: false };
+          if (face === 'tree' && d.tier > 1) {
+            rolled.bonusTier = d.tier - 1;
+            rolled.bonusFace = rollDie(d.tier - 1);
+          }
+          return rolled;
+        });
+
+        // Count results
+        const pSwords = pRolled.filter(r => r.alive && r.face === 'sword').length
+          + pRolled.filter(r => r.alive && r.bonusFace === 'sword').length;
+        const pShields = pRolled.filter(r => r.alive && r.face === 'shield').length
+          + pRolled.filter(r => r.alive && r.bonusFace === 'shield').length;
+        const mSwords = mRolled.filter(r => r.alive && r.face === 'sword').length
+          + mRolled.filter(r => r.alive && r.bonusFace === 'sword').length;
+        const mShields = mRolled.filter(r => r.alive && r.face === 'shield').length
+          + mRolled.filter(r => r.alive && r.bonusFace === 'shield').length;
+
+        const playerDmgToMonster = Math.max(0, pSwords - mShields);
+        const monsterDmgToPlayer = Math.max(0, mSwords - pShields);
+
+        next.monsterHP = Math.max(0, prev.monsterHP - playerDmgToMonster);
+        next.playerHP = Math.max(0, prev.playerHP - monsterDmgToPlayer);
+
+        if (playerDmgToMonster > 0) next.log.push(`⚔️ → ${playerDmgToMonster} ${language === 'ru' ? 'урона монстру' : 'damage to monster'}`);
+        if (monsterDmgToPlayer > 0) next.log.push(`⚔️ → ${monsterDmgToPlayer} ${language === 'ru' ? 'урона тебе' : 'damage to you'}`);
+        if (pShields > 0 && mSwords > 0) next.log.push(`🛡️ ${Math.min(pShields, mSwords)} ${language === 'ru' ? 'заблокировано' : 'blocked'}`);
+        if (mShields > 0 && pSwords > 0) next.log.push(`🛡️ ${language === 'ru' ? 'Монстр заблокировал' : 'Monster blocked'} ${Math.min(mShields, pSwords)}`);
+
+        // Handle rot — destroy dice
+        next.playerDice = prev.playerDice.map((d, i) => {
+          if (pRolled[i]?.alive && pRolled[i]?.face === 'rot') {
+            next.log.push(`💀 ${language === 'ru' ? 'Кубик уничтожен гнилью!' : 'Die destroyed by rot!'}`);
+            return { ...d, alive: false };
+          }
+          return { ...d };
+        });
+        next.monsterDice = prev.monsterDice.map((d, i) => {
+          if (mRolled[i]?.alive && mRolled[i]?.face === 'rot') {
+            next.log.push(`💀 Monster ${language === 'ru' ? 'кубик уничтожен' : 'die destroyed'}`);
+            return { ...d, alive: false };
+          }
+          return { ...d };
+        });
+
+        // Tree bonus log
+        pRolled.forEach(r => {
+          if (r.alive && r.face === 'tree' && r.bonusFace) {
+            next.log.push(`🌳 ${language === 'ru' ? 'Бонус' : 'Bonus'} T${r.bonusTier}: ${getDiceFaceIcon(r.bonusFace)}`);
+          }
+        });
+
+        next.playerRolled = pRolled;
+        next.monsterRolled = mRolled;
         next.round = prev.round + 1;
-
-        // Check end conditions
-        if (next.playerHP <= 0 || next.monsterHP <= 0) {
-          // Will transition to result in next render
-        }
 
         return next;
       });
       setRolling(false);
-    }, 600);
+      setPhase('result-round');
+    }, 800);
   };
 
-  // Check for game end
-  const isGameOver = battle && (battle.playerHP <= 0 || battle.monsterHP <= 0 ||
-    !battle.playerDeck.some(d => d.alive) || !battle.monsterDeck.some(d => d.alive));
-  const playerWon = battle ? battle.monsterHP <= 0 || !battle.monsterDeck.some(d => d.alive) : false;
+  const isGameOver = battle && (
+    battle.playerHP <= 0 || battle.monsterHP <= 0 ||
+    !battle.playerDice.some(d => d.alive) || !battle.monsterDice.some(d => d.alive)
+  );
+  const playerWon = battle ? (battle.monsterHP <= 0 || !battle.monsterDice.some(d => d.alive)) : false;
 
+  // === PHASE: SELECT DECK ===
   if (phase === 'select-deck') {
+    if (dice.length < 5) {
+      return <p className="text-center text-muted-foreground py-8">{l.needMore}</p>;
+    }
     return (
       <div className="space-y-4">
         <h3 className="text-lg font-bold text-center">{l.selectDeck}</h3>
-        <DiceInventory
-          dice={dice}
-          selectedIds={selectedDiceIds}
-          onSelectDie={handleSelectDie}
-          maxSelect={5}
-          language={language}
-        />
+        <DiceInventory dice={dice} selectedIds={selectedDiceIds} onSelectDie={handleSelectDie} maxSelect={5} language={language} />
         {selectedDiceIds.length === 5 && (
           <Button onClick={() => setPhase('select-difficulty')} className="w-full gap-2">
-            <Swords className="w-4 h-4" />
-            {l.continue}
+            <Swords className="w-4 h-4" /> {l.continue}
           </Button>
         )}
       </div>
     );
   }
 
+  // === PHASE: SELECT DIFFICULTY ===
   if (phase === 'select-difficulty') {
-    // Calculate average tier of selected dice
     const avgTier = selectedDiceIds.reduce((sum, id) => {
       const d = dice.find(x => x.id === id);
       return sum + (d?.tier || 1);
@@ -243,15 +237,10 @@ export function DiceBattle({ dice, onBattleEnd, language }: DiceBattleProps) {
         <h3 className="text-lg font-bold text-center">{l.selectDiff}</h3>
         <div className="space-y-2">
           {BATTLE_DIFFICULTIES.map(diff => {
-            const avgMonster = diff.monsterDice.reduce((a, b) => a + b, 0) / diff.monsterDice.length;
-            const isRecommended = Math.abs(avgTier - avgMonster) <= 1.5;
-
+            const avgM = diff.monsterDice.reduce((a, b) => a + b, 0) / diff.monsterDice.length;
+            const isRec = Math.abs(avgTier - avgM) <= 1.5;
             return (
-              <Card
-                key={diff.id}
-                className="p-4 cursor-pointer hover:scale-[1.02] transition-all"
-                onClick={() => startBattle(diff)}
-              >
+              <Card key={diff.id} className="p-4 cursor-pointer hover:scale-[1.02] transition-all" onClick={() => startBattle(diff)}>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-semibold">{diff.name[language]}</p>
@@ -260,9 +249,7 @@ export function DiceBattle({ dice, onBattleEnd, language }: DiceBattleProps) {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    {isRecommended && (
-                      <Badge variant="secondary" className="text-xs">{l.recommended}</Badge>
-                    )}
+                    {isRec && <Badge variant="secondary" className="text-xs">{l.recommended}</Badge>}
                     <Badge>💰 {diff.reward.coins.toLocaleString()}</Badge>
                   </div>
                 </div>
@@ -274,29 +261,23 @@ export function DiceBattle({ dice, onBattleEnd, language }: DiceBattleProps) {
     );
   }
 
-  if (phase === 'battle' && battle) {
+  // === PHASE: ROLLING / RESULT-ROUND ===
+  if ((phase === 'rolling' || phase === 'result-round') && battle) {
     if (isGameOver) {
       return (
-        <div className="space-y-6 text-center py-8">
+        <div className="space-y-6 text-center py-8 animate-fade-in">
           <h2 className="text-3xl font-bold">{playerWon ? l.victory : l.defeat}</h2>
           {playerWon && difficulty && (
-            <div className="space-y-2">
-              <p className="text-lg">{l.reward}: <span className="font-bold text-primary">💰 {difficulty.reward.coins.toLocaleString()} {l.coins}</span></p>
-            </div>
+            <p className="text-lg">{l.reward}: <span className="font-bold text-primary">💰 {difficulty.reward.coins.toLocaleString()} {l.coins}</span></p>
           )}
-          {!playerWon && (
-            <p className="text-muted-foreground">{l.lost}</p>
-          )}
-          <Button
-            onClick={() => {
-              onBattleEnd(playerWon, selectedDiceIds, playerWon && difficulty ? difficulty.reward.coins : 0);
-              setPhase('select-deck');
-              setSelectedDiceIds([]);
-              setBattle(null);
-              setDifficulty(null);
-            }}
-            className="gap-2"
-          >
+          {!playerWon && <p className="text-muted-foreground">{l.lost}</p>}
+          <Button onClick={() => {
+            onBattleEnd(playerWon, selectedDiceIds, playerWon && difficulty ? difficulty.reward.coins : 0);
+            setPhase('select-deck');
+            setSelectedDiceIds([]);
+            setBattle(null);
+            setDifficulty(null);
+          }}>
             {l.continue}
           </Button>
         </div>
@@ -304,12 +285,12 @@ export function DiceBattle({ dice, onBattleEnd, language }: DiceBattleProps) {
     }
 
     return (
-      <div className="space-y-4">
-        {/* HP Bars */}
+      <div className="space-y-4 animate-fade-in">
+        {/* HP */}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Heart className="w-4 h-4 text-red-500" />
+              <Heart className="w-4 h-4 text-primary" />
               <span className="text-sm font-semibold">{l.playerHP}: {battle.playerHP}/5</span>
             </div>
             <Progress value={(battle.playerHP / 5) * 100} className="h-3" />
@@ -323,73 +304,70 @@ export function DiceBattle({ dice, onBattleEnd, language }: DiceBattleProps) {
           </div>
         </div>
 
-        {/* Round display */}
         <p className="text-center text-sm font-semibold">{l.round} {battle.round}</p>
 
-        {/* Last roll display */}
-        {battle.playerRoll && battle.monsterRoll && (
-          <div className="grid grid-cols-2 gap-4 text-center">
-            <Card className="p-3">
-              <p className="text-3xl">{getDiceFaceIcon(battle.playerRoll.face)}</p>
-              <p className="text-xs text-muted-foreground mt-1">T{battle.playerDeck[battle.playerRoll.dieIndex]?.tier}</p>
-            </Card>
-            <Card className="p-3">
-              <p className="text-3xl">{getDiceFaceIcon(battle.monsterRoll.face)}</p>
-              <p className="text-xs text-muted-foreground mt-1">Monster T{battle.monsterDeck[battle.monsterRoll.dieIndex]?.tier}</p>
-            </Card>
+        {/* Rolled results */}
+        {phase === 'result-round' && battle.playerRolled.length > 0 && (
+          <div className="space-y-3 animate-scale-in">
+            {/* Player rolled */}
+            <div className="grid grid-cols-5 gap-2">
+              {battle.playerRolled.map((r, i) => (
+                <Card key={i} className={`p-2 text-center ${!r.alive ? 'opacity-30' : ''} ${r.isArtifact && r.face === 'tree' ? 'animate-pulse ring-2 ring-yellow-400 shadow-lg shadow-yellow-400/30' : ''}`}>
+                  <div
+                    className="w-10 h-10 rounded-lg mx-auto mb-1 flex items-center justify-center text-xl shadow-md"
+                    style={{ backgroundColor: r.alive ? r.color : 'hsl(var(--muted))' }}
+                  >
+                    {r.alive ? getDiceFaceIcon(r.face) : '✕'}
+                  </div>
+                  <p className="text-[10px]">T{r.tier}</p>
+                  {r.bonusFace && (
+                    <Badge variant="secondary" className="text-[9px] mt-0.5 px-1">
+                      🌳T{r.bonusTier} {getDiceFaceIcon(r.bonusFace)}
+                    </Badge>
+                  )}
+                </Card>
+              ))}
+            </div>
+
+            <p className="text-xs text-center text-muted-foreground">vs</p>
+
+            {/* Monster rolled */}
+            <div className="grid grid-cols-5 gap-2">
+              {battle.monsterRolled.map((r, i) => (
+                <Card key={i} className={`p-2 text-center ${!r.alive ? 'opacity-30' : ''}`}>
+                  <div className={`w-10 h-10 rounded-lg mx-auto mb-1 flex items-center justify-center text-xl bg-destructive/20`}>
+                    {r.alive ? getDiceFaceIcon(r.face) : '✕'}
+                  </div>
+                  <p className="text-[10px]">T{r.tier}</p>
+                  {r.bonusFace && (
+                    <Badge variant="secondary" className="text-[9px] mt-0.5 px-1">
+                      🌳T{r.bonusTier} {getDiceFaceIcon(r.bonusFace)}
+                    </Badge>
+                  )}
+                </Card>
+              ))}
+            </div>
+
+            {/* Log */}
+            <div className="space-y-1 text-xs border rounded-lg p-2 bg-muted/30">
+              {battle.log.map((entry, i) => (
+                <p key={i}>{entry}</p>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Bonus rolls */}
-        {battle.bonusRolls.length > 0 && (
-          <div className="text-center">
-            <Badge variant="secondary" className="gap-1">
-              🌳 {battle.bonusRolls.map(b => `T${b.tier}: ${getDiceFaceIcon(b.face)}`).join(' | ')}
-            </Badge>
-          </div>
+        {/* Action button */}
+        {phase === 'rolling' && (
+          <Button onClick={rollAllDice} disabled={rolling} className="w-full gap-2 text-lg py-6">
+            {rolling ? '🎲...' : l.rollAll}
+          </Button>
         )}
-
-        {/* Player dice selection */}
-        <div>
-          <p className="text-sm font-semibold mb-2">{l.yourTurn}</p>
-          <div className="grid grid-cols-5 gap-2">
-            {battle.playerDeck.map((die, i) => (
-              <Card
-                key={i}
-                className={`p-2 text-center transition-all ${die.alive ? 'cursor-pointer hover:scale-105' : 'opacity-30 line-through'}`}
-                onClick={() => die.alive && !rolling && rollPlayerDie(i)}
-              >
-                <div className="text-lg font-bold">T{die.tier}</div>
-                <div className="flex justify-center gap-0.5 flex-wrap">
-                  {(DICE_TIERS[die.tier] || []).map((f, j) => (
-                    <span key={j} className="text-xs">{getDiceFaceIcon(f as DiceFace)}</span>
-                  ))}
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Monster dice */}
-        <div>
-          <p className="text-sm font-semibold mb-2 text-destructive">Monster</p>
-          <div className="grid grid-cols-5 gap-2">
-            {battle.monsterDeck.map((die, i) => (
-              <Card key={i} className={`p-2 text-center ${die.alive ? '' : 'opacity-30'}`}>
-                <div className="text-lg font-bold">T{die.tier}</div>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Log */}
-        <div className="max-h-32 overflow-y-auto space-y-1 text-xs border rounded-lg p-2 bg-muted/30">
-          {battle.log.slice(-8).map((entry, i) => (
-            <p key={i} className={entry.type === 'player' ? 'text-primary' : entry.type === 'monster' ? 'text-destructive' : 'text-muted-foreground'}>
-              {entry.text}
-            </p>
-          ))}
-        </div>
+        {phase === 'result-round' && !isGameOver && (
+          <Button onClick={() => setPhase('rolling')} className="w-full gap-2">
+            {l.nextRound}
+          </Button>
+        )}
       </div>
     );
   }
