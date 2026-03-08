@@ -383,6 +383,7 @@ export function GameInterface() {
                     onSellCrystal={gameData.sellCrystal}
                     onPlayInTemple={handlePlayInTemple}
                     onGoToForge={handleGoToForge}
+                    onGiftCrystal={handleConsumeCrystal}
                     language={language}
                   />
                 </Card>
