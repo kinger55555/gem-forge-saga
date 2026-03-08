@@ -4,12 +4,13 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Crystal } from '@/types/game';
 import { getRarityName, getRarityColor } from '@/utils/crystalUtils';
-import { Gem, Coins, ArrowUpDown } from 'lucide-react';
+import { Gem, Coins, ArrowUpDown, Landmark } from 'lucide-react';
 
 interface CrystalInventoryProps {
   crystals: Crystal[];
   coins: number;
   onSellCrystal: (crystalId: string, price: number) => void;
+  onPlayInTemple?: (crystal: Crystal) => void;
   language: 'en' | 'ru';
 }
 
@@ -24,6 +25,7 @@ const translations = {
     rarity: 'Rarity',
     price: 'Price',
     sellConfirm: 'Sell for',
+    playInTemple: 'Play in Temple',
   },
   ru: {
     collection: 'Коллекция кристаллов',
@@ -35,10 +37,11 @@ const translations = {
     rarity: 'Редкость',
     price: 'Цена',
     sellConfirm: 'Продать за',
+    playInTemple: 'Играть в Храме',
   }
 };
 
-export function CrystalInventory({ crystals, coins, onSellCrystal, language }: CrystalInventoryProps) {
+export function CrystalInventory({ crystals, coins, onSellCrystal, onPlayInTemple, language }: CrystalInventoryProps) {
   const t = translations[language];
   const [sortBy, setSortBy] = useState<'none' | 'rarity' | 'price'>('none');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -65,6 +68,12 @@ export function CrystalInventory({ crystals, coins, onSellCrystal, language }: C
     setSelectedCrystal(null);
   };
 
+  const handlePlayInTemple = () => {
+    if (!selectedCrystal || !onPlayInTemple) return;
+    onPlayInTemple(selectedCrystal);
+    setSelectedCrystal(null);
+  };
+
   return (
     <>
       <div className="flex items-center justify-center mb-4">
@@ -82,22 +91,12 @@ export function CrystalInventory({ crystals, coins, onSellCrystal, language }: C
 
       {crystals.length > 0 && (
         <div className="flex gap-2 mb-3">
-          <Button
-            variant={sortBy === 'rarity' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => handleSort('rarity')}
-            className="gap-1 text-xs"
-          >
+          <Button variant={sortBy === 'rarity' ? 'default' : 'outline'} size="sm" onClick={() => handleSort('rarity')} className="gap-1 text-xs">
             <ArrowUpDown className="w-3 h-3" />
             {language === 'ru' ? 'Редкость' : 'Rarity'}
             {sortBy === 'rarity' && (sortDir === 'desc' ? ' ↓' : ' ↑')}
           </Button>
-          <Button
-            variant={sortBy === 'price' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => handleSort('price')}
-            className="gap-1 text-xs"
-          >
+          <Button variant={sortBy === 'price' ? 'default' : 'outline'} size="sm" onClick={() => handleSort('price')} className="gap-1 text-xs">
             <ArrowUpDown className="w-3 h-3" />
             {language === 'ru' ? 'Цена' : 'Price'}
             {sortBy === 'price' && (sortDir === 'desc' ? ' ↓' : ' ↑')}
@@ -107,9 +106,7 @@ export function CrystalInventory({ crystals, coins, onSellCrystal, language }: C
 
       <div className="flex flex-wrap gap-3 max-h-[600px] overflow-y-auto">
         {crystals.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8 whitespace-pre-line w-full">
-            {t.noCrystals}
-          </p>
+          <p className="text-muted-foreground text-center py-8 whitespace-pre-line w-full">{t.noCrystals}</p>
         ) : (
           sortedCrystals.map((crystal) => (
             <div
@@ -141,7 +138,6 @@ export function CrystalInventory({ crystals, coins, onSellCrystal, language }: C
         )}
       </div>
 
-      {/* Crystal detail dialog */}
       <Dialog open={!!selectedCrystal} onOpenChange={(open) => !open && setSelectedCrystal(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -174,21 +170,25 @@ export function CrystalInventory({ crystals, coins, onSellCrystal, language }: C
                 </div>
               </div>
 
-              <div className="flex gap-2 w-full">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => setSelectedCrystal(null)}
-                >
-                  {t.close}
-                </Button>
-                <Button
-                  variant="destructive"
-                  className="flex-1"
-                  onClick={handleSell}
-                >
-                  {t.sellConfirm} {selectedCrystal.price.toLocaleString()}
-                </Button>
+              <div className="flex flex-col gap-2 w-full">
+                {onPlayInTemple && (
+                  <Button
+                    variant="default"
+                    className="w-full gap-2"
+                    onClick={handlePlayInTemple}
+                  >
+                    <Landmark className="w-4 h-4" />
+                    {t.playInTemple}
+                  </Button>
+                )}
+                <div className="flex gap-2 w-full">
+                  <Button variant="outline" className="flex-1" onClick={() => setSelectedCrystal(null)}>
+                    {t.close}
+                  </Button>
+                  <Button variant="destructive" className="flex-1" onClick={handleSell}>
+                    {t.sellConfirm} {selectedCrystal.price.toLocaleString()}
+                  </Button>
+                </div>
               </div>
             </div>
           )}

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Crystal } from '@/types/game';
-import { Landmark, Dices, Zap } from 'lucide-react';
+import { Landmark, Dices, Zap, Brain } from 'lucide-react';
 import { ShellGame } from '@/components/temple/ShellGame';
 import { CrystalClicker } from '@/components/temple/CrystalClicker';
+import { Singularity } from '@/components/temple/Singularity';
 
 interface TempleProps {
   crystals: Crystal[];
@@ -13,36 +14,41 @@ interface TempleProps {
   language: 'en' | 'ru';
 }
 
-type MiniGame = 'menu' | 'shell' | 'clicker';
+export type MiniGameId = 'menu' | 'shell' | 'clicker' | 'singularity';
 
 const translations = {
   en: {
     title: 'The Temple',
     subtitle: 'Choose a game of fate',
     shellTitle: 'Shell Game',
-    shellDesc: 'Track the rune under shuffling cups. Win: crystal back + 50% bonus.',
+    shellDesc: 'Track the rune under shuffling cups. Win: crystal + 50% bonus.',
     clickerTitle: 'Crystal Clicker',
-    clickerDesc: 'Tap fast enough to charge the crystal. Win: crystal back + 30% bonus.',
+    clickerDesc: 'Tap fast enough to charge the crystal. Win: crystal + 30% bonus.',
+    singularityTitle: 'Singularity',
+    singularityDesc: 'Survive 5 phases of timing mastery. Win: crystal + 70% bonus.',
     comingSoon: 'More games coming soon...',
   },
   ru: {
     title: 'Храм',
     subtitle: 'Выбери игру судьбы',
     shellTitle: 'Стаканчики',
-    shellDesc: 'Следи за руной под стаканами. Победа: кристалл назад + 50% бонус.',
+    shellDesc: 'Следи за руной под стаканами. Победа: кристалл + 50% бонус.',
     clickerTitle: 'Кликер кристаллов',
-    clickerDesc: 'Нажимай достаточно быстро чтобы зарядить кристалл. Победа: кристалл назад + 30% бонус.',
+    clickerDesc: 'Нажимай достаточно быстро. Победа: кристалл + 30% бонус.',
+    singularityTitle: 'Сингулярность',
+    singularityDesc: 'Пройди 5 фаз тайминга. Победа: кристалл + 70% бонус.',
     comingSoon: 'Скоро больше игр...',
   },
 };
 
-const MINI_GAMES: { id: MiniGame; icon: typeof Dices; translationKey: 'shellTitle' | 'clickerTitle'; descKey: 'shellDesc' | 'clickerDesc' }[] = [
-  { id: 'shell', icon: Dices, translationKey: 'shellTitle', descKey: 'shellDesc' },
-  { id: 'clicker', icon: Zap, translationKey: 'clickerTitle', descKey: 'clickerDesc' },
+const MINI_GAMES: { id: MiniGameId; icon: typeof Dices; titleKey: keyof typeof translations.en; descKey: keyof typeof translations.en }[] = [
+  { id: 'shell', icon: Dices, titleKey: 'shellTitle', descKey: 'shellDesc' },
+  { id: 'clicker', icon: Zap, titleKey: 'clickerTitle', descKey: 'clickerDesc' },
+  { id: 'singularity', icon: Brain, titleKey: 'singularityTitle', descKey: 'singularityDesc' },
 ];
 
 export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, language }: TempleProps) {
-  const [currentGame, setCurrentGame] = useState<MiniGame>('menu');
+  const [currentGame, setCurrentGame] = useState<MiniGameId>('menu');
   const t = translations[language];
 
   const goBack = () => setCurrentGame('menu');
@@ -50,9 +56,11 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
   if (currentGame === 'shell') {
     return <ShellGame crystals={crystals} coins={coins} onEarnCoins={onEarnCoins} onConsumeCrystal={onConsumeCrystal} onBack={goBack} language={language} />;
   }
-
   if (currentGame === 'clicker') {
     return <CrystalClicker crystals={crystals} coins={coins} onEarnCoins={onEarnCoins} onConsumeCrystal={onConsumeCrystal} onBack={goBack} language={language} />;
+  }
+  if (currentGame === 'singularity') {
+    return <Singularity crystals={crystals} coins={coins} onEarnCoins={onEarnCoins} onConsumeCrystal={onConsumeCrystal} onBack={goBack} language={language} />;
   }
 
   // Menu
@@ -66,7 +74,7 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
         <p className="text-sm text-muted-foreground">{t.subtitle}</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {MINI_GAMES.map(game => {
           const Icon = game.icon;
           return (
@@ -79,7 +87,7 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
                 <Icon className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-foreground">{t[game.translationKey]}</h3>
+                <h3 className="text-lg font-bold text-foreground">{t[game.titleKey]}</h3>
                 <p className="text-sm text-muted-foreground mt-1">{t[game.descKey]}</p>
               </div>
             </button>
