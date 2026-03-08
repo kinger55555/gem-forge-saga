@@ -11,6 +11,7 @@ import { Shop } from './Shop';
 import { PickaxeCodeInput } from './PickaxeCodeInput';
 import { DailyRewards } from './DailyRewards';
 import { Temple } from './Temple';
+import { WelcomeTutorial } from './WelcomeTutorial';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
