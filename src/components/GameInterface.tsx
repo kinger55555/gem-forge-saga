@@ -72,7 +72,7 @@ export function GameInterface() {
       signOut: 'Выйти',
       mine: 'Шахта',
       temple: 'Храм',
-      scribe: 'Бдение Писца',
+      
     }
   };
 
