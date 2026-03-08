@@ -6,7 +6,8 @@ import { Dice } from '@/types/dice';
 import { CrystalSmelter } from './forge/CrystalSmelter';
 import { DiceInventory } from './forge/DiceInventory';
 import { DiceBattle } from './forge/DiceBattle';
-import { Hammer, Swords, Dices } from 'lucide-react';
+import { DiceDuel } from './forge/DiceDuel';
+import { Hammer, Swords, Dices, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ForgeProps {
@@ -18,8 +19,8 @@ interface ForgeProps {
 }
 
 const t = {
-  en: { smelt: 'Smelt', inventory: 'Dice', battle: 'Battle' },
-  ru: { smelt: 'Плавка', inventory: 'Кубики', battle: 'Бой' },
+  en: { smelt: 'Smelt', inventory: 'Dice', battle: 'Battle', duel: 'Duel' },
+  ru: { smelt: 'Плавка', inventory: 'Кубики', battle: 'Бой', duel: 'Дуэль' },
 };
 
 const DICE_STORAGE_KEY = 'gem_forge_dice';
@@ -60,10 +61,16 @@ export function Forge({ crystals, coins, onConsumeCrystals, onEarnCoins, languag
     }
   };
 
+  const handleDuelEnd = (won: boolean, coinsWon: number) => {
+    if (coinsWon > 0) {
+      onEarnCoins(coinsWon);
+    }
+  };
+
   return (
     <Card className="p-6">
       <Tabs defaultValue="smelt" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="smelt" className="gap-1 text-xs sm:text-sm">
             <Hammer className="w-4 h-4" /> {l.smelt}
           </TabsTrigger>
@@ -72,6 +79,9 @@ export function Forge({ crystals, coins, onConsumeCrystals, onEarnCoins, languag
           </TabsTrigger>
           <TabsTrigger value="battle" className="gap-1 text-xs sm:text-sm">
             <Swords className="w-4 h-4" /> {l.battle}
+          </TabsTrigger>
+          <TabsTrigger value="duel" className="gap-1 text-xs sm:text-sm">
+            <Users className="w-4 h-4" /> {l.duel}
           </TabsTrigger>
         </TabsList>
         <TabsContent value="smelt">
@@ -82,6 +92,9 @@ export function Forge({ crystals, coins, onConsumeCrystals, onEarnCoins, languag
         </TabsContent>
         <TabsContent value="battle">
           <DiceBattle dice={dice} onBattleEnd={handleBattleEnd} language={language} />
+        </TabsContent>
+        <TabsContent value="duel">
+          <DiceDuel dice={dice} onDuelEnd={handleDuelEnd} language={language} />
         </TabsContent>
       </Tabs>
     </Card>
