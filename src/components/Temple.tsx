@@ -54,12 +54,13 @@ const translations = {
 };
 
 // Difficulty config by rarity — always 8 cups, Limbo-style
+// Phase 1: pairwise swaps. Phase 2: circular spinning.
 function getDifficulty(rarity: number) {
-  if (rarity <= 1) return { cups: 8, shuffles: 8, speed: 420 };
-  if (rarity <= 3) return { cups: 8, shuffles: 12, speed: 350 };
-  if (rarity <= 5) return { cups: 8, shuffles: 16, speed: 280 };
-  if (rarity <= 7) return { cups: 8, shuffles: 22, speed: 220 };
-  return { cups: 8, shuffles: 30, speed: 180 };
+  if (rarity <= 1) return { cups: 8, swaps: 6, spins: 4, speed: 700 };
+  if (rarity <= 3) return { cups: 8, swaps: 8, spins: 6, speed: 600 };
+  if (rarity <= 5) return { cups: 8, swaps: 10, spins: 8, speed: 520 };
+  if (rarity <= 7) return { cups: 8, swaps: 14, spins: 10, speed: 440 };
+  return { cups: 8, swaps: 18, spins: 14, speed: 380 };
 }
 
 export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, language }: TempleProps) {
@@ -97,38 +98,45 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
     setRevealedCup(targetIdx);
     setPhase('reveal');
 
-    // Show the target for 1.5s, then start shuffling
+    // Show the target for 2s, then start Phase 1 (pairwise swaps)
     timerRef.current = setTimeout(() => {
       setRevealedCup(null);
       setPhase('shuffling');
-      doShuffles(selected.length, diff.shuffles, diff.speed, 0, selected.map((_, i) => i));
-    }, 1500);
+      const initPos = selected.map((_, i) => i);
+      doSwapPhase(selected.length, diff.swaps, diff.spins, diff.speed, 0, initPos);
+    }, 2000);
   }, []);
 
-  // Patterns that move ALL 8 cups at once (2x4 grid, indices 0-7)
-  // Grid layout:  0 1 2 3
-  //               4 5 6 7
-  const PATTERNS = [
-    // Rotate perimeter clockwise: 0→1→2→3→7→6→5→4→0
-    (p: number[]) => { const n = [...p]; const ring = [0,1,2,3,7,6,5,4]; const vals = ring.map(i => p[i]); for (let i = 0; i < ring.length; i++) n[ring[i]] = vals[(i - 1 + ring.length) % ring.length]; return n; },
-    // Rotate perimeter counter-clockwise
-    (p: number[]) => { const n = [...p]; const ring = [0,1,2,3,7,6,5,4]; const vals = ring.map(i => p[i]); for (let i = 0; i < ring.length; i++) n[ring[i]] = vals[(i + 1) % ring.length]; return n; },
-    // Swap rows: top↔bottom
-    (p: number[]) => { const n = [...p]; [n[0],n[4]] = [p[4],p[0]]; [n[1],n[5]] = [p[5],p[1]]; [n[2],n[6]] = [p[6],p[2]]; [n[3],n[7]] = [p[7],p[3]]; return n; },
-    // Shift all left (wrap)
-    (p: number[]) => { const n = [...p]; [n[0],n[1],n[2],n[3]] = [p[1],p[2],p[3],p[0]]; [n[4],n[5],n[6],n[7]] = [p[5],p[6],p[7],p[4]]; return n; },
-    // Shift all right (wrap)
-    (p: number[]) => { const n = [...p]; [n[0],n[1],n[2],n[3]] = [p[3],p[0],p[1],p[2]]; [n[4],n[5],n[6],n[7]] = [p[7],p[4],p[5],p[6]]; return n; },
-    // Mirror horizontally: swap columns 0↔3, 1↔2
-    (p: number[]) => { const n = [...p]; [n[0],n[3]] = [p[3],p[0]]; [n[1],n[2]] = [p[2],p[1]]; [n[4],n[7]] = [p[7],p[4]]; [n[5],n[6]] = [p[6],p[5]]; return n; },
-    // Diagonal shift: each moves to its diagonal partner
-    (p: number[]) => { const n = [...p]; [n[0],n[7]] = [p[7],p[0]]; [n[1],n[6]] = [p[6],p[1]]; [n[2],n[5]] = [p[5],p[2]]; [n[3],n[4]] = [p[4],p[3]]; return n; },
-    // Rotate top row CW + bottom row CCW
-    (p: number[]) => { const n = [...p]; [n[0],n[1],n[2],n[3]] = [p[3],p[0],p[1],p[2]]; [n[4],n[5],n[6],n[7]] = [p[5],p[6],p[7],p[4]]; return n; },
-  ];
+  // Phase 1: Two cups swap at a time (like Limbo keys)
+  const doSwapPhase = (cupCount: number, totalSwaps: number, totalSpins: number, speed: number, current: number, pos: number[]) => {
+    if (current >= totalSwaps) {
+      // Move to Phase 2: circular spinning
+      doSpinPhase(cupCount, totalSpins, speed, 0, pos);
+      return;
+    }
 
-  const doShuffles = (cupCount: number, total: number, speed: number, current: number, pos: number[]) => {
-    if (current >= total) {
+    setIsShuffling(true);
+
+    // Pick two random different cups to swap
+    const a = Math.floor(Math.random() * cupCount);
+    let b = Math.floor(Math.random() * (cupCount - 1));
+    if (b >= a) b++;
+
+    const newPos = [...pos];
+    [newPos[a], newPos[b]] = [newPos[b], newPos[a]];
+    setPositions(newPos);
+
+    timerRef.current = setTimeout(() => {
+      doSwapPhase(cupCount, totalSwaps, totalSpins, speed, current + 1, newPos);
+    }, speed);
+  };
+
+  // Phase 2: All cups rotate in a circle (Limbo-style spinning formation)
+  // Grid positions 0-7 mapped to a ring: 0→1→2→3→7→6→5→4→0
+  const RING_ORDER = [0, 1, 2, 3, 7, 6, 5, 4];
+
+  const doSpinPhase = (cupCount: number, totalSpins: number, speed: number, current: number, pos: number[]) => {
+    if (current >= totalSpins) {
       setIsShuffling(false);
       setPhase('pick');
       return;
@@ -136,13 +144,16 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
 
     setIsShuffling(true);
 
-    // Pick a random pattern
-    const pattern = PATTERNS[Math.floor(Math.random() * PATTERNS.length)];
-    const newPos = pattern(pos);
+    // Rotate all cups one step clockwise around the perimeter
+    const newPos = [...pos];
+    const ringValues = RING_ORDER.map(i => pos[i]);
+    for (let i = 0; i < RING_ORDER.length; i++) {
+      newPos[RING_ORDER[i]] = ringValues[(i - 1 + RING_ORDER.length) % RING_ORDER.length];
+    }
     setPositions(newPos);
 
     timerRef.current = setTimeout(() => {
-      doShuffles(cupCount, total, speed, current + 1, newPos);
+      doSpinPhase(cupCount, totalSpins, speed * 0.95, current + 1, newPos);
     }, speed);
   };
 
@@ -229,7 +240,7 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
                   +{bonus.toLocaleString()}
                 </Badge>
                 <span className="text-[10px] text-muted-foreground">
-                  {t.cups}: {diff.cups} · {t.shuffles}: {diff.shuffles}
+                  {t.cups}: {diff.cups} · {t.shuffles}: {diff.swaps + diff.spins}
                 </span>
               </button>
             );
