@@ -153,11 +153,11 @@ export function useGameData() {
     }
   };
 
-  const buyPickaxe = async (type: 'normal' | 'legendary', price: number) => {
+  const buyPickaxe = async (type: PickaxeType['type'], price: number) => {
     if (!user || gameData.coins < price) return false;
 
     try {
-      const name = type === 'normal' ? 'Normal Pickaxe' : 'Legendary Pickaxe';
+      const name = `${type.charAt(0).toUpperCase() + type.slice(1)} Pickaxe`;
       
       const [insertRes, updateRes] = await Promise.all([
         supabase.from('pickaxes').insert({
