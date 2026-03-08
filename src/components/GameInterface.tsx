@@ -69,61 +69,26 @@ export function GameInterface() {
     if (!user) return;
 
     try {
-      const { data: link, error } = await supabase
-        .from('admin_links')
-        .select('*')
-        .eq('code', code)
-        .eq('used', false)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc('redeem_admin_link', { p_code: code });
 
-      if (error || !link) {
-        toast.error('Invalid or already used link!');
+      if (error) {
+        toast.error(language === 'ru' ? 'Неверная или уже использованная ссылка!' : 'Invalid or already used link!');
         return;
       }
 
-      const { error: updateError } = await supabase
-        .from('admin_links')
-        .update({ 
-          used: true, 
-          used_by: user.id, 
-          used_at: new Date().toISOString() 
-        })
-        .eq('id', link.id);
-
-      if (updateError) throw updateError;
-
+      const link = data as any;
       if (link.type === 'coins') {
-        const coinAmt = (link as any).value || 100;
-        const { error: coinErr } = await supabase
-          .from('game_state')
-          .update({ coins: (gameData.coins + coinAmt) })
-          .eq('user_id', user.id);
-
-        if (coinErr) throw coinErr;
-        toast.success(`💰 Received ${coinAmt} coins!`, { duration: 4000 });
+        toast.success(`💰 Получено ${link.value || 100} монет!`, { duration: 4000 });
       } else {
-        const pType = link.type;
-        const pName = `${pType.charAt(0).toUpperCase() + pType.slice(1)} Pickaxe`;
-        const { error: pErr } = await supabase
-          .from('pickaxes')
-          .insert({
-            user_id: user.id,
-            type: pType,
-            name: pName,
-            used: false
-          });
-
-        if (pErr) throw pErr;
-        toast.success(`🎁 Received ${pType} pickaxe!`, { duration: 4000 });
+        toast.success(`🎁 Получена ${link.type} кирка!`, { duration: 4000 });
       }
 
       gameData.refreshData();
-      
     } catch (error: any) {
       console.error('Error activating link:', error);
       toast.error('Failed to activate link');
     }
-  }, [user, gameData]);
+  }, [user, gameData, language]);
 
   useEffect(() => {
     const linkCode = parsePickaxeFromUrl();
