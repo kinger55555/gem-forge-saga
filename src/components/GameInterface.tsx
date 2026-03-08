@@ -119,6 +119,26 @@ export function GameInterface() {
       activateAdminLinkFromCode(linkCode);
       window.history.replaceState({}, document.title, window.location.pathname);
     }
+
+    // Handle gift code from URL
+    const params = new URLSearchParams(window.location.search);
+    const giftCode = params.get('gift');
+    if (giftCode) {
+      (async () => {
+        try {
+          const { data, error } = await supabase.rpc('redeem_crystal_gift', { p_code: giftCode });
+          if (error) {
+            toast.error(language === 'ru' ? 'Неверный или использованный код подарка!' : 'Invalid or used gift code!');
+          } else {
+            toast.success(language === 'ru' ? '💎 Кристалл получен в подарок!' : '💎 Crystal gift received!');
+            gameData.refreshData();
+          }
+        } catch {
+          toast.error('Error redeeming gift');
+        }
+        window.history.replaceState({}, document.title, window.location.pathname);
+      })();
+    }
   }, [activateAdminLinkFromCode]);
 
   const selectPickaxe = useCallback((pickaxe: PickaxeType) => {
@@ -305,6 +325,7 @@ export function GameInterface() {
                     onSellCrystal={gameData.sellCrystal}
                     onPlayInTemple={handlePlayInTemple}
                     onGoToForge={handleGoToForge}
+                    onGiftCrystal={handleConsumeCrystal}
                     language={language}
                   />
                 </Card>
@@ -331,6 +352,7 @@ export function GameInterface() {
                     onSellCrystal={gameData.sellCrystal}
                     onPlayInTemple={handlePlayInTemple}
                     onGoToForge={handleGoToForge}
+                    onGiftCrystal={handleConsumeCrystal}
                     language={language}
                   />
                 </Card>
@@ -361,6 +383,7 @@ export function GameInterface() {
                     onSellCrystal={gameData.sellCrystal}
                     onPlayInTemple={handlePlayInTemple}
                     onGoToForge={handleGoToForge}
+                    onGiftCrystal={handleConsumeCrystal}
                     language={language}
                   />
                 </Card>

@@ -2,9 +2,13 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Crystal } from '@/types/game';
 import { getRarityName, getRarityColor } from '@/utils/crystalUtils';
-import { Gem, Coins, ArrowUpDown, Landmark, Hammer } from 'lucide-react';
+import { Gem, Coins, ArrowUpDown, Landmark, Hammer, Gift, Copy, Check } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface CrystalInventoryProps {
   crystals: Crystal[];
@@ -12,6 +16,7 @@ interface CrystalInventoryProps {
   onSellCrystal: (crystalId: string, price: number) => void;
   onPlayInTemple?: (crystal: Crystal) => void;
   onGoToForge?: () => void;
+  onGiftCrystal?: (crystalId: string) => void;
   language: 'en' | 'ru';
 }
 
@@ -28,6 +33,13 @@ const translations = {
     sellConfirm: 'Sell for',
     playInTemple: 'Play in Temple',
     goToForge: 'Recycle in Forge',
+    gift: 'Gift to friend',
+    giftCreated: 'Gift link created!',
+    copyLink: 'Copy link',
+    copied: 'Copied!',
+    redeemGift: 'Redeem crystal gift',
+    redeemCode: 'Gift code',
+    redeem: 'Redeem',
   },
   ru: {
     collection: 'Коллекция кристаллов',
@@ -41,14 +53,26 @@ const translations = {
     sellConfirm: 'Продать за',
     playInTemple: 'Играть в Храме',
     goToForge: 'В Кузницу',
+    gift: 'Подарить другу',
+    giftCreated: 'Ссылка на подарок создана!',
+    copyLink: 'Копировать ссылку',
+    copied: 'Скопировано!',
+    redeemGift: 'Получить подарок',
+    redeemCode: 'Код подарка',
+    redeem: 'Получить',
   }
 };
 
-export function CrystalInventory({ crystals, coins, onSellCrystal, onPlayInTemple, onGoToForge, language }: CrystalInventoryProps) {
+export function CrystalInventory({ crystals, coins, onSellCrystal, onPlayInTemple, onGoToForge, onGiftCrystal, language }: CrystalInventoryProps) {
   const t = translations[language];
+  const { user } = useAuth();
   const [sortBy, setSortBy] = useState<'none' | 'rarity' | 'price'>('none');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [selectedCrystal, setSelectedCrystal] = useState<Crystal | null>(null);
+  const [giftLink, setGiftLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [giftCode, setGiftCode] = useState('');
+  const [isRedeeming, setIsRedeeming] = useState(false);
 
   const handleSort = (type: 'rarity' | 'price') => {
     if (sortBy === type) {
@@ -83,6 +107,68 @@ export function CrystalInventory({ crystals, coins, onSellCrystal, onPlayInTempl
     setSelectedCrystal(null);
   };
 
+  const handleGift = async () => {
+    if (!selectedCrystal || !user) return;
+    try {
+      const { data, error } = await supabase
+        .from('crystal_gifts')
+        .insert({
+          sender_id: user.id,
+          red: selectedCrystal.red,
+          green: selectedCrystal.green,
+          blue: selectedCrystal.blue,
+          rarity: selectedCrystal.rarity,
+          price: selectedCrystal.price,
+          color: selectedCrystal.color,
+        })
+        .select('code')
+        .single();
+
+      if (error) throw error;
+
+      // Remove crystal from sender
+      onGiftCrystal?.(selectedCrystal.id);
+
+      const link = `${window.location.origin}?gift=${data.code}`;
+      setGiftLink(link);
+      toast.success(t.giftCreated);
+    } catch (error) {
+      console.error('Error creating gift:', error);
+      toast.error('Failed to create gift');
+    }
+  };
+
+  const handleCopyGiftLink = () => {
+    if (!giftLink) return;
+    navigator.clipboard.writeText(giftLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleRedeemGift = async () => {
+    if (!giftCode.trim()) return;
+    setIsRedeeming(true);
+    try {
+      const { data, error } = await supabase.rpc('redeem_crystal_gift', { p_code: giftCode.trim() });
+      if (error) {
+        if (error.message.includes('invalid_or_used_gift')) {
+          toast.error(language === 'ru' ? 'Неверный или уже использованный код!' : 'Invalid or already used code!');
+        } else {
+          toast.error(error.message);
+        }
+        return;
+      }
+      toast.success(language === 'ru' ? '💎 Кристалл получен!' : '💎 Crystal received!');
+      setGiftCode('');
+      // Trigger data refresh via selling with 0 (hack - we need a proper refresh)
+      window.location.reload();
+    } catch {
+      toast.error('Error');
+    } finally {
+      setIsRedeeming(false);
+    }
+  };
+
   return (
     <>
       <div className="flex items-center justify-center mb-4">
@@ -91,6 +177,20 @@ export function CrystalInventory({ crystals, coins, onSellCrystal, onPlayInTempl
           <span className="font-bold text-lg">{coins.toLocaleString()}</span>
           <span className="text-muted-foreground text-sm">{t.coins}</span>
         </div>
+      </div>
+
+      {/* Gift redemption */}
+      <div className="flex gap-2 mb-3">
+        <Input
+          value={giftCode}
+          onChange={(e) => setGiftCode(e.target.value)}
+          placeholder={t.redeemCode}
+          className="text-xs"
+        />
+        <Button size="sm" onClick={handleRedeemGift} disabled={isRedeeming || !giftCode.trim()} className="gap-1 shrink-0">
+          <Gift className="w-3 h-3" />
+          {t.redeem}
+        </Button>
       </div>
 
       <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
@@ -147,7 +247,7 @@ export function CrystalInventory({ crystals, coins, onSellCrystal, onPlayInTempl
         )}
       </div>
 
-      <Dialog open={!!selectedCrystal} onOpenChange={(open) => !open && setSelectedCrystal(null)}>
+      <Dialog open={!!selectedCrystal} onOpenChange={(open) => { if (!open) { setSelectedCrystal(null); setGiftLink(null); setCopied(false); } }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>{t.crystalInfo}</DialogTitle>
@@ -179,37 +279,46 @@ export function CrystalInventory({ crystals, coins, onSellCrystal, onPlayInTempl
                 </div>
               </div>
 
+              {/* Gift link display */}
+              {giftLink && (
+                <div className="w-full p-3 rounded-lg bg-muted/50 space-y-2">
+                  <p className="text-xs text-muted-foreground break-all">{giftLink}</p>
+                  <Button size="sm" variant="outline" className="w-full gap-1" onClick={handleCopyGiftLink}>
+                    {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    {copied ? t.copied : t.copyLink}
+                  </Button>
+                </div>
+              )}
+
               <div className="flex flex-col gap-2 w-full">
                 <div className="flex gap-2 w-full">
                   {onPlayInTemple && (
-                    <Button
-                      variant="default"
-                      className="flex-1 gap-2"
-                      onClick={handlePlayInTemple}
-                    >
+                    <Button variant="default" className="flex-1 gap-2" onClick={handlePlayInTemple}>
                       <Landmark className="w-4 h-4" />
                       {t.playInTemple}
                     </Button>
                   )}
                   {onGoToForge && (
-                    <Button
-                      variant="secondary"
-                      className="flex-1 gap-2"
-                      onClick={handleGoToForge}
-                    >
+                    <Button variant="secondary" className="flex-1 gap-2" onClick={handleGoToForge}>
                       <Hammer className="w-4 h-4" />
                       {t.goToForge}
                     </Button>
                   )}
                 </div>
                 <div className="flex gap-2 w-full">
-                  <Button variant="outline" className="flex-1" onClick={() => setSelectedCrystal(null)}>
-                    {t.close}
-                  </Button>
+                  {!giftLink && (
+                    <Button variant="outline" className="flex-1 gap-2" onClick={handleGift}>
+                      <Gift className="w-4 h-4" />
+                      {t.gift}
+                    </Button>
+                  )}
                   <Button variant="destructive" className="flex-1" onClick={handleSell}>
                     {t.sellConfirm} {selectedCrystal.price.toLocaleString()}
                   </Button>
                 </div>
+                <Button variant="outline" className="w-full" onClick={() => { setSelectedCrystal(null); setGiftLink(null); }}>
+                  {t.close}
+                </Button>
               </div>
             </div>
           )}

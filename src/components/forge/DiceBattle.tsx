@@ -143,13 +143,13 @@ export function DiceBattle({ dice, onBattleEnd, language }: DiceBattleProps) {
           return rolled;
         });
 
-        // Count results
-        const pSwords = pRolled.filter(r => r.alive && r.face === 'sword').length
-          + pRolled.filter(r => r.alive && r.bonusFace === 'sword').length;
+        // Count results — tree counts as sword AND spawns bonus die
+        const pSwords = pRolled.filter(r => r.alive && (r.face === 'sword' || r.face === 'tree')).length
+          + pRolled.filter(r => r.alive && (r.bonusFace === 'sword' || r.bonusFace === 'tree')).length;
         const pShields = pRolled.filter(r => r.alive && r.face === 'shield').length
           + pRolled.filter(r => r.alive && r.bonusFace === 'shield').length;
-        const mSwords = mRolled.filter(r => r.alive && r.face === 'sword').length
-          + mRolled.filter(r => r.alive && r.bonusFace === 'sword').length;
+        const mSwords = mRolled.filter(r => r.alive && (r.face === 'sword' || r.face === 'tree')).length
+          + mRolled.filter(r => r.alive && (r.bonusFace === 'sword' || r.bonusFace === 'tree')).length;
         const mShields = mRolled.filter(r => r.alive && r.face === 'shield').length
           + mRolled.filter(r => r.alive && r.bonusFace === 'shield').length;
 

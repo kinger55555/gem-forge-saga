@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { createAdminLink, getActivationUrl, isAdmin, hasModeratorAccess, isModerator } from '@/utils/linkUtils';
 import { AdminLink } from '@/types/admin';
 import { PickaxeRarity } from '@/types/game';
-import { getRarityColor, getRarityName } from '@/utils/crystalUtils';
+import { getRarityColor, getRarityName, calculateRarity, calculatePrice } from '@/utils/crystalUtils';
 import { 
   Settings, 
   Link,
@@ -16,6 +16,7 @@ import {
   Trash2,
   Coins,
   Send,
+  Gem,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,6 +43,13 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
   const [customName, setCustomName] = useState('');
   const [coinAmount, setCoinAmount] = useState('100');
   const [isLoadingLinks, setIsLoadingLinks] = useState(false);
+
+  // Crystal link state
+  const [crystalMode, setCrystalMode] = useState<'rgb' | 'rarity'>('rarity');
+  const [crystalR, setCrystalR] = useState('128');
+  const [crystalG, setCrystalG] = useState('0');
+  const [crystalB, setCrystalB] = useState('255');
+  const [crystalRarity, setCrystalRarity] = useState('5');
 
   // Moderator state
   const [targetEmail, setTargetEmail] = useState('');
@@ -386,6 +394,129 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
                 </Button>
                 <Button onClick={() => handleGiveToSelf('coins')} className="gap-2">
                   <Coins className="w-4 h-4" />
+                  Дать себе
+                </Button>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Create Crystal Links */}
+            <div className="space-y-3">
+              <h3 className="font-medium flex items-center gap-2">
+                <Gem className="w-4 h-4" />
+                Создать ссылку на кристалл
+              </h3>
+              <div className="flex gap-2">
+                <Button
+                  variant={crystalMode === 'rarity' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCrystalMode('rarity')}
+                >
+                  По редкости
+                </Button>
+                <Button
+                  variant={crystalMode === 'rgb' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCrystalMode('rgb')}
+                >
+                  По RGB
+                </Button>
+              </div>
+
+              {crystalMode === 'rarity' ? (
+                <div>
+                  <Label>Редкость (0-9)</Label>
+                  <Input
+                    type="number"
+                    value={crystalRarity}
+                    onChange={(e) => setCrystalRarity(e.target.value)}
+                    min="0" max="9"
+                    className="mt-1"
+                  />
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <Label className="text-xs">R</Label>
+                    <Input type="number" value={crystalR} onChange={(e) => setCrystalR(e.target.value)} min="0" max="255" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">G</Label>
+                    <Input type="number" value={crystalG} onChange={(e) => setCrystalG(e.target.value)} min="0" max="255" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">B</Label>
+                    <Input type="number" value={crystalB} onChange={(e) => setCrystalB(e.target.value)} min="0" max="255" />
+                  </div>
+                </div>
+              )}
+
+              {crystalMode === 'rgb' && (
+                <div
+                  className="w-full h-8 rounded-lg border border-border"
+                  style={{ backgroundColor: `rgb(${crystalR}, ${crystalG}, ${crystalB})` }}
+                />
+              )}
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  onClick={async () => {
+                    const code = crypto.randomUUID().slice(0, 12);
+                    const r = crystalMode === 'rgb' ? parseInt(crystalR) || 0 : null;
+                    const g = crystalMode === 'rgb' ? parseInt(crystalG) || 0 : null;
+                    const b = crystalMode === 'rgb' ? parseInt(crystalB) || 0 : null;
+                    const rarity = crystalMode === 'rarity' ? (parseInt(crystalRarity) || 0) : null;
+                    try {
+                      const { error } = await supabase.from('admin_links').insert({
+                        code,
+                        type: 'crystal',
+                        name: customName || 'Crystal Link',
+                        used: false,
+                        value: rarity,
+                        crystal_red: r,
+                        crystal_green: g,
+                        crystal_blue: b,
+                      });
+                      if (error) throw error;
+                      loadAdminLinks();
+                      toast.success('Ссылка на кристалл создана!');
+                    } catch { toast.error('Ошибка!'); }
+                  }}
+                >
+                  <Link className="w-4 h-4" />
+                  Создать ссылку
+                </Button>
+                <Button
+                  className="gap-2"
+                  onClick={async () => {
+                    const code = crypto.randomUUID().slice(0, 12);
+                    const r = crystalMode === 'rgb' ? parseInt(crystalR) || 0 : null;
+                    const g = crystalMode === 'rgb' ? parseInt(crystalG) || 0 : null;
+                    const b = crystalMode === 'rgb' ? parseInt(crystalB) || 0 : null;
+                    const rarity = crystalMode === 'rarity' ? (parseInt(crystalRarity) || 0) : null;
+                    try {
+                      const { error: insertErr } = await supabase.from('admin_links').insert({
+                        code,
+                        type: 'crystal',
+                        name: 'Self-grant crystal',
+                        used: false,
+                        value: rarity,
+                        crystal_red: r,
+                        crystal_green: g,
+                        crystal_blue: b,
+                      });
+                      if (insertErr) throw insertErr;
+                      const { error: redeemErr } = await supabase.rpc('redeem_admin_link', { p_code: code });
+                      if (redeemErr) throw redeemErr;
+                      onRefreshData?.();
+                      toast.success('Кристалл получен!');
+                    } catch { toast.error('Ошибка!'); }
+                  }}
+                >
+                  <Gem className="w-4 h-4" />
                   Дать себе
                 </Button>
               </div>
