@@ -97,6 +97,8 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
   if (currentGame === 'roulette') return <ColorRoulette {...gameProps} />;
   if (currentGame === 'quickdraw') return <QuickDraw {...gameProps} />;
   if (currentGame === 'nova') return <NovaCollapse {...gameProps} />;
+  if (currentGame === 'pressure') return <PressureHold {...gameProps} />;
+  if (currentGame === 'spam') return <SpamRace {...gameProps} />;
 
   // Menu
   return (
