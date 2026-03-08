@@ -64,8 +64,8 @@ export function useGameData() {
           price: c.price,
           color: c.color
         })),
-        coins: Number(gameStateRes.data.coins),
-        clickerEarnings: Number(gameStateRes.data.clicker_earnings),
+        coins: Number(gameState.coins),
+        clickerEarnings: Number(gameState.clicker_earnings),
         loading: false
       });
     } catch (error: any) {
