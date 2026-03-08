@@ -341,6 +341,7 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
                   width: cupWidth,
                   height: cupWidth,
                   left,
+                  top,
                   borderColor: borderClr,
                   backgroundColor: bgClr,
                   boxShadow: shadow,
