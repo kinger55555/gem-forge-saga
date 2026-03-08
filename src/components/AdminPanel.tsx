@@ -112,6 +112,32 @@ export function AdminPanel({ language = 'ru', onRefreshData }: AdminPanelProps) 
     }
   };
 
+  const handleGiveToSelf = async (type: PickaxeRarity | 'coins') => {
+    let value: number | undefined;
+    if (type === 'coins') {
+      value = parseInt(coinAmount) || 100;
+    }
+    const link = createAdminLink(type, 'Self-grant', value);
+
+    try {
+      const { error: insertError } = await supabase
+        .from('admin_links')
+        .insert({ code: link.code, type: link.type, name: link.name, used: false, value: link.value });
+      if (insertError) { toast.error('Ошибка создания!'); return; }
+
+      const { data, error: redeemError } = await supabase.rpc('redeem_admin_link', { p_code: link.code });
+      if (redeemError) { toast.error('Ошибка активации!'); return; }
+
+      onRefreshData?.();
+      toast.success(type === 'coins'
+        ? `Получено ${value} монет!`
+        : `Получена ${getRarityName(TIER_INDEX[type as PickaxeRarity], language)} кирка!`
+      );
+    } catch {
+      toast.error('Ошибка!');
+    }
+  };
+
   const handleCopyLink = (code: string) => {
     const url = getActivationUrl(code);
     navigator.clipboard.writeText(url);
