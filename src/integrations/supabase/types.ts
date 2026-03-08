@@ -18,6 +18,9 @@ export type Database = {
         Row: {
           code: string
           created_at: string
+          crystal_blue: number | null
+          crystal_green: number | null
+          crystal_red: number | null
           id: string
           name: string
           type: string
@@ -29,6 +32,9 @@ export type Database = {
         Insert: {
           code: string
           created_at?: string
+          crystal_blue?: number | null
+          crystal_green?: number | null
+          crystal_red?: number | null
           id?: string
           name?: string
           type?: string
@@ -40,6 +46,9 @@ export type Database = {
         Update: {
           code?: string
           created_at?: string
+          crystal_blue?: number | null
+          crystal_green?: number | null
+          crystal_red?: number | null
           id?: string
           name?: string
           type?: string
@@ -47,6 +56,54 @@ export type Database = {
           used_at?: string | null
           used_by?: string | null
           value?: number | null
+        }
+        Relationships: []
+      }
+      crystal_gifts: {
+        Row: {
+          blue: number
+          code: string
+          color: string
+          created_at: string
+          green: number
+          id: string
+          price: number
+          rarity: number
+          red: number
+          sender_id: string
+          used: boolean
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          blue?: number
+          code?: string
+          color?: string
+          created_at?: string
+          green?: number
+          id?: string
+          price?: number
+          rarity?: number
+          red?: number
+          sender_id: string
+          used?: boolean
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          blue?: number
+          code?: string
+          color?: string
+          created_at?: string
+          green?: number
+          id?: string
+          price?: number
+          rarity?: number
+          red?: number
+          sender_id?: string
+          used?: boolean
+          used_at?: string | null
+          used_by?: string | null
         }
         Relationships: []
       }
@@ -230,6 +287,7 @@ export type Database = {
     }
     Functions: {
       redeem_admin_link: { Args: { p_code: string }; Returns: Json }
+      redeem_crystal_gift: { Args: { p_code: string }; Returns: Json }
       send_mod_coins: {
         Args: { p_amount: number; p_target_email: string }
         Returns: Json
