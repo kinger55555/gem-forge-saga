@@ -176,7 +176,7 @@ export function useGameData() {
 
       const newPickaxe: PickaxeType = {
         id: insertRes.data.id,
-        type: insertRes.data.type as 'normal' | 'legendary',
+        type: insertRes.data.type as PickaxeType['type'],
         name: insertRes.data.name,
         used: insertRes.data.used
       };
