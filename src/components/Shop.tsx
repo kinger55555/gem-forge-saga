@@ -1,41 +1,30 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Coins, ShoppingCart, Gem, Shield, Crown } from 'lucide-react';
+import { Coins, ShoppingCart, Crown, Pickaxe as PickaxeIcon } from 'lucide-react';
 
 interface ShopProps {
   coins: number;
-  onBuySpecificPickaxe: (pickaxeKey: string, price: number) => Promise<boolean>;
+  onBuyPickaxe: (type: 'normal' | 'legendary', price: number) => Promise<boolean>;
 }
 
-export function Shop({ coins, onBuySpecificPickaxe }: ShopProps) {
+export function Shop({ coins, onBuyPickaxe }: ShopProps) {
   const pickaxes = [
     {
-      key: 'plain',
-      name: 'Plain Pickaxe',
-      description: 'Standard mining tool',
+      type: 'normal' as const,
+      name: 'Обычная кирка',
+      description: 'Стандартная кирка для добычи',
       price: 100,
-      color: 'hsl(var(--rarity-common))',
-      icon: ShoppingCart,
+      icon: PickaxeIcon,
       rarity: 'Common'
     },
     {
-      key: 'prismatic', 
-      name: 'Prismatic Pickaxe',
-      description: 'Roll 3 times, keep best rarity',
-      price: 1000,
-      color: 'hsl(var(--rarity-uncommon))',
-      icon: Gem,
-      rarity: 'Rare'
-    },
-    {
-      key: 'ancient',
-      name: 'Ancient Pickaxe', 
-      description: 'Roll 3 times, keep best, then +1 rarity',
+      type: 'legendary' as const,
+      name: 'Легендарная кирка',
+      description: 'Повышенный шанс редких кристаллов',
       price: 5000,
-      color: 'hsl(var(--rarity-rare))',
       icon: Crown,
-      rarity: 'Epic'
+      rarity: 'Legendary'
     }
   ];
 
@@ -50,35 +39,30 @@ export function Shop({ coins, onBuySpecificPickaxe }: ShopProps) {
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {pickaxes.map((pickaxe) => {
           const Icon = pickaxe.icon;
           const canAfford = coins >= pickaxe.price;
+          const isLegendary = pickaxe.type === 'legendary';
           
           return (
             <div 
-              key={pickaxe.key}
+              key={pickaxe.type}
               className={`
                 p-4 border rounded-lg bg-gradient-to-br from-card to-card/80
-                ${pickaxe.rarity === 'Epic' ? 'border-2 border-rarity-rare/50' : ''}
-                ${pickaxe.rarity === 'Rare' ? 'border-rarity-uncommon/50' : ''}
+                ${isLegendary ? 'border-2 border-rarity-legendary/50' : 'border-rarity-common/50'}
               `}
             >
               <div className="flex flex-col items-center gap-3">
                 <div 
-                  className="w-12 h-12 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: `${pickaxe.color}20` }}
+                  className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                    isLegendary ? 'bg-rarity-legendary/20' : 'bg-rarity-common/20'
+                  }`}
                 >
-                  <Icon 
-                    className="w-6 h-6" 
-                    style={{ color: pickaxe.color }}
-                  />
+                  <Icon className={`w-6 h-6 ${isLegendary ? 'text-rarity-legendary' : 'text-rarity-common'}`} />
                 </div>
                 <div className="text-center">
-                  <h3 
-                    className="font-medium"
-                    style={{ color: pickaxe.color }}
-                  >
+                  <h3 className={`font-medium ${isLegendary ? 'text-rarity-legendary' : 'text-rarity-common'}`}>
                     {pickaxe.name}
                   </h3>
                   <p className="text-xs text-muted-foreground mb-1">{pickaxe.rarity}</p>
@@ -88,16 +72,10 @@ export function Shop({ coins, onBuySpecificPickaxe }: ShopProps) {
                   </p>
                 </div>
                 <Button 
-                  onClick={() => onBuySpecificPickaxe(pickaxe.key, pickaxe.price)}
+                  onClick={() => onBuyPickaxe(pickaxe.type, pickaxe.price)}
                   disabled={!canAfford}
                   className="w-full"
                   size="sm"
-                  style={
-                    pickaxe.rarity === 'Epic' ? {
-                      backgroundColor: pickaxe.color,
-                      color: 'white'
-                    } : undefined
-                  }
                 >
                   Купить
                 </Button>

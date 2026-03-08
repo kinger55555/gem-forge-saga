@@ -22,7 +22,6 @@ import {
   Eye,
   EyeOff,
   Coins,
-  Package
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -43,10 +42,8 @@ export function AdminPanel({
   const [adminLinks, setAdminLinks] = useState<AdminLink[]>([]);
   const [customName, setCustomName] = useState('');
   const [coinAmount, setCoinAmount] = useState('100');
-  const [caseAmount, setCaseAmount] = useState('1');
   const [isLoadingLinks, setIsLoadingLinks] = useState(false);
 
-  // Load existing admin links when entering admin mode
   useEffect(() => {
     if (isAdminMode) {
       loadAdminLinks();
@@ -61,67 +58,45 @@ export function AdminPanel({
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error loading admin links:', error);
-        toast.error('Ошибка при загрузке ссылок!');
-        return;
-      }
+      if (error) throw error;
 
-      // Convert database records to AdminLink format
-      const links: AdminLink[] = (data || []).map(dbLink => ({
-        id: dbLink.id,
-        code: dbLink.code,
-        type: dbLink.type as AdminLink['type'],
-        name: dbLink.name,
-        used: dbLink.used,
-        createdAt: new Date(dbLink.created_at),
-        usedAt: dbLink.used_at ? new Date(dbLink.used_at) : undefined,
-        value: dbLink.value || undefined
-      }));
-
-      setAdminLinks(links);
+      setAdminLinks((data || []).map(link => ({
+        id: link.id,
+        code: link.code,
+        type: link.type as AdminLink['type'],
+        name: link.name,
+        used: link.used,
+        createdAt: new Date(link.created_at),
+        usedAt: link.used_at ? new Date(link.used_at) : undefined,
+        value: link.value ?? undefined,
+      })));
     } catch (error) {
-      console.error('Unexpected error loading links:', error);
-      toast.error('Неожиданная ошибка при загрузке ссылок!');
+      console.error('Error loading admin links:', error);
     } finally {
       setIsLoadingLinks(false);
     }
   };
 
   const handleAdminLogin = () => {
-    console.log('Admin login attempt with password:', adminPassword);
-    console.log('Expected password:', 'gemforge2024');
-    
     if (validateAdminPassword(adminPassword)) {
-      console.log('Admin login successful');
       onToggleAdmin(true);
       toast.success('Добро пожаловать в админ-панель!');
       setAdminPassword('');
     } else {
-      console.log('Admin login failed - incorrect password');
       toast.error('Неверный пароль администратора!');
     }
   };
 
-  const handleCreateLink = async (type: 'normal' | 'legendary' | 'coins' | 'case') => {
-    console.log('Creating admin link of type:', type);
-    
+  const handleCreateLink = async (type: 'normal' | 'legendary' | 'coins') => {
     let value: number | undefined;
     
     if (type === 'coins') {
       value = parseInt(coinAmount) || 100;
-    } else if (type === 'case') {
-      value = parseInt(caseAmount) || 1;
     }
     
-    console.log('Link value:', value);
-    console.log('Custom name:', customName);
-    
     const link = createAdminLink(type, customName, value);
-    console.log('Created link:', link);
     
     try {
-      // Save to database
       const { error } = await supabase
         .from('admin_links')
         .insert({
@@ -133,35 +108,21 @@ export function AdminPanel({
         });
 
       if (error) {
-        console.error('Error saving link to database:', error);
         toast.error('Ошибка при создании ссылки!');
         return;
       }
 
-      // Add to local state
       setAdminLinks(prev => [...prev, link]);
       setCustomName('');
       
-      let successMessage = '';
-      switch (type) {
-        case 'normal':
-          successMessage = 'Создана ссылка для обычной кирки!';
-          break;
-        case 'legendary':
-          successMessage = 'Создана ссылка для легендарной кирки!';
-          break;
-        case 'coins':
-          successMessage = `Создана ссылка на ${value} монет!`;
-          break;
-        case 'case':
-          successMessage = `Создана ссылка на ${value} кейс${value > 1 ? 'а' : ''}!`;
-          break;
-      }
+      const messages: Record<string, string> = {
+        normal: 'Создана ссылка для обычной кирки!',
+        legendary: 'Создана ссылка для легендарной кирки!',
+        coins: `Создана ссылка на ${value} монет!`,
+      };
       
-      console.log('Success message:', successMessage);
-      toast.success(successMessage);
+      toast.success(messages[type]);
     } catch (error) {
-      console.error('Unexpected error:', error);
       toast.error('Неожиданная ошибка при создании ссылки!');
     }
   };
@@ -174,56 +135,40 @@ export function AdminPanel({
 
   const handleDeleteLink = async (id: string) => {
     try {
-      // Find the link to get its database ID
       const linkToDelete = adminLinks.find(link => link.id === id);
       if (!linkToDelete) return;
 
-      // Delete from database using the code (since we might not have the DB id)
       const { error } = await supabase
         .from('admin_links')
         .delete()
         .eq('code', linkToDelete.code);
 
       if (error) {
-        console.error('Error deleting link from database:', error);
         toast.error('Ошибка при удалении ссылки!');
         return;
       }
 
-      // Remove from local state
       setAdminLinks(prev => prev.filter(link => link.id !== id));
       toast.success('Ссылка удалена!');
     } catch (error) {
-      console.error('Unexpected error:', error);
       toast.error('Неожиданная ошибка при удалении ссылки!');
     }
   };
 
   const getBadgeVariant = (type: AdminLink['type']) => {
     switch (type) {
-      case 'legendary':
-        return 'default';
-      case 'coins':
-        return 'outline';
-      case 'case':
-        return 'secondary';
-      default:
-        return 'secondary';
+      case 'legendary': return 'default';
+      case 'coins': return 'outline';
+      default: return 'secondary';
     }
   };
 
   const getTypeLabel = (link: AdminLink) => {
     switch (link.type) {
-      case 'normal':
-        return 'Обычная кирка';
-      case 'legendary':
-        return 'Легендарная';
-      case 'coins':
-        return 'Монеты';
-      case 'case':
-        return 'Кейс';
-      default:
-        return link.type;
+      case 'normal': return 'Обычная кирка';
+      case 'legendary': return 'Легендарная';
+      case 'coins': return 'Монеты';
+      default: return link.type;
     }
   };
 
@@ -280,11 +225,7 @@ export function AdminPanel({
           <Settings className="w-5 h-5" />
           Админ-панель
         </h2>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => onToggleAdmin(false)}
-        >
+        <Button variant="outline" size="sm" onClick={() => onToggleAdmin(false)}>
           Выйти
         </Button>
       </div>
@@ -353,40 +294,10 @@ export function AdminPanel({
           </Button>
         </div>
 
-        <Separator />
-
-        {/* Create Case Links */}
-        <div className="space-y-3">
-          <h3 className="font-medium">Создать ссылку на кейсы</h3>
-          
-          <div>
-            <Label htmlFor="caseAmount">Количество кейсов</Label>
-            <Input
-              id="caseAmount"
-              type="number"
-              value={caseAmount}
-              onChange={(e) => setCaseAmount(e.target.value)}
-              placeholder="1"
-              min="1"
-              className="mt-1"
-            />
-          </div>
-          
-          <Button 
-            onClick={() => handleCreateLink('case')}
-            variant="outline"
-            className="w-full gap-2"
-          >
-            <Package className="w-4 h-4" />
-            Создать ссылку на кейсы
-          </Button>
-        </div>
-
         {adminLinks.length > 0 && (
           <>
             <Separator />
 
-            {/* Generated Links */}
             <div className="space-y-3">
               <h3 className="font-medium">Созданные ссылки</h3>
               

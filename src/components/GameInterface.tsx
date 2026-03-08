@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useGameData } from '@/hooks/useGameData';
 import { supabase } from '@/integrations/supabase/client';
-import { PickaxeCase } from './PickaxeCase';
 import { Pickaxe } from './Pickaxe';
 import { MiningArea } from './MiningArea';
 import { CrystalInventory } from './CrystalInventory';
@@ -15,7 +14,7 @@ import { DailyRewards } from './DailyRewards';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { 
   MiningState, 
   Pickaxe as PickaxeType, 
@@ -27,9 +26,9 @@ import {
   getRarityName 
 } from '@/utils/crystalUtils';
 import { parsePickaxeFromUrl } from '@/utils/linkUtils';
-import { Plus, Gift, LogOut, Globe, User, RotateCcw } from 'lucide-react';
+import { Plus, LogOut, Globe, RotateCcw } from 'lucide-react';
+import { toast } from 'sonner';
 
-// SEO: semantic structure for main page
 const SeoHeader = () => (
   <header>
     <title>Gem Forge Saga - Mine crystals game</title>
@@ -37,13 +36,12 @@ const SeoHeader = () => (
     <link rel="canonical" href="/" />
   </header>
 );
-import { toast } from 'sonner';
 
 export function GameInterface() {
   const { user, signOut } = useAuth();
   const gameData = useGameData();
   const [language, setLanguage] = useState<'en' | 'ru'>('ru');
-  const [currentPickaxe, setCurrentPickaxe] = useState<(PickaxeType & { pickaxeKey?: string }) | null>(null);
+  const [currentPickaxe, setCurrentPickaxe] = useState<PickaxeType | null>(null);
   const [miningState, setMiningState] = useState<MiningState>(MiningState.IDLE);
   const [currentCrystal, setCurrentCrystal] = useState<Crystal | null>(null);
   const [showMiningModal, setShowMiningModal] = useState(false);
@@ -56,7 +54,6 @@ export function GameInterface() {
       pickaxes: 'Pickaxes',
       selected: 'Selected',
       signOut: 'Sign Out',
-      chooseLang: 'Language'
     },
     ru: {
       title: 'Gem Forge Saga',
@@ -64,7 +61,6 @@ export function GameInterface() {
       pickaxes: 'Кирки',
       selected: 'Выбрана',
       signOut: 'Выйти',
-      chooseLang: 'Язык'
     }
   };
 
@@ -86,7 +82,6 @@ export function GameInterface() {
         return;
       }
 
-      // Mark link as used
       const { error: updateError } = await supabase
         .from('admin_links')
         .update({ 
@@ -98,51 +93,31 @@ export function GameInterface() {
 
       if (updateError) throw updateError;
 
-      // Handle different link types
       switch (link.type) {
         case 'normal':
         case 'legendary':
-          // Insert pickaxe
           const { error: pickaxeError } = await supabase
             .from('pickaxes')
             .insert({
               user_id: user.id,
               type: link.type,
-              name: link.name,
+              name: link.type === 'legendary' ? 'Legendary Pickaxe' : 'Normal Pickaxe',
               used: false
             });
 
           if (pickaxeError) throw pickaxeError;
-          toast.success(`🎁 Received new pickaxe: ${link.name}!`, { duration: 4000 });
+          toast.success(`🎁 Received ${link.type} pickaxe!`, { duration: 4000 });
           break;
           
         case 'coins':
-          // Add coins to user's balance
           const coinAmount = (link as any).value || 100;
           const { error: coinError } = await supabase
             .from('game_state')
-            .update({ 
-              coins: (gameData.coins + coinAmount)
-            })
+            .update({ coins: (gameData.coins + coinAmount) })
             .eq('user_id', user.id);
 
           if (coinError) throw coinError;
           toast.success(`💰 Received ${coinAmount} coins!`, { duration: 4000 });
-          break;
-          
-        case 'case':
-          // Add coins equivalent to case value (100 coins per case)
-          const caseAmount = (link as any).value || 1;
-          const coinsFromCases = caseAmount * 100; // 100 coins per case
-          const { error: caseError } = await supabase
-            .from('game_state')
-            .update({ 
-              coins: (gameData.coins + coinsFromCases)
-            })
-            .eq('user_id', user.id);
-
-          if (caseError) throw caseError;
-          toast.success(`📦 Received ${caseAmount} case${caseAmount > 1 ? 's' : ''} (${coinsFromCases} coins)!`, { duration: 4000 });
           break;
           
         default:
@@ -150,7 +125,6 @@ export function GameInterface() {
           return;
       }
 
-      // Refresh game data
       gameData.refreshData();
       
     } catch (error: any) {
@@ -159,12 +133,10 @@ export function GameInterface() {
     }
   }, [user, gameData]);
 
-  // Check for admin link activation on component mount
   useEffect(() => {
     const linkCode = parsePickaxeFromUrl();
     if (linkCode) {
       activateAdminLinkFromCode(linkCode);
-      // Clean URL after activation
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [activateAdminLinkFromCode]);
@@ -173,7 +145,7 @@ export function GameInterface() {
     setIsAdminMode(isAdmin);
   }, []);
 
-  const selectPickaxe = useCallback((pickaxe: PickaxeType & { pickaxeKey?: string }) => {
+  const selectPickaxe = useCallback((pickaxe: PickaxeType) => {
     if (pickaxe.used) {
       toast.error(language === 'en' ? 'This pickaxe is already used!' : 'Эта кирка уже использована!');
       return;
@@ -191,22 +163,17 @@ export function GameInterface() {
     if (!currentPickaxe) return;
 
     if (miningState === MiningState.IDLE) {
-      // First click → show rarity color cue based on rarity points
-      const crystal = generateCrystal(currentPickaxe.pickaxeKey);
+      const crystal = generateCrystal();
       
       setMiningState(MiningState.SHOWING_RARITY);
       setCurrentCrystal(crystal);
       
       toast.success(`Found ${getRarityName(crystal.rarity, language).toLowerCase()} crystal!`);
-      
-      toast.success(`Found ${getRarityName(crystal.rarity, language).toLowerCase()} crystal!`);
     } 
     else if (miningState === MiningState.SHOWING_RARITY) {
-      // Show the actual crystal
       setMiningState(MiningState.SHOWING_CRYSTAL);
     }
     else if (miningState === MiningState.SHOWING_CRYSTAL && currentCrystal) {
-      // Collect the crystal
       gameData.saveCrystal(currentCrystal);
       gameData.usePickaxe(currentPickaxe.id);
       
@@ -332,17 +299,10 @@ export function GameInterface() {
               </div>
             </Card>
 
-            {/* Pickaxe Case */}
-            <PickaxeCase 
-              coins={gameData.coins}
-              onOpenCase={gameData.addPickaxeFromCase}
-              language={language}
-            />
-
             {/* Shop */}
             <Shop 
               coins={gameData.coins}
-              onBuySpecificPickaxe={gameData.buySpecificPickaxe}
+              onBuyPickaxe={gameData.buyPickaxe}
             />
 
             {/* Clicker */}
