@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Crystal } from '@/types/game';
-import { Dice, CRYSTALS_PER_DICE } from '@/types/dice';
+import { Dice } from '@/types/dice';
 import { CrystalSmelter } from './forge/CrystalSmelter';
 import { DiceInventory } from './forge/DiceInventory';
 import { DiceBattle } from './forge/DiceBattle';
@@ -18,16 +18,8 @@ interface ForgeProps {
 }
 
 const t = {
-  en: {
-    smelt: 'Smelt',
-    inventory: 'Dice',
-    battle: 'Battle',
-  },
-  ru: {
-    smelt: 'Плавка',
-    inventory: 'Кубики',
-    battle: 'Бой',
-  },
+  en: { smelt: 'Smelt', inventory: 'Dice', battle: 'Battle' },
+  ru: { smelt: 'Плавка', inventory: 'Кубики', battle: 'Бой' },
 };
 
 const DICE_STORAGE_KEY = 'gem_forge_dice';
@@ -49,16 +41,18 @@ export function Forge({ crystals, coins, onConsumeCrystals, onEarnCoins, languag
 
   useEffect(() => { saveDice(dice); }, [dice]);
 
-  const handleSmelt = (crystalIds: string[], tier: number) => {
-    onConsumeCrystals(crystalIds);
-    const newDie: Dice = { id: crypto.randomUUID(), tier };
+  const handleSmelt = (crystalId: string, tier: number, color: string) => {
+    onConsumeCrystals([crystalId]);
+    const newDie: Dice = { id: crypto.randomUUID(), tier, color };
     setDice(prev => [...prev, newDie]);
-    toast.success(language === 'ru' ? `Создан кубик Тир ${tier}!` : `Created Tier ${tier} die!`);
+    toast.success(language === 'ru'
+      ? `Создан кубик ${tier === 10 ? 'Артефакт' : `Тир ${tier}`}!`
+      : `Created ${tier === 10 ? 'Artifact' : `Tier ${tier}`} die!`
+    );
   };
 
   const handleBattleEnd = (won: boolean, diceUsed: string[], coinsWon: number) => {
     if (!won) {
-      // Remove used dice on defeat
       setDice(prev => prev.filter(d => !diceUsed.includes(d.id)));
     }
     if (coinsWon > 0) {
@@ -71,27 +65,21 @@ export function Forge({ crystals, coins, onConsumeCrystals, onEarnCoins, languag
       <Tabs defaultValue="smelt" className="space-y-4">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="smelt" className="gap-1 text-xs sm:text-sm">
-            <Hammer className="w-4 h-4" />
-            {l.smelt}
+            <Hammer className="w-4 h-4" /> {l.smelt}
           </TabsTrigger>
           <TabsTrigger value="inventory" className="gap-1 text-xs sm:text-sm">
-            <Dices className="w-4 h-4" />
-            {l.inventory}
+            <Dices className="w-4 h-4" /> {l.inventory}
           </TabsTrigger>
           <TabsTrigger value="battle" className="gap-1 text-xs sm:text-sm">
-            <Swords className="w-4 h-4" />
-            {l.battle}
+            <Swords className="w-4 h-4" /> {l.battle}
           </TabsTrigger>
         </TabsList>
-
         <TabsContent value="smelt">
           <CrystalSmelter crystals={crystals} onSmelt={handleSmelt} language={language} />
         </TabsContent>
-
         <TabsContent value="inventory">
           <DiceInventory dice={dice} language={language} />
         </TabsContent>
-
         <TabsContent value="battle">
           <DiceBattle dice={dice} onBattleEnd={handleBattleEnd} language={language} />
         </TabsContent>

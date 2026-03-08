@@ -1,23 +1,18 @@
 export type DiceFace = 'sword' | 'shield' | 'tree' | 'rot';
 
-export interface DiceTier {
-  tier: number;
-  faces: DiceFace[];
-}
-
 export interface Dice {
   id: string;
   tier: number;
+  color: string; // crystal color (rgb string)
 }
 
 export interface BattleDifficulty {
   id: string;
   name: { en: string; ru: string };
-  monsterDice: number[]; // array of tiers
-  reward: { coins: number; };
+  monsterDice: number[];
+  reward: { coins: number };
 }
 
-// Tier face distributions (6 faces each)
 export const DICE_TIERS: Record<number, DiceFace[]> = {
   1: ['sword', 'sword', 'shield', 'shield', 'tree', 'rot'],
   2: ['sword', 'sword', 'sword', 'shield', 'tree', 'rot'],
@@ -28,9 +23,10 @@ export const DICE_TIERS: Record<number, DiceFace[]> = {
   7: ['sword', 'sword', 'sword', 'sword', 'shield', 'rot'],
   8: ['sword', 'shield', 'shield', 'shield', 'shield', 'tree'],
   9: ['sword', 'sword', 'sword', 'tree', 'tree', 'tree'],
+  10: ['sword', 'sword', 'sword', 'shield', 'tree', 'tree'], // Artifact
 };
 
-export const CRYSTALS_PER_DICE = 3;
+export const CRYSTALS_PER_DICE = 1;
 
 export function rollDie(tier: number): DiceFace {
   const faces = DICE_TIERS[tier];
@@ -55,6 +51,11 @@ export function getDiceFaceName(face: DiceFace, lang: 'en' | 'ru'): string {
     rot: { en: 'Rot', ru: 'Гниль' },
   };
   return names[face][lang];
+}
+
+export function getTierName(tier: number, lang: 'en' | 'ru'): string {
+  if (tier === 10) return lang === 'ru' ? 'Артефакт' : 'Artifact';
+  return `${lang === 'ru' ? 'Тир' : 'Tier'} ${tier}`;
 }
 
 export const BATTLE_DIFFICULTIES: BattleDifficulty[] = [
