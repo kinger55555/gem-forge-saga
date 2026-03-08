@@ -18,7 +18,7 @@ interface TempleProps {
   language: 'en' | 'ru';
 }
 
-export type MiniGameId = 'menu' | 'shell' | 'clicker' | 'tworoads' | 'memory' | 'roulette' | 'quickdraw';
+export type MiniGameId = 'menu' | 'shell' | 'clicker' | 'tworoads' | 'memory' | 'roulette' | 'quickdraw' | 'nova';
 
 const translations = {
   en: {
