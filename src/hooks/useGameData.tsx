@@ -29,12 +29,24 @@ export function useGameData() {
       const [pickaxesRes, crystalsRes, gameStateRes] = await Promise.all([
         supabase.from('pickaxes').select('*').eq('user_id', user.id),
         supabase.from('crystals').select('*').eq('user_id', user.id),
-        supabase.from('game_state').select('*').eq('user_id', user.id).single()
+        supabase.from('game_state').select('*').eq('user_id', user.id).maybeSingle()
       ]);
 
       if (pickaxesRes.error) throw pickaxesRes.error;
       if (crystalsRes.error) throw crystalsRes.error;
       if (gameStateRes.error) throw gameStateRes.error;
+
+      // Create game_state row if it doesn't exist
+      let gameState = gameStateRes.data;
+      if (!gameState) {
+        const { data: newState, error: createError } = await supabase
+          .from('game_state')
+          .insert({ user_id: user.id, coins: 0, clicker_earnings: 0 })
+          .select()
+          .single();
+        if (createError) throw createError;
+        gameState = newState;
+      }
 
       setGameData({
         pickaxes: pickaxesRes.data.map(p => ({
