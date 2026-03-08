@@ -267,6 +267,27 @@ export function useGameData() {
     }
   };
 
+  const consumeCrystal = async (crystalId: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('crystals')
+        .delete()
+        .eq('id', crystalId);
+
+      if (error) throw error;
+
+      setGameData(prev => ({
+        ...prev,
+        crystals: prev.crystals.filter(c => c.id !== crystalId)
+      }));
+    } catch (error: any) {
+      console.error('Error consuming crystal:', error);
+      toast.error('Failed to consume crystal');
+    }
+  };
+
   return {
     ...gameData,
     saveCrystal,
@@ -275,6 +296,7 @@ export function useGameData() {
     buyPickaxe,
     addClickerEarnings,
     clearUsedPickaxes,
+    consumeCrystal,
     refreshData: loadGameData
   };
 }

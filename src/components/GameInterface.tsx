@@ -11,6 +11,7 @@ import { Shop } from './Shop';
 import { PickaxeCodeInput } from './PickaxeCodeInput';
 import { DailyRewards } from './DailyRewards';
 import { Temple } from './Temple';
+import { GlyphCipher } from './GlyphCipher';
 import { WelcomeTutorial } from './WelcomeTutorial';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,7 @@ import {
   getRarityName 
 } from '@/utils/crystalUtils';
 import { parsePickaxeFromUrl } from '@/utils/linkUtils';
-import { Plus, LogOut, Globe, RotateCcw, Pickaxe as PickaxeIcon, Landmark } from 'lucide-react';
+import { Plus, LogOut, Globe, RotateCcw, Pickaxe as PickaxeIcon, Landmark, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 
 const SeoHeader = () => (
@@ -61,6 +62,7 @@ export function GameInterface() {
       signOut: 'Sign Out',
       mine: 'Mine',
       temple: 'Temple',
+      scribe: "Scribe's Vigil",
     },
     ru: {
       title: 'Gem Forge Saga',
@@ -70,6 +72,7 @@ export function GameInterface() {
       signOut: 'Выйти',
       mine: 'Шахта',
       temple: 'Храм',
+      scribe: 'Бдение Писца',
     }
   };
 
@@ -157,6 +160,10 @@ export function GameInterface() {
     await gameData.addClickerEarnings(amount);
   }, [gameData]);
 
+  const handleConsumeCrystal = useCallback(async (crystalId: string) => {
+    await gameData.consumeCrystal(crystalId);
+  }, [gameData]);
+
   if (gameData.loading) {
     return (
       <div className="min-h-screen bg-gradient-cave flex items-center justify-center">
@@ -225,7 +232,7 @@ export function GameInterface() {
 
         {/* Tabs */}
         <Tabs defaultValue="mine" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2 mx-auto">
+          <TabsList className="grid w-full max-w-lg grid-cols-3 mx-auto">
             <TabsTrigger value="mine" className="gap-2">
               <PickaxeIcon className="w-4 h-4" />
               {t.mine}
@@ -234,19 +241,20 @@ export function GameInterface() {
               <Landmark className="w-4 h-4" />
               {t.temple}
             </TabsTrigger>
+            <TabsTrigger value="scribe" className="gap-2">
+              <Eye className="w-4 h-4" />
+              {t.scribe}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="mine">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Panel */}
               <div className="lg:col-span-2 space-y-6">
-                {/* Pickaxes */}
                 <Card className="p-6">
                   <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                     <Plus className="w-5 h-5" />
                     {t.pickaxes}
                   </h2>
-                  
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <div></div>
@@ -261,7 +269,6 @@ export function GameInterface() {
                         {language === 'ru' ? 'Удалить использованные' : 'Delete used pickaxes'}
                       </Button>
                     </div>
-                    
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {gameData.pickaxes.map((pickaxe) => (
                         <Pickaxe
@@ -276,30 +283,13 @@ export function GameInterface() {
                     </div>
                   </div>
                 </Card>
-
-                {/* Shop */}
-                <Shop 
-                  coins={gameData.coins}
-                  onBuyPickaxe={gameData.buyPickaxe}
-                />
-
-                {/* Daily Rewards */}
-                <DailyRewards 
-                  onRewardClaimed={gameData.refreshData}
-                  language={language}
-                />
-
-                {/* Pickaxe Code Input */}
-                <PickaxeCodeInput 
-                  onRedeemCode={activateAdminLinkFromCode}
-                  language={language}
-                />
+                <Shop coins={gameData.coins} onBuyPickaxe={gameData.buyPickaxe} />
+                <DailyRewards onRewardClaimed={gameData.refreshData} language={language} />
+                <PickaxeCodeInput onRedeemCode={activateAdminLinkFromCode} language={language} />
               </div>
-
-              {/* Right Panel - Inventory */}
               <div>
                 <Card className="p-6">
-                  <CrystalInventory 
+                  <CrystalInventory
                     crystals={gameData.crystals}
                     coins={gameData.coins}
                     onSellCrystal={gameData.sellCrystal}
@@ -317,12 +307,35 @@ export function GameInterface() {
                   crystals={gameData.crystals}
                   coins={gameData.coins}
                   onEarnCoins={handleTempleEarnCoins}
+                  onConsumeCrystal={handleConsumeCrystal}
                   language={language}
                 />
               </div>
               <div>
                 <Card className="p-6">
-                  <CrystalInventory 
+                  <CrystalInventory
+                    crystals={gameData.crystals}
+                    coins={gameData.coins}
+                    onSellCrystal={gameData.sellCrystal}
+                    language={language}
+                  />
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="scribe">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <GlyphCipher
+                  onEarnCoins={handleTempleEarnCoins}
+                  coins={gameData.coins}
+                  language={language}
+                />
+              </div>
+              <div>
+                <Card className="p-6">
+                  <CrystalInventory
                     crystals={gameData.crystals}
                     coins={gameData.coins}
                     onSellCrystal={gameData.sellCrystal}
