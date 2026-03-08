@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/dialog';
 import { validateAdminPassword, createAdminLink, getActivationUrl } from '@/utils/linkUtils';
 import { AdminLink } from '@/types/admin';
+import { PickaxeRarity } from '@/types/game';
+import { getRarityColor, getRarityName } from '@/utils/crystalUtils';
 import { 
   Settings, 
   Link,
@@ -31,6 +33,12 @@ interface AdminPanelProps {
   onToggleAdmin: (isAdmin: boolean) => void;
   language?: 'en' | 'ru';
 }
+
+const ALL_PICKAXE_TYPES: PickaxeRarity[] = ['trash', 'common', 'epic', 'legendary', 'demonic', 'silent'];
+
+const TIER_INDEX: Record<PickaxeRarity, number> = {
+  trash: 0, common: 1, epic: 2, legendary: 3, demonic: 4, silent: 5,
+};
 
 export function AdminPanel({ 
   isAdminMode, 
@@ -87,7 +95,7 @@ export function AdminPanel({
     }
   };
 
-  const handleCreateLink = async (type: 'normal' | 'legendary' | 'coins') => {
+  const handleCreateLink = async (type: PickaxeRarity | 'coins') => {
     let value: number | undefined;
     
     if (type === 'coins') {
@@ -112,16 +120,13 @@ export function AdminPanel({
         return;
       }
 
-      setAdminLinks(prev => [...prev, link]);
+      setAdminLinks(prev => [link, ...prev]);
       setCustomName('');
       
-      const messages: Record<string, string> = {
-        normal: 'Создана ссылка для обычной кирки!',
-        legendary: 'Создана ссылка для легендарной кирки!',
-        coins: `Создана ссылка на ${value} монет!`,
-      };
-      
-      toast.success(messages[type]);
+      toast.success(type === 'coins' 
+        ? `Создана ссылка на ${value} монет!`
+        : `Создана ссылка на ${getRarityName(TIER_INDEX[type as PickaxeRarity], language)} кирку!`
+      );
     } catch (error) {
       toast.error('Неожиданная ошибка при создании ссылки!');
     }
@@ -155,21 +160,15 @@ export function AdminPanel({
     }
   };
 
-  const getBadgeVariant = (type: AdminLink['type']) => {
-    switch (type) {
-      case 'legendary': return 'default';
-      case 'coins': return 'outline';
-      default: return 'secondary';
-    }
+  const getTypeLabel = (link: AdminLink) => {
+    if (link.type === 'coins') return 'Монеты';
+    const tier = TIER_INDEX[link.type as PickaxeRarity];
+    return getRarityName(tier, language);
   };
 
-  const getTypeLabel = (link: AdminLink) => {
-    switch (link.type) {
-      case 'normal': return 'Обычная кирка';
-      case 'legendary': return 'Легендарная';
-      case 'coins': return 'Монеты';
-      default: return link.type;
-    }
+  const getTypeColor = (link: AdminLink) => {
+    if (link.type === 'coins') return undefined;
+    return getRarityColor(TIER_INDEX[link.type as PickaxeRarity]);
   };
 
   if (!isAdminMode) {
@@ -246,22 +245,24 @@ export function AdminPanel({
             />
           </div>
           
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => handleCreateLink('normal')}
-              variant="outline"
-              className="flex-1 gap-2"
-            >
-              <Link className="w-4 h-4" />
-              Обычная кирка
-            </Button>
-            <Button 
-              onClick={() => handleCreateLink('legendary')}
-              className="flex-1 gap-2"
-            >
-              <Link className="w-4 h-4" />
-              Легендарная кирка
-            </Button>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {ALL_PICKAXE_TYPES.map((type) => {
+              const tier = TIER_INDEX[type];
+              const color = getRarityColor(tier);
+              return (
+                <Button
+                  key={type}
+                  onClick={() => handleCreateLink(type)}
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 text-xs"
+                  style={{ borderColor: color, color }}
+                >
+                  <Link className="w-3 h-3" />
+                  {getRarityName(tier, language)}
+                </Button>
+              );
+            })}
           </div>
         </div>
 
@@ -306,7 +307,10 @@ export function AdminPanel({
                   <div key={link.id} className="p-3 bg-muted/50 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <div className="font-medium text-sm">{link.name}</div>
-                      <Badge variant={getBadgeVariant(link.type)}>
+                      <Badge
+                        variant="outline"
+                        style={getTypeColor(link) ? { borderColor: getTypeColor(link), color: getTypeColor(link) } : undefined}
+                      >
                         {getTypeLabel(link)}
                       </Badge>
                     </div>
