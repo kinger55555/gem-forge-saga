@@ -84,6 +84,7 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
   if (currentGame === 'memory') return <MemoryGame {...gameProps} />;
   if (currentGame === 'roulette') return <ColorRoulette {...gameProps} />;
   if (currentGame === 'quickdraw') return <QuickDraw {...gameProps} />;
+  if (currentGame === 'nova') return <NovaCollapse {...gameProps} />;
 
   // Menu
   return (
