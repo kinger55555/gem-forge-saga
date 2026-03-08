@@ -183,3 +183,77 @@
     transform: translateX(100%);
   }
 }
+
+/* High-tier pickaxe effects */
+@keyframes insane-shake {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(1px, -1px) rotate(0.5deg); }
+  50% { transform: translate(-1px, 1px) rotate(-0.5deg); }
+  75% { transform: translate(1px, 0px) rotate(0.3deg); }
+}
+
+@keyframes insane-zap {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  50% { transform: scale(1.3) rotate(15deg); opacity: 0.7; }
+}
+
+@keyframes demonic-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.15); }
+}
+
+@keyframes demonic-icon {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 0.6; transform: scale(1) translateY(0); }
+  25% { opacity: 0.3; transform: scale(0.9) translateY(1px); }
+  50% { opacity: 0.7; transform: scale(1.1) translateY(-2px); }
+  75% { opacity: 0.4; transform: scale(0.95) translateY(0); }
+}
+
+@keyframes silent-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+@keyframes silent-eye {
+  0%, 40%, 60%, 100% { transform: scaleY(1); opacity: 0.8; }
+  50% { transform: scaleY(0.1); opacity: 0.3; }
+}
+
+@keyframes float-particle {
+  0% { transform: translateY(0) scale(1); opacity: 0; }
+  20% { opacity: 0.5; }
+  50% { transform: translateY(-20px) scale(1.2); opacity: 0.4; }
+  80% { opacity: 0.1; }
+  100% { transform: translateY(-35px) scale(0.5); opacity: 0; }
+}
+
+@keyframes artifact-glow {
+  0%, 100% { 
+    filter: brightness(1) saturate(1);
+    box-shadow: 0 0 15px currentColor;
+  }
+  50% { 
+    filter: brightness(1.2) saturate(1.3);
+    box-shadow: 0 0 30px currentColor;
+  }
+}
+
+@keyframes artifact-sweep {
+  0% { transform: translateX(-100%) rotate(-15deg); }
+  100% { transform: translateX(200%) rotate(-15deg); }
+}
+
+@keyframes artifact-icon-pulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px currentColor); }
+  50% { transform: scale(1.05); filter: drop-shadow(0 0 8px currentColor); }
+}
+
+@keyframes artifact-crown {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(-3px) rotate(5deg); }
+}
