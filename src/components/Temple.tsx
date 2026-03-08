@@ -24,8 +24,8 @@ const translations = {
     shellDesc: 'Track the rune under shuffling cups. Win: crystal + 50% bonus.',
     clickerTitle: 'Crystal Clicker',
     clickerDesc: 'Tap fast enough to charge the crystal. Win: crystal + 30% bonus.',
-    singularityTitle: 'Singularity',
-    singularityDesc: 'Survive 5 phases of timing mastery. Win: crystal + 70% bonus.',
+    singularityTitle: 'Timing Tap',
+    singularityDesc: 'Tap at the perfect moment — multiple rounds. Win: crystal + 70% bonus.',
     comingSoon: 'More games coming soon...',
   },
   ru: {
