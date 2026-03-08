@@ -29,7 +29,7 @@ import {
   getRarityName 
 } from '@/utils/crystalUtils';
 import { parsePickaxeFromUrl } from '@/utils/linkUtils';
-import { Plus, LogOut, Globe, RotateCcw, Pickaxe as PickaxeIcon, Landmark } from 'lucide-react';
+import { Plus, LogOut, Globe, RotateCcw, Pickaxe as PickaxeIcon, Landmark, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 
 const SeoHeader = () => (
