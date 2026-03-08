@@ -62,7 +62,7 @@ export function GameInterface() {
       signOut: 'Sign Out',
       mine: 'Mine',
       temple: 'Temple',
-      scribe: "Scribe's Vigil",
+      
     },
     ru: {
       title: 'Gem Forge Saga',
