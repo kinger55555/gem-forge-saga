@@ -114,9 +114,10 @@ export function PressureHold({ crystals, coins, onEarnCoins, onConsumeCrystal, o
 
     if (isWin) {
       const bonusCoins = Math.floor(selectedCrystal.price * (bonus / 100));
-      await onEarnCoins(selectedCrystal.price + bonusCoins);
+      await onEarnCoins(bonusCoins);
+    } else {
+      await onConsumeCrystal(selectedCrystal.id);
     }
-    await onConsumeCrystal(selectedCrystal.id);
   };
 
   useEffect(() => () => { if (animRef.current) cancelAnimationFrame(animRef.current); }, []);

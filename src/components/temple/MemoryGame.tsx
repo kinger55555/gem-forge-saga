@@ -118,9 +118,10 @@ export function MemoryGame({ crystals, coins, onEarnCoins, onConsumeCrystal, onB
 
     if (correct) {
       const bonus = Math.floor(selectedCrystal.price * BONUS);
-      await onEarnCoins(selectedCrystal.price + bonus);
+      await onEarnCoins(bonus);
+    } else {
+      await onConsumeCrystal(selectedCrystal.id);
     }
-    await onConsumeCrystal(selectedCrystal.id);
   };
 
   // SELECT phase
