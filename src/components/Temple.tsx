@@ -98,12 +98,13 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
     setRevealedCup(targetIdx);
     setPhase('reveal');
 
-    // Show the target for 1.5s, then start shuffling
+    // Show the target for 2s, then start Phase 1 (pairwise swaps)
     timerRef.current = setTimeout(() => {
       setRevealedCup(null);
       setPhase('shuffling');
-      doShuffles(selected.length, diff.shuffles, diff.speed, 0, selected.map((_, i) => i));
-    }, 1500);
+      const initPos = selected.map((_, i) => i);
+      doSwapPhase(selected.length, diff.swaps, diff.spins, diff.speed, 0, initPos);
+    }, 2000);
   }, []);
 
   // Patterns that move ALL 8 cups at once (2x4 grid, indices 0-7)
