@@ -41,12 +41,13 @@ export function DailyRewards({ onRewardClaimed, language = 'ru' }: DailyRewardsP
 
       if (error) throw error;
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      const today = new Date(todayStr + 'T00:00:00Z');
 
       // Daily check
       if (gameState?.last_daily_claim) {
-        const lastClaim = new Date(gameState.last_daily_claim + 'T00:00:00');
+        const lastClaim = new Date(gameState.last_daily_claim + 'T00:00:00Z');
         setCanClaimDaily(lastClaim.getTime() < today.getTime());
       } else {
         setCanClaimDaily(true);
@@ -54,7 +55,7 @@ export function DailyRewards({ onRewardClaimed, language = 'ru' }: DailyRewardsP
 
       // Weekly check: 7 days since last weekly claim
       if (gameState?.last_weekly_claim) {
-        const lastWeekly = new Date(gameState.last_weekly_claim + 'T00:00:00');
+        const lastWeekly = new Date(gameState.last_weekly_claim + 'T00:00:00Z');
         const diffDays = Math.floor((today.getTime() - lastWeekly.getTime()) / (1000 * 60 * 60 * 24));
         setCanClaimWeekly(diffDays >= 7);
         setDaysUntilWeekly(Math.max(0, 7 - diffDays));
@@ -82,9 +83,9 @@ export function DailyRewards({ onRewardClaimed, language = 'ru' }: DailyRewardsP
     setIsLoadingDaily(true);
 
     try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayStr = today.toISOString().split('T')[0];
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      const today = new Date(todayStr + 'T00:00:00Z');
 
       // Get current game state for streak calc
       const { data: gameState } = await supabase
@@ -96,7 +97,7 @@ export function DailyRewards({ onRewardClaimed, language = 'ru' }: DailyRewardsP
       // Calculate new streak
       let newStreak = 1;
       if (gameState?.last_daily_claim) {
-        const lastClaim = new Date(gameState.last_daily_claim + 'T00:00:00');
+        const lastClaim = new Date(gameState.last_daily_claim + 'T00:00:00Z');
         const diffDays = Math.floor((today.getTime() - lastClaim.getTime()) / (1000 * 60 * 60 * 24));
         if (diffDays === 1) {
           newStreak = (gameState.streak_count ?? 0) + 1;
