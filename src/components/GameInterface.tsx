@@ -11,6 +11,7 @@ import { Shop } from './Shop';
 import { PickaxeCodeInput } from './PickaxeCodeInput';
 import { DailyRewards } from './DailyRewards';
 import { Temple } from './Temple';
+import { WelcomeTutorial } from './WelcomeTutorial';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +48,9 @@ export function GameInterface() {
   const [currentCrystal, setCurrentCrystal] = useState<Crystal | null>(null);
   const [showMiningModal, setShowMiningModal] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(() => {
+    return !localStorage.getItem('gem_forge_tutorial_seen');
+  });
 
   const translations = {
     en: {
@@ -343,6 +347,16 @@ export function GameInterface() {
             />
           </DialogContent>
         </Dialog>
+
+        {/* Welcome Tutorial */}
+        <WelcomeTutorial
+          open={showTutorial}
+          onClose={() => {
+            setShowTutorial(false);
+            localStorage.setItem('gem_forge_tutorial_seen', 'true');
+          }}
+          language={language}
+        />
       </div>
     </div>
   );
