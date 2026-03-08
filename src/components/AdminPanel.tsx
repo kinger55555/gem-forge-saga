@@ -16,6 +16,7 @@ import {
   Trash2,
   Coins,
   Send,
+  Gem,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
