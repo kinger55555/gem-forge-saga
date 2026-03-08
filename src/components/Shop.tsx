@@ -1,33 +1,25 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Coins, ShoppingCart, Crown, Pickaxe as PickaxeIcon } from 'lucide-react';
+import { Coins, ShoppingCart, Pickaxe as PickaxeIcon } from 'lucide-react';
+import { PickaxeRarity } from '@/types/game';
+import { getRarityName, getRarityColor } from '@/utils/crystalUtils';
 
 interface ShopProps {
   coins: number;
-  onBuyPickaxe: (type: 'normal' | 'legendary', price: number) => Promise<boolean>;
+  onBuyPickaxe: (type: PickaxeRarity, price: number) => Promise<boolean>;
 }
 
-export function Shop({ coins, onBuyPickaxe }: ShopProps) {
-  const pickaxes = [
-    {
-      type: 'normal' as const,
-      name: 'Обычная кирка',
-      description: 'Стандартная кирка для добычи',
-      price: 100,
-      icon: PickaxeIcon,
-      rarity: 'Common'
-    },
-    {
-      type: 'legendary' as const,
-      name: 'Легендарная кирка',
-      description: 'Повышенный шанс редких кристаллов',
-      price: 5000,
-      icon: Crown,
-      rarity: 'Legendary'
-    }
-  ];
+const PICKAXE_SHOP_ITEMS: { type: PickaxeRarity; price: number; tierIndex: number }[] = [
+  { type: 'trash', price: 50, tierIndex: 0 },
+  { type: 'common', price: 200, tierIndex: 1 },
+  { type: 'epic', price: 1000, tierIndex: 2 },
+  { type: 'legendary', price: 5000, tierIndex: 3 },
+  { type: 'demonic', price: 25000, tierIndex: 4 },
+  { type: 'silent', price: 100000, tierIndex: 5 },
+];
 
+export function Shop({ coins, onBuyPickaxe }: ShopProps) {
   return (
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -39,47 +31,43 @@ export function Shop({ coins, onBuyPickaxe }: ShopProps) {
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {pickaxes.map((pickaxe) => {
-          const Icon = pickaxe.icon;
-          const canAfford = coins >= pickaxe.price;
-          const isLegendary = pickaxe.type === 'legendary';
-          
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {PICKAXE_SHOP_ITEMS.map((item) => {
+          const canAfford = coins >= item.price;
+          const rarityColor = getRarityColor(item.tierIndex);
+          const rarityName = getRarityName(item.tierIndex, 'ru');
+
           return (
-            <div 
-              key={pickaxe.type}
-              className={`
-                p-4 border rounded-lg bg-gradient-to-br from-card to-card/80
-                ${isLegendary ? 'border-2 border-rarity-legendary/50' : 'border-rarity-common/50'}
-              `}
+            <div
+              key={item.type}
+              className="p-3 border-2 rounded-lg bg-gradient-to-br from-card to-card/80 flex flex-col items-center gap-2"
+              style={{ borderColor: rarityColor }}
             >
-              <div className="flex flex-col items-center gap-3">
-                <div 
-                  className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                    isLegendary ? 'bg-rarity-legendary/20' : 'bg-rarity-common/20'
-                  }`}
-                >
-                  <Icon className={`w-6 h-6 ${isLegendary ? 'text-rarity-legendary' : 'text-rarity-common'}`} />
-                </div>
-                <div className="text-center">
-                  <h3 className={`font-medium ${isLegendary ? 'text-rarity-legendary' : 'text-rarity-common'}`}>
-                    {pickaxe.name}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mb-1">{pickaxe.rarity}</p>
-                  <p className="text-xs text-muted-foreground">{pickaxe.description}</p>
-                  <p className="text-lg font-bold text-primary mt-2">
-                    {pickaxe.price.toLocaleString()} монет
-                  </p>
-                </div>
-                <Button 
-                  onClick={() => onBuyPickaxe(pickaxe.type, pickaxe.price)}
-                  disabled={!canAfford}
-                  className="w-full"
-                  size="sm"
-                >
-                  Купить
-                </Button>
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: `${rarityColor}20` }}
+              >
+                <PickaxeIcon className="w-5 h-5" style={{ color: rarityColor }} />
               </div>
+              <div className="text-center">
+                <h3 className="font-medium text-sm" style={{ color: rarityColor }}>
+                  {rarityName}
+                </h3>
+                <p className="text-[10px] text-muted-foreground">
+                  Редкость: {Math.max(0, item.tierIndex - 1)}–{Math.min(5, item.tierIndex + 4)}
+                </p>
+                <p className="text-sm font-bold text-primary mt-1">
+                  {item.price.toLocaleString()}
+                </p>
+              </div>
+              <Button
+                onClick={() => onBuyPickaxe(item.type, item.price)}
+                disabled={!canAfford}
+                className="w-full"
+                size="sm"
+              >
+                Купить
+              </Button>
             </div>
           );
         })}

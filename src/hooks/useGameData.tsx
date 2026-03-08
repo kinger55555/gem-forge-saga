@@ -39,7 +39,7 @@ export function useGameData() {
       setGameData({
         pickaxes: pickaxesRes.data.map(p => ({
           id: p.id,
-          type: p.type as 'normal' | 'legendary',
+          type: p.type as PickaxeType['type'],
           name: p.name,
           used: p.used
         })),
@@ -153,11 +153,11 @@ export function useGameData() {
     }
   };
 
-  const buyPickaxe = async (type: 'normal' | 'legendary', price: number) => {
+  const buyPickaxe = async (type: PickaxeType['type'], price: number) => {
     if (!user || gameData.coins < price) return false;
 
     try {
-      const name = type === 'normal' ? 'Normal Pickaxe' : 'Legendary Pickaxe';
+      const name = `${type.charAt(0).toUpperCase() + type.slice(1)} Pickaxe`;
       
       const [insertRes, updateRes] = await Promise.all([
         supabase.from('pickaxes').insert({
@@ -176,7 +176,7 @@ export function useGameData() {
 
       const newPickaxe: PickaxeType = {
         id: insertRes.data.id,
-        type: insertRes.data.type as 'normal' | 'legendary',
+        type: insertRes.data.type as PickaxeType['type'],
         name: insertRes.data.name,
         used: insertRes.data.used
       };
