@@ -50,16 +50,18 @@ export function CrystalInventory({ crystals, coins, onSellCrystal, language }: C
 
   return (
     <>
-      <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-        <Gem className="w-5 h-5" />
-        {t.collection}
-      </h2>
-      
-      <div className="flex items-center gap-2 mb-4">
-        <Coins className="w-5 h-5 text-primary" />
-        <span className="font-bold text-xl">{coins.toLocaleString()}</span>
-        <span className="text-muted-foreground">{t.coins}</span>
+      <div className="flex items-center justify-center mb-4">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-card">
+          <Coins className="w-4 h-4 text-primary" />
+          <span className="font-bold text-lg">{coins.toLocaleString()}</span>
+          <span className="text-muted-foreground text-sm">{t.coins}</span>
+        </div>
       </div>
+
+      <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+        <Gem className="w-5 h-5" />
+        {t.collection} ({crystals.length})
+      </h2>
 
       {crystals.length > 0 && (
         <div className="flex gap-2 mb-3">
@@ -86,38 +88,41 @@ export function CrystalInventory({ crystals, coins, onSellCrystal, language }: C
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 max-h-[600px] overflow-y-auto">
+      <div className="flex flex-wrap gap-3 max-h-[600px] overflow-y-auto">
         {crystals.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8 whitespace-pre-line col-span-2">
+          <p className="text-muted-foreground text-center py-8 whitespace-pre-line w-full">
             {t.noCrystals}
           </p>
         ) : (
           sortedCrystals.map((crystal) => (
-            <Card key={crystal.id} className="p-3 flex flex-col items-center gap-2">
-              <div 
-                className="w-full aspect-square rounded-lg border-2 border-border/50"
+            <div
+              key={crystal.id}
+              className="w-24 flex flex-col items-center gap-1 cursor-pointer group"
+              onClick={() => onSellCrystal(crystal.id, crystal.price)}
+            >
+              {/* Crystal tile */}
+              <div
+                className="w-20 h-20 rounded-xl flex items-center justify-center relative border border-border/30 group-hover:scale-105 transition-transform"
                 style={{ backgroundColor: crystal.color }}
-              />
-              <Badge 
-                style={{ backgroundColor: getRarityColor(crystal.rarity) }}
-                className="text-white text-xs"
               >
-                {getRarityName(crystal.rarity, language)}
-              </Badge>
-              <p className="text-xs text-muted-foreground">
-                RGB({crystal.red}, {crystal.green}, {crystal.blue})
+                <Gem className="w-8 h-8 text-white/80 drop-shadow-md" />
+                {/* Rarity badge */}
+                <Badge
+                  className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] px-1.5 py-0 text-white border-0 whitespace-nowrap"
+                  style={{ backgroundColor: getRarityColor(crystal.rarity) }}
+                >
+                  {getRarityName(crystal.rarity, language)}
+                </Badge>
+              </div>
+              {/* Info below */}
+              <p className="text-[10px] text-muted-foreground mt-1.5 leading-tight text-center">
+                RGB: {crystal.red}, {crystal.green}, {crystal.blue}
               </p>
-              <p className="text-sm font-semibold">
-                {crystal.price.toLocaleString()} {t.coins}
-              </p>
-              <Button
-                size="sm"
-                className="w-full"
-                onClick={() => onSellCrystal(crystal.id, crystal.price)}
-              >
-                {t.sell}
-              </Button>
-            </Card>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Coins className="w-3 h-3" />
+                <span>{crystal.price.toLocaleString()}</span>
+              </div>
+            </div>
           ))
         )}
       </div>
