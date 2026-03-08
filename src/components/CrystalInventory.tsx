@@ -4,13 +4,14 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Crystal } from '@/types/game';
 import { getRarityName, getRarityColor } from '@/utils/crystalUtils';
-import { Gem, Coins, ArrowUpDown, Landmark } from 'lucide-react';
+import { Gem, Coins, ArrowUpDown, Landmark, Hammer } from 'lucide-react';
 
 interface CrystalInventoryProps {
   crystals: Crystal[];
   coins: number;
   onSellCrystal: (crystalId: string, price: number) => void;
   onPlayInTemple?: (crystal: Crystal) => void;
+  onGoToForge?: () => void;
   language: 'en' | 'ru';
 }
 
@@ -26,6 +27,7 @@ const translations = {
     price: 'Price',
     sellConfirm: 'Sell for',
     playInTemple: 'Play in Temple',
+    goToForge: 'Recycle in Forge',
   },
   ru: {
     collection: 'Коллекция кристаллов',
@@ -38,10 +40,11 @@ const translations = {
     price: 'Цена',
     sellConfirm: 'Продать за',
     playInTemple: 'Играть в Храме',
+    goToForge: 'В Кузницу',
   }
 };
 
-export function CrystalInventory({ crystals, coins, onSellCrystal, onPlayInTemple, language }: CrystalInventoryProps) {
+export function CrystalInventory({ crystals, coins, onSellCrystal, onPlayInTemple, onGoToForge, language }: CrystalInventoryProps) {
   const t = translations[language];
   const [sortBy, setSortBy] = useState<'none' | 'rarity' | 'price'>('none');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -71,6 +74,12 @@ export function CrystalInventory({ crystals, coins, onSellCrystal, onPlayInTempl
   const handlePlayInTemple = () => {
     if (!selectedCrystal || !onPlayInTemple) return;
     onPlayInTemple(selectedCrystal);
+    setSelectedCrystal(null);
+  };
+
+  const handleGoToForge = () => {
+    if (!onGoToForge) return;
+    onGoToForge();
     setSelectedCrystal(null);
   };
 
@@ -171,16 +180,28 @@ export function CrystalInventory({ crystals, coins, onSellCrystal, onPlayInTempl
               </div>
 
               <div className="flex flex-col gap-2 w-full">
-                {onPlayInTemple && (
-                  <Button
-                    variant="default"
-                    className="w-full gap-2"
-                    onClick={handlePlayInTemple}
-                  >
-                    <Landmark className="w-4 h-4" />
-                    {t.playInTemple}
-                  </Button>
-                )}
+                <div className="flex gap-2 w-full">
+                  {onPlayInTemple && (
+                    <Button
+                      variant="default"
+                      className="flex-1 gap-2"
+                      onClick={handlePlayInTemple}
+                    >
+                      <Landmark className="w-4 h-4" />
+                      {t.playInTemple}
+                    </Button>
+                  )}
+                  {onGoToForge && (
+                    <Button
+                      variant="secondary"
+                      className="flex-1 gap-2"
+                      onClick={handleGoToForge}
+                    >
+                      <Hammer className="w-4 h-4" />
+                      {t.goToForge}
+                    </Button>
+                  )}
+                </div>
                 <div className="flex gap-2 w-full">
                   <Button variant="outline" className="flex-1" onClick={() => setSelectedCrystal(null)}>
                     {t.close}
