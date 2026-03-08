@@ -22,6 +22,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface AdminPanelProps {
   language?: 'en' | 'ru';
+  onRefreshData?: () => void;
 }
 
 const ALL_PICKAXE_TYPES: PickaxeRarity[] = ['trash', 'normal', 'rare', 'epic', 'mythic', 'legendary', 'insane', 'demonic', 'silent', 'artifact'];
