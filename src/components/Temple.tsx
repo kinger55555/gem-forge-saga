@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Crystal } from '@/types/game';
-import { Landmark, Dices, Zap, Route, Brain, Palette, Target } from 'lucide-react';
+import { Landmark, Dices, Zap, Route, Brain, Palette, Target, Eclipse } from 'lucide-react';
 import { ShellGame } from '@/components/temple/ShellGame';
 import { CrystalClicker } from '@/components/temple/CrystalClicker';
 import { TwoRoads } from '@/components/temple/TwoRoads';
 import { MemoryGame } from '@/components/temple/MemoryGame';
 import { ColorRoulette } from '@/components/temple/ColorRoulette';
 import { QuickDraw } from '@/components/temple/QuickDraw';
+import { NovaCollapse } from '@/components/temple/NovaCollapse';
 
 interface TempleProps {
   crystals: Crystal[];
@@ -17,7 +18,7 @@ interface TempleProps {
   language: 'en' | 'ru';
 }
 
-export type MiniGameId = 'menu' | 'shell' | 'clicker' | 'tworoads' | 'memory' | 'roulette' | 'quickdraw';
+export type MiniGameId = 'menu' | 'shell' | 'clicker' | 'tworoads' | 'memory' | 'roulette' | 'quickdraw' | 'nova';
 
 const translations = {
   en: {
@@ -35,6 +36,8 @@ const translations = {
     rouletteDesc: 'Stop the wheel near your crystal\'s color. Win: up to 60% bonus.',
     quickdrawTitle: 'Quick Draw',
     quickdrawDesc: 'React to the signal ASAP. False start = loss. Win: 10-50% bonus.',
+    novaTitle: 'Nova Collapse',
+    novaDesc: 'Time the shrinking ring to match the circle. Win: up to 55% bonus.',
     comingSoon: 'More games coming soon...',
   },
   ru: {
@@ -52,6 +55,8 @@ const translations = {
     rouletteDesc: 'Останови колесо рядом с цветом кристалла. До 60% бонус.',
     quickdrawTitle: 'Реакция',
     quickdrawDesc: 'Среагируй на сигнал. Фальстарт = потеря. Победа: 10-50% бонус.',
+    novaTitle: 'Коллапс Новы',
+    novaDesc: 'Попади в момент совпадения кольца с кругом. До 55% бонус.',
     comingSoon: 'Скоро больше игр...',
   },
 };
@@ -63,6 +68,7 @@ const MINI_GAMES: { id: MiniGameId; icon: typeof Dices; titleKey: keyof typeof t
   { id: 'memory', icon: Brain, titleKey: 'memoryTitle', descKey: 'memoryDesc' },
   { id: 'roulette', icon: Palette, titleKey: 'rouletteTitle', descKey: 'rouletteDesc' },
   { id: 'quickdraw', icon: Target, titleKey: 'quickdrawTitle', descKey: 'quickdrawDesc' },
+  { id: 'nova', icon: Eclipse, titleKey: 'novaTitle', descKey: 'novaDesc' },
 ];
 
 export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, language }: TempleProps) {
@@ -78,6 +84,7 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
   if (currentGame === 'memory') return <MemoryGame {...gameProps} />;
   if (currentGame === 'roulette') return <ColorRoulette {...gameProps} />;
   if (currentGame === 'quickdraw') return <QuickDraw {...gameProps} />;
+  if (currentGame === 'nova') return <NovaCollapse {...gameProps} />;
 
   // Menu
   return (
