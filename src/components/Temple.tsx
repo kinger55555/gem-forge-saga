@@ -85,7 +85,7 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
     setWon(false);
     setPickedCup(null);
     setRevealedCup(null);
-    setSwapping(null);
+    setIsShuffling(false);
 
     const diff = getDifficulty(crystal.rarity);
     const selected = RUNES.slice(0, diff.cups);
