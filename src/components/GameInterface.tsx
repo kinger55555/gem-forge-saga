@@ -133,9 +133,7 @@ export function GameInterface() {
     }
   }, [activateAdminLinkFromCode]);
 
-  const handleToggleAdmin = useCallback((isAdmin: boolean) => {
-    setIsAdminMode(isAdmin);
-  }, []);
+  
 
   const selectPickaxe = useCallback((pickaxe: PickaxeType) => {
     if (pickaxe.used) {
