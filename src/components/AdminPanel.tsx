@@ -283,6 +283,21 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
           </div>
         </div>
 
+        <Separator />
+
+        <div className="space-y-3">
+          <h3 className="font-medium">Очистка</h3>
+          <Button
+            onClick={handleClearCrystals}
+            variant="destructive"
+            size="sm"
+            className="w-full gap-2"
+          >
+            <Trash2 className="w-4 h-4" />
+            Удалить все кристаллы
+          </Button>
+        </div>
+
         {adminLinks.length > 0 && (
           <>
             <Separator />
