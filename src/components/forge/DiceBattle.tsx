@@ -15,14 +15,18 @@ interface DiceBattleProps {
 
 type Phase = 'select-deck' | 'select-difficulty' | 'rolling' | 'result-round' | 'game-over';
 
+interface BonusRoll {
+  tier: number;
+  face: DiceFace;
+}
+
 interface RolledDie {
   tier: number;
   color: string;
   face: DiceFace;
   alive: boolean;
   isArtifact: boolean;
-  bonusFace?: DiceFace;
-  bonusTier?: number;
+  bonusChain: BonusRoll[]; // recursive tree bonuses
 }
 
 interface BattleState {
@@ -107,6 +111,33 @@ export function DiceBattle({ dice, onBattleEnd, language }: DiceBattleProps) {
     setPhase('rolling');
   };
 
+  // Recursively generate bonus chain from tree rolls
+  const generateBonusChain = (tier: number): BonusRoll[] => {
+    if (tier <= 1) return [];
+    const bonusTier = tier - 1;
+    const bonusFace = rollDie(bonusTier);
+    const roll: BonusRoll = { tier: bonusTier, face: bonusFace };
+    if (bonusFace === 'tree') {
+      return [roll, ...generateBonusChain(bonusTier)];
+    }
+    return [roll];
+  };
+
+  // Count swords/shields from a rolled die including all bonus chain
+  const countFaces = (r: RolledDie, target: 'sword' | 'shield'): number => {
+    if (!r.alive) return 0;
+    let count = 0;
+    // Main face: tree counts as sword
+    if (target === 'sword' && (r.face === 'sword' || r.face === 'tree')) count++;
+    if (target === 'shield' && r.face === 'shield') count++;
+    // Bonus chain
+    for (const b of r.bonusChain) {
+      if (target === 'sword' && (b.face === 'sword' || b.face === 'tree')) count++;
+      if (target === 'shield' && b.face === 'shield') count++;
+    }
+    return count;
+  };
+
   const rollAllDice = () => {
     if (!battle || rolling) return;
     setRolling(true);
@@ -117,41 +148,25 @@ export function DiceBattle({ dice, onBattleEnd, language }: DiceBattleProps) {
         const next = { ...prev };
         next.log = [];
 
-        // Roll all alive player dice
         const pRolled: RolledDie[] = prev.playerDice.map(d => {
-          if (!d.alive) return { tier: d.tier, color: d.color, face: 'rot' as DiceFace, alive: false, isArtifact: false };
+          if (!d.alive) return { tier: d.tier, color: d.color, face: 'rot' as DiceFace, alive: false, isArtifact: false, bonusChain: [] };
           const face = rollDie(d.tier);
           const isArtifact = d.tier === 10;
-          const rolled: RolledDie = { tier: d.tier, color: d.color, face, alive: true, isArtifact };
-          // Tree bonus
-          if (face === 'tree' && d.tier > 1) {
-            rolled.bonusTier = d.tier - 1;
-            rolled.bonusFace = rollDie(d.tier - 1);
-          }
-          return rolled;
+          const bonusChain = face === 'tree' ? generateBonusChain(d.tier) : [];
+          return { tier: d.tier, color: d.color, face, alive: true, isArtifact, bonusChain };
         });
 
-        // Roll all alive monster dice
         const mRolled: RolledDie[] = prev.monsterDice.map(d => {
-          if (!d.alive) return { tier: d.tier, color: '#666', face: 'rot' as DiceFace, alive: false, isArtifact: false };
+          if (!d.alive) return { tier: d.tier, color: '#666', face: 'rot' as DiceFace, alive: false, isArtifact: false, bonusChain: [] };
           const face = rollDie(d.tier);
-          const rolled: RolledDie = { tier: d.tier, color: '#666', face, alive: true, isArtifact: false };
-          if (face === 'tree' && d.tier > 1) {
-            rolled.bonusTier = d.tier - 1;
-            rolled.bonusFace = rollDie(d.tier - 1);
-          }
-          return rolled;
+          const bonusChain = face === 'tree' ? generateBonusChain(d.tier) : [];
+          return { tier: d.tier, color: '#666', face, alive: true, isArtifact: false, bonusChain };
         });
 
-        // Count results — tree counts as sword AND spawns bonus die
-        const pSwords = pRolled.filter(r => r.alive && (r.face === 'sword' || r.face === 'tree')).length
-          + pRolled.filter(r => r.alive && (r.bonusFace === 'sword' || r.bonusFace === 'tree')).length;
-        const pShields = pRolled.filter(r => r.alive && r.face === 'shield').length
-          + pRolled.filter(r => r.alive && r.bonusFace === 'shield').length;
-        const mSwords = mRolled.filter(r => r.alive && (r.face === 'sword' || r.face === 'tree')).length
-          + mRolled.filter(r => r.alive && (r.bonusFace === 'sword' || r.bonusFace === 'tree')).length;
-        const mShields = mRolled.filter(r => r.alive && r.face === 'shield').length
-          + mRolled.filter(r => r.alive && r.bonusFace === 'shield').length;
+        const pSwords = pRolled.reduce((s, r) => s + countFaces(r, 'sword'), 0);
+        const pShields = pRolled.reduce((s, r) => s + countFaces(r, 'shield'), 0);
+        const mSwords = mRolled.reduce((s, r) => s + countFaces(r, 'sword'), 0);
+        const mShields = mRolled.reduce((s, r) => s + countFaces(r, 'shield'), 0);
 
         const playerDmgToMonster = Math.max(0, pSwords - mShields);
         const monsterDmgToPlayer = Math.max(0, mSwords - pShields);
@@ -164,7 +179,7 @@ export function DiceBattle({ dice, onBattleEnd, language }: DiceBattleProps) {
         if (pShields > 0 && mSwords > 0) next.log.push(`🛡️ ${Math.min(pShields, mSwords)} ${language === 'ru' ? 'заблокировано' : 'blocked'}`);
         if (mShields > 0 && pSwords > 0) next.log.push(`🛡️ ${language === 'ru' ? 'Монстр заблокировал' : 'Monster blocked'} ${Math.min(mShields, pSwords)}`);
 
-        // Handle rot — destroy dice
+        // Handle rot — destroy own dice
         next.playerDice = prev.playerDice.map((d, i) => {
           if (pRolled[i]?.alive && pRolled[i]?.face === 'rot') {
             next.log.push(`💀 ${language === 'ru' ? 'Кубик уничтожен гнилью!' : 'Die destroyed by rot!'}`);
@@ -182,8 +197,10 @@ export function DiceBattle({ dice, onBattleEnd, language }: DiceBattleProps) {
 
         // Tree bonus log
         pRolled.forEach(r => {
-          if (r.alive && r.face === 'tree' && r.bonusFace) {
-            next.log.push(`🌳 ${language === 'ru' ? 'Бонус' : 'Bonus'} T${r.bonusTier}: ${getDiceFaceIcon(r.bonusFace)}`);
+          if (r.alive && r.bonusChain.length > 0) {
+            r.bonusChain.forEach(b => {
+              next.log.push(`🌳 ${language === 'ru' ? 'Бонус' : 'Bonus'} T${b.tier}: ${getDiceFaceIcon(b.face)}`);
+            });
           }
         });
 
@@ -323,26 +340,29 @@ export function DiceBattle({ dice, onBattleEnd, language }: DiceBattleProps) {
                 </Card>
               ))}
             </div>
-            {/* Player bonus dice row */}
-            {battle.playerRolled.some(r => r.alive && r.bonusFace) && (
-              <div className="grid grid-cols-5 gap-2">
-                {battle.playerRolled.map((r, i) => (
-                  <div key={i} className="flex justify-center">
-                    {r.alive && r.bonusFace ? (
-                      <Card className="p-1.5 text-center border-dashed animate-scale-in">
-                        <div
-                          className="w-8 h-8 rounded-md mx-auto mb-0.5 flex items-center justify-center text-base shadow-sm opacity-80"
-                          style={{ backgroundColor: r.color }}
-                        >
-                          {getDiceFaceIcon(r.bonusFace)}
-                        </div>
-                        <p className="text-[9px] text-muted-foreground">🌳T{r.bonusTier}</p>
-                      </Card>
-                    ) : <div className="w-8" />}
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Player bonus dice rows (recursive chains) */}
+            {(() => {
+              const maxDepth = Math.max(...battle.playerRolled.map(r => r.bonusChain.length), 0);
+              return Array.from({ length: maxDepth }, (_, depth) => (
+                <div key={`p-bonus-${depth}`} className="grid grid-cols-5 gap-2">
+                  {battle.playerRolled.map((r, i) => (
+                    <div key={i} className="flex justify-center">
+                      {r.alive && r.bonusChain[depth] ? (
+                        <Card className="p-1.5 text-center border-dashed animate-scale-in">
+                          <div
+                            className="w-8 h-8 rounded-md mx-auto mb-0.5 flex items-center justify-center text-base shadow-sm opacity-80"
+                            style={{ backgroundColor: r.color }}
+                          >
+                            {getDiceFaceIcon(r.bonusChain[depth].face)}
+                          </div>
+                          <p className="text-[9px] text-muted-foreground">🌳T{r.bonusChain[depth].tier}</p>
+                        </Card>
+                      ) : <div className="w-8" />}
+                    </div>
+                  ))}
+                </div>
+              ));
+            })()}
 
             <p className="text-xs text-center text-muted-foreground">vs</p>
 
@@ -357,23 +377,26 @@ export function DiceBattle({ dice, onBattleEnd, language }: DiceBattleProps) {
                 </Card>
               ))}
             </div>
-            {/* Monster bonus dice row */}
-            {battle.monsterRolled.some(r => r.alive && r.bonusFace) && (
-              <div className="grid grid-cols-5 gap-2">
-                {battle.monsterRolled.map((r, i) => (
-                  <div key={i} className="flex justify-center">
-                    {r.alive && r.bonusFace ? (
-                      <Card className="p-1.5 text-center border-dashed animate-scale-in">
-                        <div className="w-8 h-8 rounded-md mx-auto mb-0.5 flex items-center justify-center text-base bg-destructive/15">
-                          {getDiceFaceIcon(r.bonusFace)}
-                        </div>
-                        <p className="text-[9px] text-muted-foreground">🌳T{r.bonusTier}</p>
-                      </Card>
-                    ) : <div className="w-8" />}
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Monster bonus dice rows (recursive chains) */}
+            {(() => {
+              const maxDepth = Math.max(...battle.monsterRolled.map(r => r.bonusChain.length), 0);
+              return Array.from({ length: maxDepth }, (_, depth) => (
+                <div key={`m-bonus-${depth}`} className="grid grid-cols-5 gap-2">
+                  {battle.monsterRolled.map((r, i) => (
+                    <div key={i} className="flex justify-center">
+                      {r.alive && r.bonusChain[depth] ? (
+                        <Card className="p-1.5 text-center border-dashed animate-scale-in">
+                          <div className="w-8 h-8 rounded-md mx-auto mb-0.5 flex items-center justify-center text-base bg-destructive/15">
+                            {getDiceFaceIcon(r.bonusChain[depth].face)}
+                          </div>
+                          <p className="text-[9px] text-muted-foreground">🌳T{r.bonusChain[depth].tier}</p>
+                        </Card>
+                      ) : <div className="w-8" />}
+                    </div>
+                  ))}
+                </div>
+              ));
+            })()}
 
             {/* Log */}
             <div className="space-y-1 text-xs border rounded-lg p-2 bg-muted/30">
