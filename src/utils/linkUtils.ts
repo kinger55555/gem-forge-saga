@@ -1,21 +1,6 @@
 import { AdminLink } from '@/types/admin';
 import { PickaxeRarity } from '@/types/game';
 
-const ADMIN_PASSWORD = '6767676767676';
-
-export function validateAdminPassword(password: string): boolean {
-  return password === ADMIN_PASSWORD;
-}
-
-export function generateLinkCode(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-}
-
 const PICKAXE_NAMES: Record<PickaxeRarity, string> = {
   trash: 'Мусорная кирка',
   normal: 'Обычная кирка',
@@ -28,6 +13,15 @@ const PICKAXE_NAMES: Record<PickaxeRarity, string> = {
   silent: 'Тихая кирка',
   artifact: 'Артефактная кирка',
 };
+
+export function generateLinkCode(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
 
 export function createAdminLink(
   type: PickaxeRarity | 'coins',
@@ -60,4 +54,8 @@ export function parseAdminLinkFromUrl(): string | null {
 
 export function parsePickaxeFromUrl(): string | null {
   return parseAdminLinkFromUrl();
+}
+
+export function isAdmin(user: any): boolean {
+  return user?.app_metadata?.role === 'admin';
 }

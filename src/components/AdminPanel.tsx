@@ -5,14 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { validateAdminPassword, createAdminLink, getActivationUrl } from '@/utils/linkUtils';
+import { createAdminLink, getActivationUrl, isAdmin } from '@/utils/linkUtils';
 import { AdminLink } from '@/types/admin';
 import { PickaxeRarity } from '@/types/game';
 import { getRarityColor, getRarityName } from '@/utils/crystalUtils';
@@ -21,16 +14,13 @@ import {
   Link,
   Copy,
   Trash2,
-  Eye,
-  EyeOff,
   Coins,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AdminPanelProps {
-  isAdminMode: boolean;
-  onToggleAdmin: (isAdmin: boolean) => void;
   language?: 'en' | 'ru';
 }
 
@@ -40,23 +30,22 @@ const TIER_INDEX: Record<PickaxeRarity, number> = {
   trash: 0, normal: 1, rare: 2, epic: 3, mythic: 4, legendary: 5, insane: 6, demonic: 7, silent: 8, artifact: 9,
 };
 
-export function AdminPanel({ 
-  isAdminMode, 
-  onToggleAdmin,
-  language = 'ru'
-}: AdminPanelProps) {
-  const [adminPassword, setAdminPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+export function AdminPanel({ language = 'ru' }: AdminPanelProps) {
+  const { user } = useAuth();
   const [adminLinks, setAdminLinks] = useState<AdminLink[]>([]);
   const [customName, setCustomName] = useState('');
   const [coinAmount, setCoinAmount] = useState('100');
   const [isLoadingLinks, setIsLoadingLinks] = useState(false);
 
+  const isAdminUser = user ? isAdmin(user) : false;
+
   useEffect(() => {
-    if (isAdminMode) {
+    if (isAdminUser) {
       loadAdminLinks();
     }
-  }, [isAdminMode]);
+  }, [isAdminUser]);
+
+  if (!isAdminUser) return null;
 
   const loadAdminLinks = async () => {
     setIsLoadingLinks(true);
@@ -82,16 +71,6 @@ export function AdminPanel({
       console.error('Error loading admin links:', error);
     } finally {
       setIsLoadingLinks(false);
-    }
-  };
-
-  const handleAdminLogin = () => {
-    if (validateAdminPassword(adminPassword)) {
-      onToggleAdmin(true);
-      toast.success('Добро пожаловать в админ-панель!');
-      setAdminPassword('');
-    } else {
-      toast.error('Неверный пароль администратора!');
     }
   };
 
@@ -171,52 +150,6 @@ export function AdminPanel({
     return getRarityColor(TIER_INDEX[link.type as PickaxeRarity]);
   };
 
-  if (!isAdminMode) {
-    return (
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="ghost" size="sm" className="gap-2">
-            <Settings className="w-4 h-4" />
-            Админ
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Админ-панель</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="password">Пароль администратора</Label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={adminPassword}
-                    onChange={(e) => setAdminPassword(e.target.value)}
-                    placeholder="Введите пароль..."
-                    onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-1 top-1 h-7 w-7 p-0"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </Button>
-                </div>
-                <Button onClick={handleAdminLogin}>Вход</Button>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
   return (
     <Card className="p-6 border-primary/20 bg-gradient-crystal">
       <div className="flex items-center justify-between mb-4">
@@ -224,9 +157,6 @@ export function AdminPanel({
           <Settings className="w-5 h-5" />
           Админ-панель
         </h2>
-        <Button variant="outline" size="sm" onClick={() => onToggleAdmin(false)}>
-          Выйти
-        </Button>
       </div>
 
       <div className="space-y-6">
