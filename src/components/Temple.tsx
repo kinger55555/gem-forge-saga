@@ -20,7 +20,7 @@ interface TempleProps {
   language: 'en' | 'ru';
 }
 
-export type MiniGameId = 'menu' | 'shell' | 'clicker' | 'tworoads' | 'memory' | 'roulette' | 'quickdraw' | 'nova';
+export type MiniGameId = 'menu' | 'shell' | 'clicker' | 'tworoads' | 'memory' | 'roulette' | 'quickdraw' | 'nova' | 'pressure' | 'spam';
 
 const translations = {
   en: {
