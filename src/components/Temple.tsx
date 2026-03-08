@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Crystal } from '@/types/game';
-import { Landmark, Dices, Zap, Brain } from 'lucide-react';
+import { Landmark, Dices, Zap, Brain, Route } from 'lucide-react';
 import { ShellGame } from '@/components/temple/ShellGame';
 import { CrystalClicker } from '@/components/temple/CrystalClicker';
 import { Singularity } from '@/components/temple/Singularity';
+import { TwoRoads } from '@/components/temple/TwoRoads';
 
 interface TempleProps {
   crystals: Crystal[];
@@ -14,7 +15,7 @@ interface TempleProps {
   language: 'en' | 'ru';
 }
 
-export type MiniGameId = 'menu' | 'shell' | 'clicker' | 'singularity';
+export type MiniGameId = 'menu' | 'shell' | 'clicker' | 'singularity' | 'tworoads';
 
 const translations = {
   en: {
@@ -26,6 +27,8 @@ const translations = {
     clickerDesc: 'Tap fast enough to charge the crystal. Win: crystal + 30% bonus.',
     singularityTitle: 'Timing Tap',
     singularityDesc: 'Tap at the perfect moment — multiple rounds. Win: crystal + 70% bonus.',
+    tworoadsTitle: 'Two Roads',
+    tworoadsDesc: 'Pick one of two paths — 50/50 chance. Win: crystal + 10% bonus.',
     comingSoon: 'More games coming soon...',
   },
   ru: {
@@ -37,6 +40,8 @@ const translations = {
     clickerDesc: 'Нажимай достаточно быстро. Победа: кристалл + 30% бонус.',
     singularityTitle: 'Тайминг',
     singularityDesc: 'Жми в нужный момент — несколько раундов. Победа: кристалл + 70% бонус.',
+    tworoadsTitle: 'Два Пути',
+    tworoadsDesc: 'Выбери одну из двух дорог — шанс 50/50. Победа: кристалл + 10% бонус.',
     comingSoon: 'Скоро больше игр...',
   },
 };
@@ -45,6 +50,7 @@ const MINI_GAMES: { id: MiniGameId; icon: typeof Dices; titleKey: keyof typeof t
   { id: 'shell', icon: Dices, titleKey: 'shellTitle', descKey: 'shellDesc' },
   { id: 'clicker', icon: Zap, titleKey: 'clickerTitle', descKey: 'clickerDesc' },
   { id: 'singularity', icon: Brain, titleKey: 'singularityTitle', descKey: 'singularityDesc' },
+  { id: 'tworoads', icon: Route, titleKey: 'tworoadsTitle', descKey: 'tworoadsDesc' },
 ];
 
 export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, language }: TempleProps) {
@@ -62,6 +68,9 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
   if (currentGame === 'singularity') {
     return <Singularity crystals={crystals} coins={coins} onEarnCoins={onEarnCoins} onConsumeCrystal={onConsumeCrystal} onBack={goBack} language={language} />;
   }
+  if (currentGame === 'tworoads') {
+    return <TwoRoads crystals={crystals} coins={coins} onEarnCoins={onEarnCoins} onConsumeCrystal={onConsumeCrystal} onBack={goBack} language={language} />;
+  }
 
   // Menu
   return (
@@ -74,7 +83,7 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
         <p className="text-sm text-muted-foreground">{t.subtitle}</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
         {MINI_GAMES.map(game => {
           const Icon = game.icon;
           return (

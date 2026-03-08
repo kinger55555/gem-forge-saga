@@ -11,6 +11,7 @@ import { Shop } from './Shop';
 import { PickaxeCodeInput } from './PickaxeCodeInput';
 import { DailyRewards } from './DailyRewards';
 import { Temple } from './Temple';
+import { Forge } from './Forge';
 
 import { WelcomeTutorial } from './WelcomeTutorial';
 import { Card } from '@/components/ui/card';
@@ -29,7 +30,7 @@ import {
   getRarityName 
 } from '@/utils/crystalUtils';
 import { parsePickaxeFromUrl } from '@/utils/linkUtils';
-import { Plus, LogOut, Globe, RotateCcw, Pickaxe as PickaxeIcon, Landmark } from 'lucide-react';
+import { Plus, LogOut, Globe, RotateCcw, Pickaxe as PickaxeIcon, Landmark, Hammer } from 'lucide-react';
 import { toast } from 'sonner';
 
 const SeoHeader = () => (
@@ -54,8 +55,12 @@ export function GameInterface() {
     return !localStorage.getItem('gem_forge_tutorial_seen');
   });
 
-  const handlePlayInTemple = useCallback((crystal: Crystal) => {
+  const handlePlayInTemple = useCallback(() => {
     setActiveTab('temple');
+  }, []);
+
+  const handleGoToForge = useCallback(() => {
+    setActiveTab('forge');
   }, []);
 
   const translations = {
@@ -67,7 +72,7 @@ export function GameInterface() {
       signOut: 'Sign Out',
       mine: 'Mine',
       temple: 'Temple',
-      
+      forge: 'Forge',
     },
     ru: {
       title: 'Gem Forge Saga',
@@ -77,7 +82,7 @@ export function GameInterface() {
       signOut: 'Выйти',
       mine: 'Шахта',
       temple: 'Храм',
-      
+      forge: 'Кузница',
     }
   };
 
@@ -246,6 +251,10 @@ export function GameInterface() {
               <Landmark className="w-4 h-4" />
               {t.temple}
             </TabsTrigger>
+            <TabsTrigger value="forge" className="gap-2">
+              <Hammer className="w-4 h-4" />
+              {t.forge}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="mine">
@@ -295,6 +304,7 @@ export function GameInterface() {
                     coins={gameData.coins}
                     onSellCrystal={gameData.sellCrystal}
                     onPlayInTemple={handlePlayInTemple}
+                    onGoToForge={handleGoToForge}
                     language={language}
                   />
                 </Card>
@@ -320,6 +330,31 @@ export function GameInterface() {
                     coins={gameData.coins}
                     onSellCrystal={gameData.sellCrystal}
                     onPlayInTemple={handlePlayInTemple}
+                    onGoToForge={handleGoToForge}
+                    language={language}
+                  />
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="forge">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <Forge
+                  crystals={gameData.crystals}
+                  coins={gameData.coins}
+                  language={language}
+                />
+              </div>
+              <div>
+                <Card className="p-6">
+                  <CrystalInventory
+                    crystals={gameData.crystals}
+                    coins={gameData.coins}
+                    onSellCrystal={gameData.sellCrystal}
+                    onPlayInTemple={handlePlayInTemple}
+                    onGoToForge={handleGoToForge}
                     language={language}
                   />
                 </Card>
