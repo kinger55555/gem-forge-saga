@@ -257,6 +257,8 @@
   0% { transform: translateY(0) scale(1); opacity: 1; }
   100% { transform: translateY(-50px) scale(1.3); opacity: 0; }
 }
+
+@keyframes artifact-crown {
   0%, 100% { transform: translateY(0) rotate(-5deg); }
   50% { transform: translateY(-3px) rotate(5deg); }
 }
