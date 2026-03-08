@@ -10,17 +10,18 @@ interface ShopProps {
   onBuyPickaxe: (type: PickaxeRarity, price: number) => Promise<boolean>;
 }
 
+// Pickaxe price = crystal base price (5 * 10^tier) * 1.5, rounded up
 const PICKAXE_SHOP_ITEMS: { type: PickaxeRarity; price: number; tierIndex: number }[] = [
-  { type: 'trash', price: 50, tierIndex: 0 },
-  { type: 'normal', price: 200, tierIndex: 1 },
-  { type: 'rare', price: 500, tierIndex: 2 },
-  { type: 'epic', price: 1500, tierIndex: 3 },
-  { type: 'mythic', price: 5000, tierIndex: 4 },
-  { type: 'legendary', price: 15000, tierIndex: 5 },
-  { type: 'insane', price: 50000, tierIndex: 6 },
-  { type: 'demonic', price: 150000, tierIndex: 7 },
-  { type: 'silent', price: 500000, tierIndex: 8 },
-  { type: 'artifact', price: 2000000, tierIndex: 9 },
+  { type: 'trash', price: Math.ceil(5 * 1.5), tierIndex: 0 },           // 8
+  { type: 'normal', price: Math.ceil(50 * 1.5), tierIndex: 1 },         // 75
+  { type: 'rare', price: Math.ceil(500 * 1.5), tierIndex: 2 },          // 750
+  { type: 'epic', price: Math.ceil(5000 * 1.5), tierIndex: 3 },         // 7,500
+  { type: 'mythic', price: Math.ceil(50000 * 1.5), tierIndex: 4 },      // 75,000
+  { type: 'legendary', price: Math.ceil(500000 * 1.5), tierIndex: 5 },  // 750,000
+  { type: 'insane', price: Math.ceil(5000000 * 1.5), tierIndex: 6 },    // 7,500,000
+  { type: 'demonic', price: Math.ceil(50000000 * 1.5), tierIndex: 7 },  // 75,000,000
+  { type: 'silent', price: Math.ceil(500000000 * 1.5), tierIndex: 8 },  // 750,000,000
+  { type: 'artifact', price: Math.ceil(5000000000 * 1.5), tierIndex: 9 }, // 7,500,000,000
 ];
 
 export function Shop({ coins, onBuyPickaxe }: ShopProps) {
