@@ -232,7 +232,7 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
   const bonus = Math.floor(selectedCrystal.price * 0.5);
   const cupWidth = 72;
   const cupGap = 12;
-  const totalWidth = cups.length * cupWidth + (cups.length - 1) * cupGap;
+  
 
   return (
     <Card className="p-6 relative overflow-hidden">
