@@ -12,11 +12,15 @@ interface ShopProps {
 
 const PICKAXE_SHOP_ITEMS: { type: PickaxeRarity; price: number; tierIndex: number }[] = [
   { type: 'trash', price: 50, tierIndex: 0 },
-  { type: 'common', price: 200, tierIndex: 1 },
-  { type: 'epic', price: 1000, tierIndex: 2 },
-  { type: 'legendary', price: 5000, tierIndex: 3 },
-  { type: 'demonic', price: 25000, tierIndex: 4 },
-  { type: 'silent', price: 100000, tierIndex: 5 },
+  { type: 'normal', price: 200, tierIndex: 1 },
+  { type: 'rare', price: 500, tierIndex: 2 },
+  { type: 'epic', price: 1500, tierIndex: 3 },
+  { type: 'mythic', price: 5000, tierIndex: 4 },
+  { type: 'legendary', price: 15000, tierIndex: 5 },
+  { type: 'insane', price: 50000, tierIndex: 6 },
+  { type: 'demonic', price: 150000, tierIndex: 7 },
+  { type: 'silent', price: 500000, tierIndex: 8 },
+  { type: 'artifact', price: 2000000, tierIndex: 9 },
 ];
 
 export function Shop({ coins, onBuyPickaxe }: ShopProps) {

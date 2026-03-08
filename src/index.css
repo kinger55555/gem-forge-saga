@@ -37,11 +37,15 @@
 
     /* Crystal rarity colors */
     --rarity-trash: 0 0% 50%;            /* Gray */
-    --rarity-common: 210 40% 50%;        /* Blue */
+    --rarity-normal: 210 40% 50%;        /* Blue */
+    --rarity-rare: 160 60% 45%;          /* Green */
     --rarity-epic: 270 70% 55%;          /* Purple */
+    --rarity-mythic: 300 80% 50%;        /* Magenta */
     --rarity-legendary: 45 93% 47%;      /* Gold */
+    --rarity-insane: 15 90% 55%;         /* Orange */
     --rarity-demonic: 0 84% 45%;         /* Dark Red */
     --rarity-silent: 180 60% 40%;        /* Teal */
+    --rarity-artifact: 50 100% 60%;      /* Bright Gold */
     --rarity-legendary-foreground: 0 0% 0%;
 
     /* Mining theme gradients */

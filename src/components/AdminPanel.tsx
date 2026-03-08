@@ -34,10 +34,10 @@ interface AdminPanelProps {
   language?: 'en' | 'ru';
 }
 
-const ALL_PICKAXE_TYPES: PickaxeRarity[] = ['trash', 'common', 'epic', 'legendary', 'demonic', 'silent'];
+const ALL_PICKAXE_TYPES: PickaxeRarity[] = ['trash', 'normal', 'rare', 'epic', 'mythic', 'legendary', 'insane', 'demonic', 'silent', 'artifact'];
 
 const TIER_INDEX: Record<PickaxeRarity, number> = {
-  trash: 0, common: 1, epic: 2, legendary: 3, demonic: 4, silent: 5,
+  trash: 0, normal: 1, rare: 2, epic: 3, mythic: 4, legendary: 5, insane: 6, demonic: 7, silent: 8, artifact: 9,
 };
 
 export function AdminPanel({ 
