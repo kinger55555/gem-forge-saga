@@ -31,7 +31,7 @@ const TIER_INDEX: Record<PickaxeRarity, number> = {
   trash: 0, normal: 1, rare: 2, epic: 3, mythic: 4, legendary: 5, insane: 6, demonic: 7, silent: 8, artifact: 9,
 };
 
-export function AdminPanel({ language = 'ru' }: AdminPanelProps) {
+export function AdminPanel({ language = 'ru', onRefreshData }: AdminPanelProps) {
   const { user } = useAuth();
   const [adminLinks, setAdminLinks] = useState<AdminLink[]>([]);
   const [customName, setCustomName] = useState('');
