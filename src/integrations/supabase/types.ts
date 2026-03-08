@@ -149,6 +149,30 @@ export type Database = {
         }
         Relationships: []
       }
+      mod_transfers: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          mod_user_id: string
+          target_user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          mod_user_id: string
+          target_user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          mod_user_id?: string
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       pickaxes: {
         Row: {
           created_at: string
@@ -206,6 +230,10 @@ export type Database = {
     }
     Functions: {
       redeem_admin_link: { Args: { p_code: string }; Returns: Json }
+      send_mod_coins: {
+        Args: { p_amount: number; p_target_email: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
