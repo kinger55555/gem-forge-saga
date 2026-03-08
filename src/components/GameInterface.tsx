@@ -49,9 +49,14 @@ export function GameInterface() {
   const [currentCrystal, setCurrentCrystal] = useState<Crystal | null>(null);
   const [showMiningModal, setShowMiningModal] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [activeTab, setActiveTab] = useState('mine');
   const [showTutorial, setShowTutorial] = useState(() => {
     return !localStorage.getItem('gem_forge_tutorial_seen');
   });
+
+  const handlePlayInTemple = useCallback((crystal: Crystal) => {
+    setActiveTab('temple');
+  }, []);
 
   const translations = {
     en: {
