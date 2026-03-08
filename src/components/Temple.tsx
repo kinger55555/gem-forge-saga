@@ -172,7 +172,7 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
     setSelectedCrystal(null);
     setCups([]);
     setPositions([]);
-    setSwapping(null);
+    setIsShuffling(false);
     setPickedCup(null);
     setRevealedCup(null);
   };
