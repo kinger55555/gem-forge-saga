@@ -119,6 +119,9 @@ export type Database = {
           coins: number
           created_at: string
           id: string
+          last_daily_claim: string | null
+          last_weekly_claim: string | null
+          streak_count: number
           updated_at: string
           user_id: string
         }
@@ -127,6 +130,9 @@ export type Database = {
           coins?: number
           created_at?: string
           id?: string
+          last_daily_claim?: string | null
+          last_weekly_claim?: string | null
+          streak_count?: number
           updated_at?: string
           user_id: string
         }
@@ -135,6 +141,9 @@ export type Database = {
           coins?: number
           created_at?: string
           id?: string
+          last_daily_claim?: string | null
+          last_weekly_claim?: string | null
+          streak_count?: number
           updated_at?: string
           user_id?: string
         }
