@@ -1,46 +1,101 @@
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Crystal } from '@/types/game';
-import { Hammer } from 'lucide-react';
+import { Dice, CRYSTALS_PER_DICE } from '@/types/dice';
+import { CrystalSmelter } from './forge/CrystalSmelter';
+import { DiceInventory } from './forge/DiceInventory';
+import { DiceBattle } from './forge/DiceBattle';
+import { Hammer, Swords, Dices } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface ForgeProps {
   crystals: Crystal[];
   coins: number;
+  onConsumeCrystals: (crystalIds: string[]) => void;
+  onEarnCoins: (amount: number) => void;
   language: 'en' | 'ru';
 }
 
-const translations = {
+const t = {
   en: {
-    title: 'The Forge',
-    subtitle: 'Recycle crystals into cubes',
-    comingSoon: 'The Forge is being built... Come back soon!',
-    description: 'Here you will be able to recycle your crystals into cubes. Rarer crystals produce cubes with more properties.',
+    smelt: 'Smelt',
+    inventory: 'Dice',
+    battle: 'Battle',
   },
   ru: {
-    title: 'Кузница',
-    subtitle: 'Перерабатывай кристаллы в кубики',
-    comingSoon: 'Кузница строится... Возвращайся скоро!',
-    description: 'Здесь можно будет перерабатывать кристаллы в кубики. Чем реже кристалл, тем больше свойств у кубика.',
+    smelt: 'Плавка',
+    inventory: 'Кубики',
+    battle: 'Бой',
   },
 };
 
-export function Forge({ crystals, coins, language }: ForgeProps) {
-  const t = translations[language];
+const DICE_STORAGE_KEY = 'gem_forge_dice';
+
+function loadDice(): Dice[] {
+  try {
+    const raw = localStorage.getItem(DICE_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveDice(dice: Dice[]) {
+  localStorage.setItem(DICE_STORAGE_KEY, JSON.stringify(dice));
+}
+
+export function Forge({ crystals, coins, onConsumeCrystals, onEarnCoins, language }: ForgeProps) {
+  const l = t[language];
+  const [dice, setDice] = useState<Dice[]>(loadDice);
+
+  useEffect(() => { saveDice(dice); }, [dice]);
+
+  const handleSmelt = (crystalIds: string[], tier: number) => {
+    onConsumeCrystals(crystalIds);
+    const newDie: Dice = { id: crypto.randomUUID(), tier };
+    setDice(prev => [...prev, newDie]);
+    toast.success(language === 'ru' ? `Создан кубик Тир ${tier}!` : `Created Tier ${tier} die!`);
+  };
+
+  const handleBattleEnd = (won: boolean, diceUsed: string[], coinsWon: number) => {
+    if (!won) {
+      // Remove used dice on defeat
+      setDice(prev => prev.filter(d => !diceUsed.includes(d.id)));
+    }
+    if (coinsWon > 0) {
+      onEarnCoins(coinsWon);
+    }
+  };
 
   return (
-    <Card className="p-8">
-      <div className="text-center space-y-6">
-        <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
-          <Hammer className="w-10 h-10 text-primary" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold mb-1">{t.title}</h2>
-          <p className="text-sm text-muted-foreground">{t.subtitle}</p>
-        </div>
-        <div className="max-w-md mx-auto p-6 rounded-xl border-2 border-dashed border-border bg-muted/30">
-          <p className="text-muted-foreground">{t.description}</p>
-        </div>
-        <p className="text-xs text-muted-foreground animate-pulse">{t.comingSoon}</p>
-      </div>
+    <Card className="p-6">
+      <Tabs defaultValue="smelt" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="smelt" className="gap-1 text-xs sm:text-sm">
+            <Hammer className="w-4 h-4" />
+            {l.smelt}
+          </TabsTrigger>
+          <TabsTrigger value="inventory" className="gap-1 text-xs sm:text-sm">
+            <Dices className="w-4 h-4" />
+            {l.inventory}
+          </TabsTrigger>
+          <TabsTrigger value="battle" className="gap-1 text-xs sm:text-sm">
+            <Swords className="w-4 h-4" />
+            {l.battle}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="smelt">
+          <CrystalSmelter crystals={crystals} onSmelt={handleSmelt} language={language} />
+        </TabsContent>
+
+        <TabsContent value="inventory">
+          <DiceInventory dice={dice} language={language} />
+        </TabsContent>
+
+        <TabsContent value="battle">
+          <DiceBattle dice={dice} onBattleEnd={handleBattleEnd} language={language} />
+        </TabsContent>
+      </Tabs>
     </Card>
   );
 }
