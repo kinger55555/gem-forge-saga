@@ -359,8 +359,8 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
                   borderColor: borderClr,
                   backgroundColor: bgClr,
                   boxShadow: shadow,
-                  transition: `left ${isSwappingNow ? '0.3s' : '0.35s'} cubic-bezier(0.4, 0, 0.2, 1), top ${isSwappingNow ? '0.3s' : '0.35s'} cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s, border-color 0.2s, background-color 0.2s, box-shadow 0.2s`,
-                  zIndex: isSwappingNow ? 10 : 1,
+                  transition: `left 0.35s cubic-bezier(0.4, 0, 0.2, 1), top 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s, border-color 0.2s, background-color 0.2s, box-shadow 0.2s`,
+                  zIndex: isMoving ? 10 : 1,
                 }}
               >
                 {/* Cup symbol on top */}
