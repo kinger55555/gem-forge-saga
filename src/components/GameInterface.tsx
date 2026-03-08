@@ -8,7 +8,6 @@ import { CrystalInventory } from './CrystalInventory';
 import { AdminPanel } from './AdminPanel';
 import { PickaxeHelp } from './PickaxeHelp';
 import { Shop } from './Shop';
-import { Clicker } from './Clicker';
 import { PickaxeCodeInput } from './PickaxeCodeInput';
 import { DailyRewards } from './DailyRewards';
 import { Card } from '@/components/ui/card';
@@ -190,10 +189,6 @@ export function GameInterface() {
     await signOut();
   };
 
-  const handleClickerClick = () => {
-    gameData.addClickerEarnings(1);
-  };
-
   if (gameData.loading) {
     return (
       <div className="min-h-screen bg-gradient-cave flex items-center justify-center">
@@ -260,7 +255,7 @@ export function GameInterface() {
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Panel - Pickaxes */}
+          {/* Left Panel */}
           <div className="lg:col-span-2 space-y-6">
             {/* Pickaxes */}
             <Card className="p-6">
@@ -303,12 +298,6 @@ export function GameInterface() {
             <Shop 
               coins={gameData.coins}
               onBuyPickaxe={gameData.buyPickaxe}
-            />
-
-            {/* Clicker */}
-            <Clicker 
-              clickerEarnings={gameData.clickerEarnings}
-              onClick={handleClickerClick}
             />
 
             {/* Daily Rewards */}
