@@ -59,3 +59,11 @@ export function parsePickaxeFromUrl(): string | null {
 export function isAdmin(user: any): boolean {
   return user?.app_metadata?.role === 'admin';
 }
+
+export function isModerator(user: any): boolean {
+  return user?.app_metadata?.role === 'moderator';
+}
+
+export function hasModeratorAccess(user: any): boolean {
+  return isAdmin(user) || isModerator(user);
+}

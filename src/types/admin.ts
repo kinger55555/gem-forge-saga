@@ -1,5 +1,7 @@
 import { PickaxeRarity } from './game';
 
+export type UserRole = 'admin' | 'moderator';
+
 export interface AdminLink {
   id: string;
   code: string;
@@ -9,6 +11,14 @@ export interface AdminLink {
   createdAt: Date;
   usedAt?: Date;
   value?: number;
+}
+
+export interface ModTransfer {
+  id: string;
+  modUserId: string;
+  targetUserId: string;
+  amount: number;
+  createdAt: Date;
 }
 
 export interface AdminState {
