@@ -236,7 +236,7 @@ export function GameInterface() {
         </Card>
 
         {/* Tabs */}
-        <Tabs defaultValue="mine" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full max-w-lg grid-cols-3 mx-auto">
             <TabsTrigger value="mine" className="gap-2">
               <PickaxeIcon className="w-4 h-4" />
