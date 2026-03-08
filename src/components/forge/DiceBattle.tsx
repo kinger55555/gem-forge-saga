@@ -340,26 +340,29 @@ export function DiceBattle({ dice, onBattleEnd, language }: DiceBattleProps) {
                 </Card>
               ))}
             </div>
-            {/* Player bonus dice row */}
-            {battle.playerRolled.some(r => r.alive && r.bonusFace) && (
-              <div className="grid grid-cols-5 gap-2">
-                {battle.playerRolled.map((r, i) => (
-                  <div key={i} className="flex justify-center">
-                    {r.alive && r.bonusFace ? (
-                      <Card className="p-1.5 text-center border-dashed animate-scale-in">
-                        <div
-                          className="w-8 h-8 rounded-md mx-auto mb-0.5 flex items-center justify-center text-base shadow-sm opacity-80"
-                          style={{ backgroundColor: r.color }}
-                        >
-                          {getDiceFaceIcon(r.bonusFace)}
-                        </div>
-                        <p className="text-[9px] text-muted-foreground">🌳T{r.bonusTier}</p>
-                      </Card>
-                    ) : <div className="w-8" />}
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Player bonus dice rows (recursive chains) */}
+            {(() => {
+              const maxDepth = Math.max(...battle.playerRolled.map(r => r.bonusChain.length), 0);
+              return Array.from({ length: maxDepth }, (_, depth) => (
+                <div key={`p-bonus-${depth}`} className="grid grid-cols-5 gap-2">
+                  {battle.playerRolled.map((r, i) => (
+                    <div key={i} className="flex justify-center">
+                      {r.alive && r.bonusChain[depth] ? (
+                        <Card className="p-1.5 text-center border-dashed animate-scale-in">
+                          <div
+                            className="w-8 h-8 rounded-md mx-auto mb-0.5 flex items-center justify-center text-base shadow-sm opacity-80"
+                            style={{ backgroundColor: r.color }}
+                          >
+                            {getDiceFaceIcon(r.bonusChain[depth].face)}
+                          </div>
+                          <p className="text-[9px] text-muted-foreground">🌳T{r.bonusChain[depth].tier}</p>
+                        </Card>
+                      ) : <div className="w-8" />}
+                    </div>
+                  ))}
+                </div>
+              ));
+            })()}
 
             <p className="text-xs text-center text-muted-foreground">vs</p>
 
@@ -374,23 +377,26 @@ export function DiceBattle({ dice, onBattleEnd, language }: DiceBattleProps) {
                 </Card>
               ))}
             </div>
-            {/* Monster bonus dice row */}
-            {battle.monsterRolled.some(r => r.alive && r.bonusFace) && (
-              <div className="grid grid-cols-5 gap-2">
-                {battle.monsterRolled.map((r, i) => (
-                  <div key={i} className="flex justify-center">
-                    {r.alive && r.bonusFace ? (
-                      <Card className="p-1.5 text-center border-dashed animate-scale-in">
-                        <div className="w-8 h-8 rounded-md mx-auto mb-0.5 flex items-center justify-center text-base bg-destructive/15">
-                          {getDiceFaceIcon(r.bonusFace)}
-                        </div>
-                        <p className="text-[9px] text-muted-foreground">🌳T{r.bonusTier}</p>
-                      </Card>
-                    ) : <div className="w-8" />}
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Monster bonus dice rows (recursive chains) */}
+            {(() => {
+              const maxDepth = Math.max(...battle.monsterRolled.map(r => r.bonusChain.length), 0);
+              return Array.from({ length: maxDepth }, (_, depth) => (
+                <div key={`m-bonus-${depth}`} className="grid grid-cols-5 gap-2">
+                  {battle.monsterRolled.map((r, i) => (
+                    <div key={i} className="flex justify-center">
+                      {r.alive && r.bonusChain[depth] ? (
+                        <Card className="p-1.5 text-center border-dashed animate-scale-in">
+                          <div className="w-8 h-8 rounded-md mx-auto mb-0.5 flex items-center justify-center text-base bg-destructive/15">
+                            {getDiceFaceIcon(r.bonusChain[depth].face)}
+                          </div>
+                          <p className="text-[9px] text-muted-foreground">🌳T{r.bonusChain[depth].tier}</p>
+                        </Card>
+                      ) : <div className="w-8" />}
+                    </div>
+                  ))}
+                </div>
+              ));
+            })()}
 
             {/* Log */}
             <div className="space-y-1 text-xs border rounded-lg p-2 bg-muted/30">
