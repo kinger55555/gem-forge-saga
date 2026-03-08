@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Crystal } from '@/types/game';
 import { getRarityName, getRarityColor } from '@/utils/crystalUtils';
-import { Gem, Coins } from 'lucide-react';
+import { Gem, Coins, ArrowUpDown } from 'lucide-react';
 
 interface CrystalInventoryProps {
   crystals: Crystal[];
