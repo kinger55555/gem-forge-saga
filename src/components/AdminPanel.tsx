@@ -207,17 +207,27 @@ export function AdminPanel({ language = 'ru', onRefreshData }: AdminPanelProps) 
               const tier = TIER_INDEX[type];
               const color = getRarityColor(tier);
               return (
-                <Button
-                  key={type}
-                  onClick={() => handleCreateLink(type)}
-                  variant="outline"
-                  size="sm"
-                  className="gap-1 text-xs"
-                  style={{ borderColor: color, color }}
-                >
-                  <Link className="w-3 h-3" />
-                  {getRarityName(tier, language)}
-                </Button>
+                <div key={type} className="flex gap-1">
+                  <Button
+                    onClick={() => handleCreateLink(type)}
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 text-xs flex-1"
+                    style={{ borderColor: color, color }}
+                  >
+                    <Link className="w-3 h-3" />
+                    {getRarityName(tier, language)}
+                  </Button>
+                  <Button
+                    onClick={() => handleGiveToSelf(type)}
+                    size="sm"
+                    className="text-xs px-2"
+                    style={{ backgroundColor: color, color: 'hsl(var(--background))' }}
+                    title="Дать себе"
+                  >
+                    +
+                  </Button>
+                </div>
               );
             })}
           </div>
