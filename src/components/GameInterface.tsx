@@ -162,7 +162,7 @@ export function GameInterface() {
     if (!currentPickaxe) return;
 
     if (miningState === MiningState.IDLE) {
-      const crystal = generateCrystal();
+      const crystal = generateCrystal(currentPickaxe.type);
       
       setMiningState(MiningState.SHOWING_RARITY);
       setCurrentCrystal(crystal);
