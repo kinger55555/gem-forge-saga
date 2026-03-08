@@ -97,7 +97,7 @@ export function DailyRewards({ onRewardClaimed, language = 'ru' }: DailyRewardsP
       // Calculate new streak
       let newStreak = 1;
       if (gameState?.last_daily_claim) {
-        const lastClaim = new Date(gameState.last_daily_claim + 'T00:00:00');
+        const lastClaim = new Date(gameState.last_daily_claim + 'T00:00:00Z');
         const diffDays = Math.floor((today.getTime() - lastClaim.getTime()) / (1000 * 60 * 60 * 24));
         if (diffDays === 1) {
           newStreak = (gameState.streak_count ?? 0) + 1;
