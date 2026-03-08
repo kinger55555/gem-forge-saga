@@ -232,7 +232,7 @@ export function GameInterface() {
                 {language === 'en' ? 'RU' : 'EN'}
               </Button>
 
-              <PickaxeHelp language={language} />
+              <PickaxeHelp language={language} onShowTutorial={() => setShowTutorial(true)} />
               
               <AdminPanel
                 language={language}
