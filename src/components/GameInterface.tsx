@@ -93,19 +93,32 @@ export function GameInterface() {
       if (updateError) throw updateError;
 
       switch (link.type) {
-        case 'normal':
-        case 'legendary':
+        case 'coins':
+          const coinAmount = (link as any).value || 100;
+          const { error: coinError } = await supabase
+            .from('game_state')
+            .update({ coins: (gameData.coins + coinAmount) })
+            .eq('user_id', user.id);
+
+          if (coinError) throw coinError;
+          toast.success(`💰 Received ${coinAmount} coins!`, { duration: 4000 });
+          break;
+          
+        default:
+          // All other types are pickaxe rarities
+          const pickaxeType = link.type;
+          const pickaxeName = `${pickaxeType.charAt(0).toUpperCase() + pickaxeType.slice(1)} Pickaxe`;
           const { error: pickaxeError } = await supabase
             .from('pickaxes')
             .insert({
               user_id: user.id,
-              type: link.type,
-              name: link.type === 'legendary' ? 'Legendary Pickaxe' : 'Normal Pickaxe',
+              type: pickaxeType,
+              name: pickaxeName,
               used: false
             });
 
           if (pickaxeError) throw pickaxeError;
-          toast.success(`🎁 Received ${link.type} pickaxe!`, { duration: 4000 });
+          toast.success(`🎁 Received ${pickaxeType} pickaxe!`, { duration: 4000 });
           break;
           
         case 'coins':
