@@ -252,14 +252,23 @@ export function AdminPanel({ language = 'ru', onRefreshData }: AdminPanelProps) 
             />
           </div>
           
-          <Button 
-            onClick={() => handleCreateLink('coins')}
-            variant="outline"
-            className="w-full gap-2"
-          >
-            <Coins className="w-4 h-4" />
-            Создать ссылку на монеты
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => handleCreateLink('coins')}
+              variant="outline"
+              className="flex-1 gap-2"
+            >
+              <Coins className="w-4 h-4" />
+              Создать ссылку
+            </Button>
+            <Button
+              onClick={() => handleGiveToSelf('coins')}
+              className="gap-2"
+            >
+              <Coins className="w-4 h-4" />
+              Дать себе
+            </Button>
+          </div>
         </div>
 
         {adminLinks.length > 0 && (
