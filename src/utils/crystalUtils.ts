@@ -145,11 +145,11 @@ export function getRarityName(rarity: number, language: 'en' | 'ru' = 'ru'): str
 
 export function calculatePrice(red: number, green: number, blue: number, rarity: number): number {
   if (red === 255 && green === 255 && blue === 255) {
-    return 5000000000;
+    return 50000000;
   }
   
   if (red === 0 && green === 0 && blue === 0) {
-    return 1000000000;
+    return 10000000;
   }
   
   const perfectColors = [
@@ -160,13 +160,11 @@ export function calculatePrice(red: number, green: number, blue: number, rarity:
   
   for (const [r, g, b] of perfectColors) {
     if (red === r && green === g && blue === b) {
-      return 100000000;
+      return 5000000;
     }
   }
   
   const basePrice = 5;
-  if (rarity >= 8) return basePrice * Math.pow(10, 8);
-  if (rarity >= 6) return basePrice * Math.pow(10, rarity + 1);
-  
-  return basePrice * Math.pow(10, rarity);
+  const cappedRarity = Math.min(rarity, 7);
+  return basePrice * Math.pow(10, cappedRarity);
 }

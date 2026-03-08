@@ -92,36 +92,29 @@ export function GameInterface() {
 
       if (updateError) throw updateError;
 
-      switch (link.type) {
-        case 'normal':
-        case 'legendary':
-          const { error: pickaxeError } = await supabase
-            .from('pickaxes')
-            .insert({
-              user_id: user.id,
-              type: link.type,
-              name: link.type === 'legendary' ? 'Legendary Pickaxe' : 'Normal Pickaxe',
-              used: false
-            });
+      if (link.type === 'coins') {
+        const coinAmt = (link as any).value || 100;
+        const { error: coinErr } = await supabase
+          .from('game_state')
+          .update({ coins: (gameData.coins + coinAmt) })
+          .eq('user_id', user.id);
 
-          if (pickaxeError) throw pickaxeError;
-          toast.success(`🎁 Received ${link.type} pickaxe!`, { duration: 4000 });
-          break;
-          
-        case 'coins':
-          const coinAmount = (link as any).value || 100;
-          const { error: coinError } = await supabase
-            .from('game_state')
-            .update({ coins: (gameData.coins + coinAmount) })
-            .eq('user_id', user.id);
+        if (coinErr) throw coinErr;
+        toast.success(`💰 Received ${coinAmt} coins!`, { duration: 4000 });
+      } else {
+        const pType = link.type;
+        const pName = `${pType.charAt(0).toUpperCase() + pType.slice(1)} Pickaxe`;
+        const { error: pErr } = await supabase
+          .from('pickaxes')
+          .insert({
+            user_id: user.id,
+            type: pType,
+            name: pName,
+            used: false
+          });
 
-          if (coinError) throw coinError;
-          toast.success(`💰 Received ${coinAmount} coins!`, { duration: 4000 });
-          break;
-          
-        default:
-          toast.error('Unknown link type!');
-          return;
+        if (pErr) throw pErr;
+        toast.success(`🎁 Received ${pType} pickaxe!`, { duration: 4000 });
       }
 
       gameData.refreshData();
