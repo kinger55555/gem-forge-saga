@@ -118,9 +118,10 @@ export function NovaCollapse({ crystals, coins, onEarnCoins, onConsumeCrystal, o
 
     if (g !== 'miss') {
       const bonusCoins = Math.floor(crystal.price * (bonus / 100));
-      await onEarnCoins(crystal.price + bonusCoins);
+      await onEarnCoins(bonusCoins);
+    } else {
+      await onConsumeCrystal(crystal.id);
     }
-    await onConsumeCrystal(crystal.id);
   };
 
   const handleTap = () => {
@@ -263,7 +264,7 @@ export function NovaCollapse({ crystals, coins, onEarnCoins, onConsumeCrystal, o
 
       {won && selectedCrystal && (
         <p className="text-lg mb-4">
-          +💰{Math.floor(selectedCrystal.price * (1 + bonusPercent / 100)).toLocaleString()} ({l.bonus} +{bonusPercent}%)
+          +💰{Math.floor(selectedCrystal.price * (bonusPercent / 100)).toLocaleString()} ({l.bonus} +{bonusPercent}%)
         </p>
       )}
 

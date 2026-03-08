@@ -75,12 +75,12 @@ export function QuickDraw({ crystals, coins, onEarnCoins, onConsumeCrystal, onBa
       setPhase('go');
 
       // Auto-fail after 2 seconds
-      timerRef.current = setTimeout(() => {
+      timerRef.current = setTimeout(async () => {
         setPhase('result');
         setWon(false);
         setReactionTime(2000);
         setBonusPercent(0);
-        onConsumeCrystal(crystal.id);
+        await onConsumeCrystal(crystal.id);
       }, 2000);
     }, delay);
   }, [onConsumeCrystal]);
@@ -117,9 +117,10 @@ export function QuickDraw({ crystals, coins, onEarnCoins, onConsumeCrystal, onBa
 
       if (isWin) {
         const bonusCoins = Math.floor(selectedCrystal.price * (bonus / 100));
-        await onEarnCoins(selectedCrystal.price + bonusCoins);
+        await onEarnCoins(bonusCoins);
+      } else {
+        await onConsumeCrystal(selectedCrystal.id);
       }
-      await onConsumeCrystal(selectedCrystal.id);
     }
   };
 
@@ -196,7 +197,7 @@ export function QuickDraw({ crystals, coins, onEarnCoins, onConsumeCrystal, onBa
 
       {won && selectedCrystal && (
         <p className="text-lg mb-4">
-          +💰{Math.floor(selectedCrystal.price * (1 + bonusPercent / 100)).toLocaleString()} ({l.bonus} +{bonusPercent}%)
+          +💰{Math.floor(selectedCrystal.price * (bonusPercent / 100)).toLocaleString()} ({l.bonus} +{bonusPercent}%)
         </p>
       )}
 

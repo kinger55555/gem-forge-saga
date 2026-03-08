@@ -137,9 +137,10 @@ export function ColorRoulette({ crystals, coins, onEarnCoins, onConsumeCrystal, 
 
     if (isWin) {
       const bonusCoins = Math.floor(selectedCrystal.price * (bonus / 100));
-      await onEarnCoins(selectedCrystal.price + bonusCoins);
+      await onEarnCoins(bonusCoins);
+    } else {
+      await onConsumeCrystal(selectedCrystal.id);
     }
-    await onConsumeCrystal(selectedCrystal.id);
   };
 
   // SELECT
@@ -235,7 +236,7 @@ export function ColorRoulette({ crystals, coins, onEarnCoins, onConsumeCrystal, 
           <p className="text-sm">{l.accuracy}: <span className="font-bold">{Math.round(accuracy * 100)}%</span></p>
           {won && selectedCrystal && (
             <p className="text-lg">
-              +💰{Math.floor(selectedCrystal.price * (1 + bonusPercent / 100)).toLocaleString()} ({l.bonus} +{bonusPercent}%)
+              +💰{Math.floor(selectedCrystal.price * (bonusPercent / 100)).toLocaleString()} ({l.bonus} +{bonusPercent}%)
             </p>
           )}
           <Button onClick={() => { setPhase('select'); setSelectedCrystal(null); }} className="w-full">
