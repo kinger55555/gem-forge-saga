@@ -54,7 +54,7 @@ export function Shop({ coins, onBuyPickaxe }: ShopProps) {
                   {rarityName}
                 </h3>
                 <p className="text-[10px] text-muted-foreground">
-                  Редкость: {Math.max(0, item.tierIndex - 1)}–{Math.min(5, item.tierIndex + 4)}
+                  Редкость: {Math.max(0, item.tierIndex - 1)}–{Math.min(5, item.tierIndex + 2)}
                 </p>
                 <p className="text-sm font-bold text-primary mt-1">
                   {item.price.toLocaleString()}
