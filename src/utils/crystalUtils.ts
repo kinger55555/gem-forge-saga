@@ -152,17 +152,6 @@ export function calculatePrice(red: number, green: number, blue: number, rarity:
     return 500000;
   }
   
-  const perfectColors = [
-    [255, 0, 0],
-    [0, 255, 0],
-    [0, 0, 255]
-  ];
-  
-  for (const [r, g, b] of perfectColors) {
-    if (red === r && green === g && blue === b) {
-      return 250000;
-    }
-  }
   
   const basePrice = 5;
   const cappedRarity = Math.min(rarity, 7);
