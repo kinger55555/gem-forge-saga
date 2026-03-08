@@ -47,7 +47,7 @@ export function DailyRewards({ onRewardClaimed, language = 'ru' }: DailyRewardsP
 
       // Daily check
       if (gameState?.last_daily_claim) {
-        const lastClaim = new Date(gameState.last_daily_claim + 'T00:00:00');
+        const lastClaim = new Date(gameState.last_daily_claim + 'T00:00:00Z');
         setCanClaimDaily(lastClaim.getTime() < today.getTime());
       } else {
         setCanClaimDaily(true);
