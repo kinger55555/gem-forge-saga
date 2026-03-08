@@ -170,6 +170,57 @@ export type Database = {
         }
         Relationships: []
       }
+      dice_duels: {
+        Row: {
+          coins_wager: number
+          created_at: string
+          current_round: number
+          id: string
+          player1_dice: Json
+          player1_hp: number
+          player1_id: string
+          player2_dice: Json | null
+          player2_hp: number
+          player2_id: string | null
+          round_data: Json | null
+          status: string
+          updated_at: string
+          winner_id: string | null
+        }
+        Insert: {
+          coins_wager?: number
+          created_at?: string
+          current_round?: number
+          id?: string
+          player1_dice?: Json
+          player1_hp?: number
+          player1_id: string
+          player2_dice?: Json | null
+          player2_hp?: number
+          player2_id?: string | null
+          round_data?: Json | null
+          status?: string
+          updated_at?: string
+          winner_id?: string | null
+        }
+        Update: {
+          coins_wager?: number
+          created_at?: string
+          current_round?: number
+          id?: string
+          player1_dice?: Json
+          player1_hp?: number
+          player1_id?: string
+          player2_dice?: Json | null
+          player2_hp?: number
+          player2_id?: string | null
+          round_data?: Json | null
+          status?: string
+          updated_at?: string
+          winner_id?: string | null
+        }
+        Relationships: []
+      }
       game_state: {
         Row: {
           clicker_earnings: number
