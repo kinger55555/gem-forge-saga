@@ -1,4 +1,5 @@
 import { AdminLink } from '@/types/admin';
+import { PickaxeRarity } from '@/types/game';
 
 const ADMIN_PASSWORD = '6767676767676';
 
@@ -15,26 +16,23 @@ export function generateLinkCode(): string {
   return result;
 }
 
+const PICKAXE_NAMES: Record<PickaxeRarity, string> = {
+  trash: 'Мусорная кирка',
+  common: 'Обычная кирка',
+  epic: 'Эпическая кирка',
+  legendary: 'Легендарная кирка',
+  demonic: 'Демоническая кирка',
+  silent: 'Тихая кирка',
+};
+
 export function createAdminLink(
-  type: 'normal' | 'legendary' | 'coins', 
-  customName?: string, 
+  type: PickaxeRarity | 'coins',
+  customName?: string,
   value?: number
 ): AdminLink {
   const code = generateLinkCode();
-  let defaultName = '';
-  
-  switch (type) {
-    case 'normal':
-      defaultName = 'Обычная кирка';
-      break;
-    case 'legendary':
-      defaultName = 'Легендарная кирка';
-      break;
-    case 'coins':
-      defaultName = `${value || 100} монет`;
-      break;
-  }
-  
+  let defaultName = type === 'coins' ? `${value || 100} монет` : PICKAXE_NAMES[type as PickaxeRarity];
+
   return {
     id: crypto.randomUUID(),
     code,

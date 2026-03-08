@@ -1,7 +1,9 @@
+import { PickaxeRarity } from './game';
+
 export interface AdminLink {
   id: string;
   code: string;
-  type: 'normal' | 'legendary' | 'coins';
+  type: PickaxeRarity | 'coins';
   name: string;
   used: boolean;
   createdAt: Date;
