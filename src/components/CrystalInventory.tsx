@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Crystal } from '@/types/game';
 import { getRarityName, getRarityColor } from '@/utils/crystalUtils';
 import { Gem, Coins, ArrowUpDown } from 'lucide-react';
@@ -19,12 +19,22 @@ const translations = {
     coins: 'coins',
     noCrystals: 'You have no crystals yet.\nSelect a pickaxe and start mining!',
     sell: 'Sell',
+    close: 'Close',
+    crystalInfo: 'Crystal Info',
+    rarity: 'Rarity',
+    price: 'Price',
+    sellConfirm: 'Sell for',
   },
   ru: {
     collection: 'Коллекция кристаллов',
     coins: 'монет',
     noCrystals: 'У вас пока нет кристаллов.\nВыберите кирку и начните добычу!',
     sell: 'Продать',
+    close: 'Закрыть',
+    crystalInfo: 'Информация о кристалле',
+    rarity: 'Редкость',
+    price: 'Цена',
+    sellConfirm: 'Продать за',
   }
 };
 
@@ -32,6 +42,7 @@ export function CrystalInventory({ crystals, coins, onSellCrystal, language }: C
   const t = translations[language];
   const [sortBy, setSortBy] = useState<'none' | 'rarity' | 'price'>('none');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [selectedCrystal, setSelectedCrystal] = useState<Crystal | null>(null);
 
   const handleSort = (type: 'rarity' | 'price') => {
     if (sortBy === type) {
@@ -47,6 +58,12 @@ export function CrystalInventory({ crystals, coins, onSellCrystal, language }: C
     const diff = sortBy === 'rarity' ? a.rarity - b.rarity : a.price - b.price;
     return sortDir === 'desc' ? -diff : diff;
   });
+
+  const handleSell = () => {
+    if (!selectedCrystal) return;
+    onSellCrystal(selectedCrystal.id, selectedCrystal.price);
+    setSelectedCrystal(null);
+  };
 
   return (
     <>
@@ -98,15 +115,13 @@ export function CrystalInventory({ crystals, coins, onSellCrystal, language }: C
             <div
               key={crystal.id}
               className="w-24 flex flex-col items-center gap-1 cursor-pointer group"
-              onClick={() => onSellCrystal(crystal.id, crystal.price)}
+              onClick={() => setSelectedCrystal(crystal)}
             >
-              {/* Crystal tile */}
               <div
                 className="w-20 h-20 rounded-xl flex items-center justify-center relative border border-border/30 group-hover:scale-105 transition-transform"
                 style={{ backgroundColor: crystal.color }}
               >
                 <Gem className="w-8 h-8 text-white/80 drop-shadow-md" />
-                {/* Rarity badge */}
                 <Badge
                   className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] px-1.5 py-0 text-white border-0 whitespace-nowrap"
                   style={{ backgroundColor: getRarityColor(crystal.rarity) }}
@@ -114,7 +129,6 @@ export function CrystalInventory({ crystals, coins, onSellCrystal, language }: C
                   {getRarityName(crystal.rarity, language)}
                 </Badge>
               </div>
-              {/* Info below */}
               <p className="text-[10px] text-muted-foreground mt-1.5 leading-tight text-center">
                 RGB: {crystal.red}, {crystal.green}, {crystal.blue}
               </p>
@@ -126,6 +140,60 @@ export function CrystalInventory({ crystals, coins, onSellCrystal, language }: C
           ))
         )}
       </div>
+
+      {/* Crystal detail dialog */}
+      <Dialog open={!!selectedCrystal} onOpenChange={(open) => !open && setSelectedCrystal(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t.crystalInfo}</DialogTitle>
+          </DialogHeader>
+          
+          {selectedCrystal && (
+            <div className="flex flex-col items-center gap-4">
+              <div
+                className="w-32 h-32 rounded-2xl flex items-center justify-center border border-border/30"
+                style={{ backgroundColor: selectedCrystal.color }}
+              >
+                <Gem className="w-14 h-14 text-white/80 drop-shadow-lg" />
+              </div>
+
+              <Badge
+                className="text-sm px-3 py-1 text-white border-0"
+                style={{ backgroundColor: getRarityColor(selectedCrystal.rarity) }}
+              >
+                {getRarityName(selectedCrystal.rarity, language)}
+              </Badge>
+
+              <div className="text-center space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  RGB({selectedCrystal.red}, {selectedCrystal.green}, {selectedCrystal.blue})
+                </p>
+                <div className="flex items-center justify-center gap-1 text-lg font-bold">
+                  <Coins className="w-5 h-5 text-primary" />
+                  {selectedCrystal.price.toLocaleString()} {t.coins}
+                </div>
+              </div>
+
+              <div className="flex gap-2 w-full">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setSelectedCrystal(null)}
+                >
+                  {t.close}
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="flex-1"
+                  onClick={handleSell}
+                >
+                  {t.sellConfirm} {selectedCrystal.price.toLocaleString()}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
