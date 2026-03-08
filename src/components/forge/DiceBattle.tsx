@@ -320,14 +320,29 @@ export function DiceBattle({ dice, onBattleEnd, language }: DiceBattleProps) {
                     {r.alive ? getDiceFaceIcon(r.face) : '✕'}
                   </div>
                   <p className="text-[10px]">T{r.tier}</p>
-                  {r.bonusFace && (
-                    <Badge variant="secondary" className="text-[9px] mt-0.5 px-1">
-                      🌳T{r.bonusTier} {getDiceFaceIcon(r.bonusFace)}
-                    </Badge>
-                  )}
                 </Card>
               ))}
             </div>
+            {/* Player bonus dice row */}
+            {battle.playerRolled.some(r => r.alive && r.bonusFace) && (
+              <div className="grid grid-cols-5 gap-2">
+                {battle.playerRolled.map((r, i) => (
+                  <div key={i} className="flex justify-center">
+                    {r.alive && r.bonusFace ? (
+                      <Card className="p-1.5 text-center border-dashed animate-scale-in">
+                        <div
+                          className="w-8 h-8 rounded-md mx-auto mb-0.5 flex items-center justify-center text-base shadow-sm opacity-80"
+                          style={{ backgroundColor: r.color }}
+                        >
+                          {getDiceFaceIcon(r.bonusFace)}
+                        </div>
+                        <p className="text-[9px] text-muted-foreground">🌳T{r.bonusTier}</p>
+                      </Card>
+                    ) : <div className="w-8" />}
+                  </div>
+                ))}
+              </div>
+            )}
 
             <p className="text-xs text-center text-muted-foreground">vs</p>
 
@@ -335,18 +350,30 @@ export function DiceBattle({ dice, onBattleEnd, language }: DiceBattleProps) {
             <div className="grid grid-cols-5 gap-2">
               {battle.monsterRolled.map((r, i) => (
                 <Card key={i} className={`p-2 text-center ${!r.alive ? 'opacity-30' : ''}`}>
-                  <div className={`w-10 h-10 rounded-lg mx-auto mb-1 flex items-center justify-center text-xl bg-destructive/20`}>
+                  <div className="w-10 h-10 rounded-lg mx-auto mb-1 flex items-center justify-center text-xl bg-destructive/20">
                     {r.alive ? getDiceFaceIcon(r.face) : '✕'}
                   </div>
                   <p className="text-[10px]">T{r.tier}</p>
-                  {r.bonusFace && (
-                    <Badge variant="secondary" className="text-[9px] mt-0.5 px-1">
-                      🌳T{r.bonusTier} {getDiceFaceIcon(r.bonusFace)}
-                    </Badge>
-                  )}
                 </Card>
               ))}
             </div>
+            {/* Monster bonus dice row */}
+            {battle.monsterRolled.some(r => r.alive && r.bonusFace) && (
+              <div className="grid grid-cols-5 gap-2">
+                {battle.monsterRolled.map((r, i) => (
+                  <div key={i} className="flex justify-center">
+                    {r.alive && r.bonusFace ? (
+                      <Card className="p-1.5 text-center border-dashed animate-scale-in">
+                        <div className="w-8 h-8 rounded-md mx-auto mb-0.5 flex items-center justify-center text-base bg-destructive/15">
+                          {getDiceFaceIcon(r.bonusFace)}
+                        </div>
+                        <p className="text-[9px] text-muted-foreground">🌳T{r.bonusTier}</p>
+                      </Card>
+                    ) : <div className="w-8" />}
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Log */}
             <div className="space-y-1 text-xs border rounded-lg p-2 bg-muted/30">
