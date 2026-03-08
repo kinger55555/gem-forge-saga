@@ -105,30 +105,44 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
     }, 1500);
   }, []);
 
+  // Patterns that move ALL 8 cups at once (2x4 grid, indices 0-7)
+  // Grid layout:  0 1 2 3
+  //               4 5 6 7
+  const PATTERNS = [
+    // Rotate perimeter clockwise: 0→1→2→3→7→6→5→4→0
+    (p: number[]) => { const n = [...p]; const ring = [0,1,2,3,7,6,5,4]; const vals = ring.map(i => p[i]); for (let i = 0; i < ring.length; i++) n[ring[i]] = vals[(i - 1 + ring.length) % ring.length]; return n; },
+    // Rotate perimeter counter-clockwise
+    (p: number[]) => { const n = [...p]; const ring = [0,1,2,3,7,6,5,4]; const vals = ring.map(i => p[i]); for (let i = 0; i < ring.length; i++) n[ring[i]] = vals[(i + 1) % ring.length]; return n; },
+    // Swap rows: top↔bottom
+    (p: number[]) => { const n = [...p]; [n[0],n[4]] = [p[4],p[0]]; [n[1],n[5]] = [p[5],p[1]]; [n[2],n[6]] = [p[6],p[2]]; [n[3],n[7]] = [p[7],p[3]]; return n; },
+    // Shift all left (wrap)
+    (p: number[]) => { const n = [...p]; [n[0],n[1],n[2],n[3]] = [p[1],p[2],p[3],p[0]]; [n[4],n[5],n[6],n[7]] = [p[5],p[6],p[7],p[4]]; return n; },
+    // Shift all right (wrap)
+    (p: number[]) => { const n = [...p]; [n[0],n[1],n[2],n[3]] = [p[3],p[0],p[1],p[2]]; [n[4],n[5],n[6],n[7]] = [p[7],p[4],p[5],p[6]]; return n; },
+    // Mirror horizontally: swap columns 0↔3, 1↔2
+    (p: number[]) => { const n = [...p]; [n[0],n[3]] = [p[3],p[0]]; [n[1],n[2]] = [p[2],p[1]]; [n[4],n[7]] = [p[7],p[4]]; [n[5],n[6]] = [p[6],p[5]]; return n; },
+    // Diagonal shift: each moves to its diagonal partner
+    (p: number[]) => { const n = [...p]; [n[0],n[7]] = [p[7],p[0]]; [n[1],n[6]] = [p[6],p[1]]; [n[2],n[5]] = [p[5],p[2]]; [n[3],n[4]] = [p[4],p[3]]; return n; },
+    // Rotate top row CW + bottom row CCW
+    (p: number[]) => { const n = [...p]; [n[0],n[1],n[2],n[3]] = [p[3],p[0],p[1],p[2]]; [n[4],n[5],n[6],n[7]] = [p[5],p[6],p[7],p[4]]; return n; },
+  ];
+
   const doShuffles = (cupCount: number, total: number, speed: number, current: number, pos: number[]) => {
     if (current >= total) {
-      setSwapping(null);
+      setIsShuffling(false);
       setPhase('pick');
       return;
     }
 
-    // Pick two random different cups to swap
-    const a = Math.floor(Math.random() * cupCount);
-    let b = Math.floor(Math.random() * (cupCount - 1));
-    if (b >= a) b++;
+    setIsShuffling(true);
 
-    setSwapping([a, b]);
-
-    // Swap positions
-    const newPos = [...pos];
-    [newPos[a], newPos[b]] = [newPos[b], newPos[a]];
+    // Pick a random pattern
+    const pattern = PATTERNS[Math.floor(Math.random() * PATTERNS.length)];
+    const newPos = pattern(pos);
     setPositions(newPos);
 
     timerRef.current = setTimeout(() => {
-      setSwapping(null);
-      timerRef.current = setTimeout(() => {
-        doShuffles(cupCount, total, speed, current + 1, newPos);
-      }, 60);
+      doShuffles(cupCount, total, speed, current + 1, newPos);
     }, speed);
   };
 
