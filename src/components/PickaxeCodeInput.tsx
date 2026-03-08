@@ -19,13 +19,12 @@ export function PickaxeCodeInput({ onRedeemCode, language = 'ru' }: PickaxeCodeI
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSpecialCode = async (codeValue: string) => {
-    if (!user) return;
+    if (!user) return false;
 
     if (codeValue === 'mod67') {
       try {
         const today = new Date().toISOString().split('T')[0];
         
-        // Check if already used today
         const { data: existing } = await supabase
           .from('special_codes')
           .select('*')
@@ -36,10 +35,9 @@ export function PickaxeCodeInput({ onRedeemCode, language = 'ru' }: PickaxeCodeI
 
         if (existing) {
           toast.error(language === 'ru' ? 'Код mod67 уже использован сегодня!' : 'Code mod67 already used today!');
-          return;
+          return true;
         }
 
-        // Record usage
         const { error: codeError } = await supabase
           .from('special_codes')
           .insert({
@@ -50,7 +48,6 @@ export function PickaxeCodeInput({ onRedeemCode, language = 'ru' }: PickaxeCodeI
 
         if (codeError) throw codeError;
 
-        // Give pickaxe
         const { error: pickaxeError } = await supabase
           .from('pickaxes')
           .insert({
@@ -67,7 +64,7 @@ export function PickaxeCodeInput({ onRedeemCode, language = 'ru' }: PickaxeCodeI
       } catch (error: any) {
         console.error('Error with mod67 code:', error);
         toast.error(language === 'ru' ? 'Ошибка активации кода' : 'Failed to activate code');
-        return false;
+        return true;
       }
     }
     
@@ -80,10 +77,8 @@ export function PickaxeCodeInput({ onRedeemCode, language = 'ru' }: PickaxeCodeI
     setIsLoading(true);
     const codeValue = code.trim().toLowerCase();
     
-    // Handle special codes first
     const handled = await handleSpecialCode(codeValue);
     if (!handled) {
-      // Handle regular pickaxe codes
       await onRedeemCode(codeValue);
     }
     
@@ -131,13 +126,6 @@ export function PickaxeCodeInput({ onRedeemCode, language = 'ru' }: PickaxeCodeI
             : (language === 'ru' ? 'Активировать код' : 'Activate code')
           }
         </Button>
-        
-        <p className="text-sm text-muted-foreground">
-          {language === 'ru' 
-            ? 'Введите код для получения кирки или других предметов' 
-            : 'Enter a code to get a pickaxe or other items'
-          }
-        </p>
       </div>
     </Card>
   );

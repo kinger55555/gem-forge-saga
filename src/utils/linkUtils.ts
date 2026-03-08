@@ -1,6 +1,6 @@
 import { AdminLink } from '@/types/admin';
 
-const ADMIN_PASSWORD = 'gemforge2024';
+const ADMIN_PASSWORD = '6767676767676';
 
 export function validateAdminPassword(password: string): boolean {
   return password === ADMIN_PASSWORD;
