@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Crystal } from '@/types/game';
 import { getRarityColor, getRarityName } from '@/utils/crystalUtils';
-import { Coins, Sparkles, Landmark, Trophy, X, Zap } from 'lucide-react';
+import { Coins, Sparkles, Landmark, Trophy, X } from 'lucide-react';
 
 interface TempleProps {
   crystals: Crystal[];
@@ -14,185 +14,156 @@ interface TempleProps {
   language: 'en' | 'ru';
 }
 
-const RUNES = ['ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ', 'ᚺ', 'ᚾ', 'ᛁ', 'ᛃ', 'ᛇ', 'ᛈ', 'ᛉ', 'ᛊ'];
+const RUNES = ['ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ', 'ᚺ', 'ᚾ', 'ᛁ', 'ᛃ'];
 
-type Phase = 'select' | 'showing' | 'input' | 'result';
+type Phase = 'select' | 'reveal' | 'shuffling' | 'pick' | 'result';
 
 const translations = {
   en: {
     title: 'The Temple',
-    subtitle: 'Watch the sequence. Repeat it. Earn riches.',
+    subtitle: 'Find the glowing rune after the shuffle',
     selectCrystal: 'Select a crystal to offer',
     noCrystals: 'You need crystals to enter the Temple',
-    watch: 'Watch carefully...',
-    yourTurn: 'Your turn! Repeat the sequence',
-    won: 'Perfect! Crystal returned + bonus!',
-    lost: 'Wrong sequence! Crystal destroyed...',
+    remember: 'Remember this one!',
+    shuffling: 'Shuffling...',
+    pickNow: 'Where did it go?',
+    won: 'Correct! Crystal returned + bonus!',
+    lost: 'Wrong! Crystal destroyed...',
     bonus: 'Bonus',
     worth: 'Worth',
     playAgain: 'Try another crystal',
-    sequence: 'Sequence',
-    progress: 'Progress',
+    cups: 'Cups',
+    shuffles: 'Shuffles',
   },
   ru: {
     title: 'Храм',
-    subtitle: 'Запомни последовательность. Повтори. Получи богатство.',
+    subtitle: 'Найди светящуюся руну после перемешивания',
     selectCrystal: 'Выбери кристалл для подношения',
     noCrystals: 'Тебе нужны кристаллы чтобы войти в Храм',
-    watch: 'Смотри внимательно...',
-    yourTurn: 'Твой ход! Повтори последовательность',
-    won: 'Идеально! Кристалл возвращён + бонус!',
-    lost: 'Неверная последовательность! Кристалл уничтожен...',
+    remember: 'Запомни эту!',
+    shuffling: 'Перемешивание...',
+    pickNow: 'Куда она делась?',
+    won: 'Верно! Кристалл возвращён + бонус!',
+    lost: 'Неверно! Кристалл уничтожен...',
     bonus: 'Бонус',
     worth: 'Стоимость',
     playAgain: 'Попробовать другой кристалл',
-    sequence: 'Последовательность',
-    progress: 'Прогресс',
+    cups: 'Стаканов',
+    shuffles: 'Перемешиваний',
   },
 };
 
-function shuffleArray<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
+// Difficulty config by rarity
+function getDifficulty(rarity: number) {
+  if (rarity <= 1) return { cups: 3, shuffles: 4, speed: 500 };
+  if (rarity <= 3) return { cups: 4, shuffles: 6, speed: 400 };
+  if (rarity <= 5) return { cups: 5, shuffles: 8, speed: 320 };
+  if (rarity <= 7) return { cups: 5, shuffles: 11, speed: 260 };
+  return { cups: 6, shuffles: 14, speed: 220 };
 }
 
 export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, language }: TempleProps) {
   const [phase, setPhase] = useState<Phase>('select');
   const [selectedCrystal, setSelectedCrystal] = useState<Crystal | null>(null);
-  const [runes, setRunes] = useState<string[]>([]);
-  const [sequence, setSequence] = useState<number[]>([]); // indices into runes[] that must be repeated
-  const [playerProgress, setPlayerProgress] = useState(0); // how many correct so far
-  const [activeRune, setActiveRune] = useState<number | null>(null); // currently lit rune index
+  const [cups, setCups] = useState<string[]>([]);
+  const [targetRune, setTargetRune] = useState('');
+  // positions[i] = which visual slot cup i occupies (for animation)
+  const [positions, setPositions] = useState<number[]>([]);
+  const [swapping, setSwapping] = useState<[number, number] | null>(null);
   const [won, setWon] = useState(false);
-  const [wrongIndex, setWrongIndex] = useState<number | null>(null);
-  const [flashCorrect, setFlashCorrect] = useState<number | null>(null);
-  const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pickedCup, setPickedCup] = useState<number | null>(null);
+  const [revealedCup, setRevealedCup] = useState<number | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const t = translations[language];
 
-  // Sequence length and grid size scale with rarity
-  const getSequenceLength = (crystal: Crystal) => {
-    if (crystal.rarity <= 1) return 3;
-    if (crystal.rarity <= 3) return 4;
-    if (crystal.rarity <= 5) return 5;
-    if (crystal.rarity <= 7) return 6;
-    return 7;
-  };
-
-  const getGridSize = (crystal: Crystal) => {
-    if (crystal.rarity <= 2) return 6;  // 3x2
-    if (crystal.rarity <= 5) return 9;  // 3x3
-    return 12; // 4x3
-  };
-
-  const getShowSpeed = (crystal: Crystal) => {
-    if (crystal.rarity <= 2) return 700;
-    if (crystal.rarity <= 5) return 550;
-    return 450;
-  };
-
-  // Cleanup timers on unmount
   useEffect(() => {
-    return () => {
-      if (showTimerRef.current) clearTimeout(showTimerRef.current);
-    };
-  }, []);
-
-  const showSequence = useCallback((seq: number[], speed: number) => {
-    setPhase('showing');
-    setActiveRune(null);
-    
-    let i = 0;
-    const show = () => {
-      if (i < seq.length) {
-        setActiveRune(seq[i]);
-        showTimerRef.current = setTimeout(() => {
-          setActiveRune(null);
-          showTimerRef.current = setTimeout(() => {
-            i++;
-            show();
-          }, 200); // gap between flashes
-        }, speed - 200); // how long each rune stays lit
-      } else {
-        // Done showing, player's turn
-        setPhase('input');
-      }
-    };
-
-    // Small initial delay
-    showTimerRef.current = setTimeout(show, 600);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, []);
 
   const startGame = useCallback((crystal: Crystal) => {
     setSelectedCrystal(crystal);
     setWon(false);
-    setPlayerProgress(0);
-    setWrongIndex(null);
-    setFlashCorrect(null);
+    setPickedCup(null);
+    setRevealedCup(null);
+    setSwapping(null);
 
-    const gridSize = getGridSize(crystal);
-    const seqLength = getSequenceLength(crystal);
-    const speed = getShowSpeed(crystal);
+    const diff = getDifficulty(crystal.rarity);
+    const selected = RUNES.slice(0, diff.cups);
+    const targetIdx = Math.floor(Math.random() * diff.cups);
 
-    // Pick runes for the grid
-    const selected = shuffleArray(RUNES).slice(0, gridSize);
-    setRunes(selected);
+    setCups(selected);
+    setTargetRune(selected[targetIdx]);
+    setPositions(selected.map((_, i) => i));
+    setRevealedCup(targetIdx);
+    setPhase('reveal');
 
-    // Generate a random sequence of indices
-    const seq: number[] = [];
-    for (let i = 0; i < seqLength; i++) {
-      seq.push(Math.floor(Math.random() * gridSize));
+    // Show the target for 1.5s, then start shuffling
+    timerRef.current = setTimeout(() => {
+      setRevealedCup(null);
+      setPhase('shuffling');
+      doShuffles(selected.length, diff.shuffles, diff.speed, 0, selected.map((_, i) => i));
+    }, 1500);
+  }, []);
+
+  const doShuffles = (cupCount: number, total: number, speed: number, current: number, pos: number[]) => {
+    if (current >= total) {
+      setSwapping(null);
+      setPhase('pick');
+      return;
     }
-    setSequence(seq);
 
-    // Start showing the sequence
-    showSequence(seq, speed);
-  }, [showSequence]);
+    // Pick two random different cups to swap
+    const a = Math.floor(Math.random() * cupCount);
+    let b = Math.floor(Math.random() * (cupCount - 1));
+    if (b >= a) b++;
 
-  const handleRuneClick = useCallback(async (index: number) => {
-    if (phase !== 'input' || !selectedCrystal) return;
+    setSwapping([a, b]);
 
-    const expectedIndex = sequence[playerProgress];
+    // Swap positions
+    const newPos = [...pos];
+    [newPos[a], newPos[b]] = [newPos[b], newPos[a]];
+    setPositions(newPos);
 
-    if (index === expectedIndex) {
-      // Correct!
-      setFlashCorrect(index);
-      setTimeout(() => setFlashCorrect(null), 250);
+    timerRef.current = setTimeout(() => {
+      setSwapping(null);
+      timerRef.current = setTimeout(() => {
+        doShuffles(cupCount, total, speed, current + 1, newPos);
+      }, 60);
+    }, speed);
+  };
 
-      const newProgress = playerProgress + 1;
-      setPlayerProgress(newProgress);
+  const handlePick = useCallback(async (cupIndex: number) => {
+    if (phase !== 'pick' || !selectedCrystal) return;
 
-      if (newProgress >= sequence.length) {
-        // Won the whole sequence!
-        setWon(true);
-        setPhase('result');
-        const bonus = Math.floor(selectedCrystal.price * 0.5);
-        await onEarnCoins(bonus);
-      }
+    setPickedCup(cupIndex);
+    const isCorrect = cups[cupIndex] === targetRune;
+    setWon(isCorrect);
+
+    // Find the correct cup to reveal
+    const correctIdx = cups.indexOf(targetRune);
+    setRevealedCup(correctIdx);
+    setPhase('result');
+
+    if (isCorrect) {
+      const bonus = Math.floor(selectedCrystal.price * 0.5);
+      await onEarnCoins(bonus);
     } else {
-      // Wrong — game over
-      setWrongIndex(index);
-      setActiveRune(expectedIndex); // show correct one
-      setWon(false);
-      setPhase('result');
       await onConsumeCrystal(selectedCrystal.id);
     }
-  }, [phase, sequence, playerProgress, selectedCrystal, onEarnCoins, onConsumeCrystal]);
+  }, [phase, cups, targetRune, selectedCrystal, onEarnCoins, onConsumeCrystal]);
 
   const resetGame = () => {
-    if (showTimerRef.current) clearTimeout(showTimerRef.current);
+    if (timerRef.current) clearTimeout(timerRef.current);
     setPhase('select');
     setSelectedCrystal(null);
-    setRunes([]);
-    setSequence([]);
-    setPlayerProgress(0);
-    setActiveRune(null);
-    setWrongIndex(null);
-    setFlashCorrect(null);
+    setCups([]);
+    setPositions([]);
+    setSwapping(null);
+    setPickedCup(null);
+    setRevealedCup(null);
   };
+
+  // === RENDER ===
 
   // No crystals
   if (crystals.length === 0 && phase === 'select') {
@@ -221,7 +192,7 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
           {crystals.map(crystal => {
             const rarityColor = getRarityColor(crystal.rarity);
             const bonus = Math.floor(crystal.price * 0.5);
-            const seqLen = getSequenceLength(crystal);
+            const diff = getDifficulty(crystal.rarity);
             return (
               <button
                 key={crystal.id}
@@ -244,7 +215,7 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
                   +{bonus.toLocaleString()}
                 </Badge>
                 <span className="text-[10px] text-muted-foreground">
-                  {t.sequence}: {seqLen}
+                  {t.cups}: {diff.cups} · {t.shuffles}: {diff.shuffles}
                 </span>
               </button>
             );
@@ -254,12 +225,14 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
     );
   }
 
-  // Game phases
+  // Game view
   if (!selectedCrystal) return null;
 
   const rarityColor = getRarityColor(selectedCrystal.rarity);
   const bonus = Math.floor(selectedCrystal.price * 0.5);
-  const cols = runes.length <= 6 ? 3 : runes.length <= 9 ? 3 : 4;
+  const cupWidth = 72;
+  const cupGap = 12;
+  const totalWidth = cups.length * cupWidth + (cups.length - 1) * cupGap;
 
   return (
     <Card className="p-6 relative overflow-hidden">
@@ -290,34 +263,16 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
           </div>
         </div>
 
-        {/* Sequence progress dots */}
-        <div className="flex items-center justify-center gap-2 mb-4">
-          {sequence.map((_, i) => (
-            <div
-              key={i}
-              className={`
-                w-3 h-3 rounded-full border-2 transition-all duration-300
-                ${i < playerProgress
-                  ? 'bg-primary border-primary scale-110'
-                  : i === playerProgress && phase === 'input'
-                    ? 'border-primary animate-pulse'
-                    : 'border-muted-foreground/30 bg-transparent'
-                }
-              `}
-            />
-          ))}
-        </div>
-
         {/* Phase message */}
-        <div className="text-center mb-5">
-          {phase === 'showing' && (
-            <div className="flex items-center justify-center gap-2 text-primary animate-pulse">
-              <Zap className="w-5 h-5" />
-              <span className="text-lg font-bold">{t.watch}</span>
-            </div>
+        <div className="text-center mb-6 h-8">
+          {phase === 'reveal' && (
+            <span className="text-lg font-bold text-primary animate-pulse">{t.remember}</span>
           )}
-          {phase === 'input' && (
-            <span className="text-lg font-bold text-foreground">{t.yourTurn}</span>
+          {phase === 'shuffling' && (
+            <span className="text-lg font-bold text-muted-foreground">{t.shuffling}</span>
+          )}
+          {phase === 'pick' && (
+            <span className="text-lg font-bold text-foreground">{t.pickNow}</span>
           )}
           {phase === 'result' && (
             <div className={`flex items-center justify-center gap-2 ${won ? 'text-primary' : 'text-destructive'}`}>
@@ -327,68 +282,78 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
           )}
         </div>
 
-        {/* Rune grid */}
+        {/* Cups area */}
         <div
-          className="grid gap-3 mx-auto mb-6"
-          style={{
-            gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-            maxWidth: `${cols * 80}px`,
-          }}
+          className="relative mx-auto mb-8"
+          style={{ width: totalWidth, height: cupWidth + 20 }}
         >
-          {runes.map((rune, i) => {
-            const isLit = activeRune === i;
-            const isFlashCorrect = flashCorrect === i;
-            const isWrong = wrongIndex === i;
-            const isClickable = phase === 'input';
+          {cups.map((rune, i) => {
+            const pos = positions[i];
+            const left = pos * (cupWidth + cupGap);
+            const isTarget = rune === targetRune;
+            const isRevealed = revealedCup === i;
+            const isPicked = pickedCup === i;
+            const isSwappingNow = swapping && (swapping[0] === i || swapping[1] === i);
+            const isClickable = phase === 'pick';
 
             let borderClr = 'hsl(var(--border))';
-            let bgClr = 'hsl(var(--card))';
+            let bgClr = 'hsl(var(--muted))';
             let shadow = 'none';
-            let transform = '';
+            let showRune = false;
 
-            if (isLit) {
+            // During reveal phase, show the target rune glowing
+            if (phase === 'reveal' && isTarget) {
               borderClr = 'hsl(var(--primary))';
-              bgClr = 'hsl(var(--primary) / 0.25)';
-              shadow = '0 0 25px hsl(var(--primary) / 0.6), inset 0 0 15px hsl(var(--primary) / 0.2)';
-              transform = 'scale(1.1)';
+              bgClr = 'hsl(var(--primary) / 0.2)';
+              shadow = '0 0 25px hsl(var(--primary) / 0.5)';
+              showRune = true;
             }
-            if (isFlashCorrect) {
-              borderClr = 'hsl(142 76% 36%)';
-              bgClr = 'hsl(142 76% 36% / 0.2)';
-              shadow = '0 0 15px hsl(142 76% 36% / 0.5)';
-              transform = 'scale(1.08)';
-            }
-            if (isWrong) {
-              borderClr = 'hsl(var(--destructive))';
-              bgClr = 'hsl(var(--destructive) / 0.2)';
-              shadow = '0 0 15px hsl(var(--destructive) / 0.5)';
-            }
-            // On result, show the correct rune that was expected
-            if (phase === 'result' && !won && activeRune === i) {
-              borderClr = 'hsl(142 76% 36%)';
-              bgClr = 'hsl(142 76% 36% / 0.15)';
-              shadow = '0 0 20px hsl(142 76% 36% / 0.4)';
+
+            // During result, show the correct cup and wrong pick
+            if (phase === 'result') {
+              if (isRevealed && isTarget) {
+                borderClr = 'hsl(142 76% 36%)';
+                bgClr = 'hsl(142 76% 36% / 0.15)';
+                shadow = '0 0 20px hsl(142 76% 36% / 0.4)';
+                showRune = true;
+              }
+              if (isPicked && !won) {
+                borderClr = 'hsl(var(--destructive))';
+                bgClr = 'hsl(var(--destructive) / 0.15)';
+                shadow = '0 0 15px hsl(var(--destructive) / 0.4)';
+              }
             }
 
             return (
               <button
-                key={`${rune}-${i}`}
-                onClick={() => handleRuneClick(i)}
+                key={i}
+                onClick={() => handlePick(i)}
                 disabled={!isClickable}
                 className={`
-                  aspect-square rounded-xl text-3xl sm:text-4xl flex items-center justify-center
-                  border-2 select-none font-mono
-                  transition-all duration-200
-                  ${isClickable ? 'cursor-pointer hover:scale-105 hover:border-primary/50 active:scale-95' : ''}
+                  absolute top-0 flex flex-col items-center justify-center
+                  rounded-xl border-2 select-none
+                  ${isClickable ? 'cursor-pointer hover:scale-110 hover:border-primary/50 active:scale-95' : ''}
                 `}
                 style={{
+                  width: cupWidth,
+                  height: cupWidth,
+                  left,
                   borderColor: borderClr,
                   backgroundColor: bgClr,
                   boxShadow: shadow,
-                  transform,
+                  transition: `left ${isSwappingNow ? '0.3s' : '0.35s'} cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s, border-color 0.2s, background-color 0.2s, box-shadow 0.2s`,
+                  zIndex: isSwappingNow ? 10 : 1,
                 }}
               >
-                {rune}
+                {/* Cup symbol on top */}
+                <span className="text-2xl mb-1 opacity-80">🏺</span>
+                {/* Show rune underneath when revealed */}
+                <span
+                  className="text-xl font-mono transition-opacity duration-300"
+                  style={{ opacity: showRune ? 1 : 0 }}
+                >
+                  {rune}
+                </span>
               </button>
             );
           })}
