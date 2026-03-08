@@ -232,7 +232,7 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
   const bonus = Math.floor(selectedCrystal.price * 0.5);
   const cupWidth = 72;
   const cupGap = 12;
-  const totalWidth = cups.length * cupWidth + (cups.length - 1) * cupGap;
+  
 
   return (
     <Card className="p-6 relative overflow-hidden">
@@ -282,14 +282,17 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
           )}
         </div>
 
-        {/* Cups area */}
+        {/* Cups area — 4 columns × 2 rows */}
         <div
           className="relative mx-auto mb-8"
-          style={{ width: totalWidth, height: cupWidth + 20 }}
+          style={{ width: 4 * cupWidth + 3 * cupGap, height: 2 * cupWidth + cupGap + 20 }}
         >
           {cups.map((rune, i) => {
             const pos = positions[i];
-            const left = pos * (cupWidth + cupGap);
+            const col = pos % 4;
+            const row = Math.floor(pos / 4);
+            const left = col * (cupWidth + cupGap);
+            const top = row * (cupWidth + cupGap);
             const isTarget = rune === targetRune;
             const isRevealed = revealedCup === i;
             const isPicked = pickedCup === i;
@@ -338,10 +341,11 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
                   width: cupWidth,
                   height: cupWidth,
                   left,
+                  top,
                   borderColor: borderClr,
                   backgroundColor: bgClr,
                   boxShadow: shadow,
-                  transition: `left ${isSwappingNow ? '0.3s' : '0.35s'} cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s, border-color 0.2s, background-color 0.2s, box-shadow 0.2s`,
+                  transition: `left ${isSwappingNow ? '0.3s' : '0.35s'} cubic-bezier(0.4, 0, 0.2, 1), top ${isSwappingNow ? '0.3s' : '0.35s'} cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s, border-color 0.2s, background-color 0.2s, box-shadow 0.2s`,
                   zIndex: isSwappingNow ? 10 : 1,
                 }}
               >
