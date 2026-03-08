@@ -195,6 +195,7 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
           <Settings className="w-5 h-5" />
           Админ-панель
         </h2>
+        <Button onClick={onToggle} variant="ghost" size="sm">✕</Button>
       </div>
 
       <div className="space-y-6">
