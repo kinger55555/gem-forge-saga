@@ -289,7 +289,10 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
         >
           {cups.map((rune, i) => {
             const pos = positions[i];
-            const left = pos * (cupWidth + cupGap);
+            const col = pos % 4;
+            const row = Math.floor(pos / 4);
+            const left = col * (cupWidth + cupGap);
+            const top = row * (cupWidth + cupGap);
             const isTarget = rune === targetRune;
             const isRevealed = revealedCup === i;
             const isPicked = pickedCup === i;
