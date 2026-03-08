@@ -29,49 +29,58 @@ export function generateCrystal(pickaxeType: PickaxeRarity = 'normal'): Crystal 
 }
 
 function generateForcedCrystal(minRarity: number, maxRarity: number): Crystal {
-  const targetRarity = minRarity + Math.floor(Math.random() * (maxRarity - minRarity + 1));
+  // Try multiple times to get a crystal within the allowed rarity range
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const targetRarity = minRarity + Math.floor(Math.random() * (maxRarity - minRarity + 1));
 
-  let red: number, green: number, blue: number;
+    let red: number, green: number, blue: number;
 
-  if (targetRarity >= 5) {
-    const val = Math.random() > 0.5 ? 255 : 0;
-    red = green = blue = val;
-  } else if (targetRarity === 4) {
-    const extreme1 = Math.random() > 0.5 ? 255 : 0;
-    const extreme2 = Math.random() > 0.5 ? 255 : 0;
-    red = extreme1;
-    green = extreme2;
-    blue = 50 + Math.floor(Math.random() * 156);
-  } else if (targetRarity === 3) {
-    const val = 30 + Math.floor(Math.random() * 196);
-    red = green = blue = val;
-  } else if (targetRarity === 2) {
-    const val = 30 + Math.floor(Math.random() * 196);
-    red = val;
-    green = val;
-    blue = (val + 50 + Math.floor(Math.random() * 100)) % 256;
-    if (blue === val) blue = (val + 77) % 226 + 15;
-  } else if (targetRarity === 1) {
-    red = Math.random() > 0.5 ? Math.floor(Math.random() * 25) : 231 + Math.floor(Math.random() * 24);
-    green = 30 + Math.floor(Math.random() * 196);
-    blue = 30 + Math.floor(Math.random() * 196);
-    if (green === red) green = (red + 50) % 196 + 30;
-    if (blue === red || blue === green) blue = (red + 100) % 196 + 30;
-  } else {
-    red = 30 + Math.floor(Math.random() * 196);
-    green = (red + 40 + Math.floor(Math.random() * 100)) % 196 + 30;
-    blue = (red + 100 + Math.floor(Math.random() * 80)) % 196 + 30;
+    if (targetRarity >= 5) {
+      const val = Math.random() > 0.5 ? 255 : 0;
+      red = green = blue = val;
+    } else if (targetRarity === 4) {
+      const extreme1 = Math.random() > 0.5 ? 255 : 0;
+      const extreme2 = Math.random() > 0.5 ? 255 : 0;
+      red = extreme1;
+      green = extreme2;
+      blue = 50 + Math.floor(Math.random() * 156);
+    } else if (targetRarity === 3) {
+      const val = 30 + Math.floor(Math.random() * 196);
+      red = green = blue = val;
+    } else if (targetRarity === 2) {
+      const val = 30 + Math.floor(Math.random() * 196);
+      red = val;
+      green = val;
+      blue = (val + 50 + Math.floor(Math.random() * 100)) % 256;
+      if (blue === val) blue = (val + 77) % 226 + 15;
+    } else if (targetRarity === 1) {
+      red = Math.random() > 0.5 ? Math.floor(Math.random() * 25) : 231 + Math.floor(Math.random() * 24);
+      green = 30 + Math.floor(Math.random() * 196);
+      blue = 30 + Math.floor(Math.random() * 196);
+      if (green === red) green = (red + 50) % 196 + 30;
+      if (blue === red || blue === green) blue = (red + 100) % 196 + 30;
+    } else {
+      red = 30 + Math.floor(Math.random() * 196);
+      green = (red + 40 + Math.floor(Math.random() * 100)) % 196 + 30;
+      blue = (red + 100 + Math.floor(Math.random() * 80)) % 196 + 30;
+    }
+
+    const rarity = calculateRarity(red, green, blue);
+    if (rarity >= minRarity && rarity <= maxRarity) {
+      const price = calculatePrice(red, green, blue, rarity);
+      const color = `rgb(${red}, ${green}, ${blue})`;
+      return { id: crypto.randomUUID(), red, green, blue, rarity, price, color };
+    }
   }
 
+  // Ultimate fallback: generate a simple crystal at minRarity
+  const red = 30 + Math.floor(Math.random() * 196);
+  const green = (red + 40 + Math.floor(Math.random() * 100)) % 196 + 30;
+  const blue = (red + 100 + Math.floor(Math.random() * 80)) % 196 + 30;
   const rarity = calculateRarity(red, green, blue);
   const price = calculatePrice(red, green, blue, rarity);
   const color = `rgb(${red}, ${green}, ${blue})`;
-
-  return {
-    id: crypto.randomUUID(),
-    red, green, blue,
-    rarity, price, color
-  };
+  return { id: crypto.randomUUID(), red, green, blue, rarity, price, color };
 }
 
 function generateRandomCrystal(): Crystal {
