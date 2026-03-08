@@ -310,7 +310,7 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
             const isTarget = rune === targetRune;
             const isRevealed = revealedCup === i;
             const isPicked = pickedCup === i;
-            const isSwappingNow = swapping && (swapping[0] === i || swapping[1] === i);
+            const isMoving = isShuffling;
             const isClickable = phase === 'pick';
 
             let borderClr = 'hsl(var(--border))';
