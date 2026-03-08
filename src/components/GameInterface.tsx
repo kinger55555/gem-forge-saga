@@ -241,10 +241,6 @@ export function GameInterface() {
               <Landmark className="w-4 h-4" />
               {t.temple}
             </TabsTrigger>
-            <TabsTrigger value="scribe" className="gap-2">
-              <Eye className="w-4 h-4" />
-              {t.scribe}
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="mine">
