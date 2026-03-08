@@ -8,7 +8,7 @@ export interface Crystal {
   color: string;
 }
 
-export type PickaxeRarity = 'trash' | 'common' | 'epic' | 'legendary' | 'demonic' | 'silent';
+export type PickaxeRarity = 'trash' | 'normal' | 'rare' | 'epic' | 'mythic' | 'legendary' | 'insane' | 'demonic' | 'silent' | 'artifact';
 
 export interface Pickaxe {
   id: string;

@@ -14,11 +14,15 @@ interface PickaxeProps {
 
 const TIER_INDEX: Record<PickaxeType['type'], number> = {
   trash: 0,
-  common: 1,
-  epic: 2,
-  legendary: 3,
-  demonic: 4,
-  silent: 5,
+  normal: 1,
+  rare: 2,
+  epic: 3,
+  mythic: 4,
+  legendary: 5,
+  insane: 6,
+  demonic: 7,
+  silent: 8,
+  artifact: 9,
 };
 
 export function Pickaxe({ pickaxe, onSelect, isSelected, disabled, language = 'ru' }: PickaxeProps) {

@@ -63,10 +63,16 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				rarity: {
-					common: 'hsl(var(--rarity-common))',
-					uncommon: 'hsl(var(--rarity-uncommon))',
+					trash: 'hsl(var(--rarity-trash))',
+					normal: 'hsl(var(--rarity-normal))',
 					rare: 'hsl(var(--rarity-rare))',
+					epic: 'hsl(var(--rarity-epic))',
+					mythic: 'hsl(var(--rarity-mythic))',
 					legendary: 'hsl(var(--rarity-legendary))',
+					insane: 'hsl(var(--rarity-insane))',
+					demonic: 'hsl(var(--rarity-demonic))',
+					silent: 'hsl(var(--rarity-silent))',
+					artifact: 'hsl(var(--rarity-artifact))',
 					'legendary-foreground': 'hsl(var(--rarity-legendary-foreground))'
 				}
 			},
