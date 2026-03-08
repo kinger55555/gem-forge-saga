@@ -1,6 +1,5 @@
-import { AdminLink, PickaxeLink } from '@/types/admin';
+import { AdminLink } from '@/types/admin';
 
-// Secret admin password (in real app, this would be server-side)
 const ADMIN_PASSWORD = 'gemforge2024';
 
 export function validateAdminPassword(password: string): boolean {
@@ -17,7 +16,7 @@ export function generateLinkCode(): string {
 }
 
 export function createAdminLink(
-  type: 'normal' | 'legendary' | 'coins' | 'case', 
+  type: 'normal' | 'legendary' | 'coins', 
   customName?: string, 
   value?: number
 ): AdminLink {
@@ -34,9 +33,6 @@ export function createAdminLink(
     case 'coins':
       defaultName = `${value || 100} монет`;
       break;
-    case 'case':
-      defaultName = `${value || 1} кейс${(value || 1) > 1 ? 'а' : ''}`;
-      break;
   }
   
   return {
@@ -50,20 +46,6 @@ export function createAdminLink(
   };
 }
 
-// Legacy function for backwards compatibility
-export function createPickaxeLink(type: 'normal' | 'legendary', customName?: string): PickaxeLink {
-  const link = createAdminLink(type, customName);
-  return {
-    id: link.id,
-    code: link.code,
-    type,
-    name: link.name,
-    used: link.used,
-    createdAt: link.createdAt,
-    usedAt: link.usedAt,
-  };
-}
-
 export function getActivationUrl(code: string): string {
   const baseUrl = window.location.origin;
   return `${baseUrl}?link=${code}`;
@@ -71,10 +53,9 @@ export function getActivationUrl(code: string): string {
 
 export function parseAdminLinkFromUrl(): string | null {
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('link') || urlParams.get('pickaxe'); // Support legacy pickaxe parameter
+  return urlParams.get('link') || urlParams.get('pickaxe');
 }
 
-// Legacy function for backwards compatibility
 export function parsePickaxeFromUrl(): string | null {
   return parseAdminLinkFromUrl();
 }

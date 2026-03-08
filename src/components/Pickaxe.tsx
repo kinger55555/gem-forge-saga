@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Pickaxe as PickaxeType } from '@/types/game';
 import { Pickaxe as PickaxeIcon, Zap } from 'lucide-react';
-import { getRarityFromPickaxe } from '@/utils/pickaxeUtils';
 
 interface PickaxeProps {
   pickaxe: PickaxeType;
@@ -13,25 +12,13 @@ interface PickaxeProps {
 }
 
 export function Pickaxe({ pickaxe, onSelect, isSelected, disabled, language = 'ru' }: PickaxeProps) {
-  // Get rarity from pickaxe key if available, otherwise use type
-  const rarity = (pickaxe as any).pickaxeKey ? getRarityFromPickaxe((pickaxe as any).pickaxeKey) : 
-                (pickaxe.type === 'legendary' ? 'legendary' : 'common');
+  const rarity = pickaxe.type === 'legendary' ? 'legendary' : 'common';
   
   const rarityStyles = {
     common: {
       bg: 'bg-secondary',
       text: 'text-foreground',
       border: 'border-border'
-    },
-    rare: {
-      bg: 'bg-rarity-uncommon/20',
-      text: 'text-rarity-uncommon',
-      border: 'border-rarity-uncommon/50'
-    },
-    epic: {
-      bg: 'bg-rarity-rare/20',
-      text: 'text-rarity-rare', 
-      border: 'border-rarity-rare/50'
     },
     legendary: {
       bg: 'bg-rarity-legendary/20',
@@ -42,8 +29,6 @@ export function Pickaxe({ pickaxe, onSelect, isSelected, disabled, language = 'r
   
   const rarityLabels = {
     common: 'Обычная',
-    rare: 'Редкая',
-    epic: 'Эпическая', 
     legendary: 'Легендарная'
   };
   
