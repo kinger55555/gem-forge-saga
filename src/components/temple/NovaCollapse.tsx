@@ -264,7 +264,7 @@ export function NovaCollapse({ crystals, coins, onEarnCoins, onConsumeCrystal, o
 
       {won && selectedCrystal && (
         <p className="text-lg mb-4">
-          +💰{Math.floor(selectedCrystal.price * (1 + bonusPercent / 100)).toLocaleString()} ({l.bonus} +{bonusPercent}%)
+          +💰{Math.floor(selectedCrystal.price * (bonusPercent / 100)).toLocaleString()} ({l.bonus} +{bonusPercent}%)
         </p>
       )}
 
