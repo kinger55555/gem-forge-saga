@@ -160,6 +160,10 @@ export function GameInterface() {
     await gameData.addClickerEarnings(amount);
   }, [gameData]);
 
+  const handleConsumeCrystal = useCallback(async (crystalId: string) => {
+    await gameData.consumeCrystal(crystalId);
+  }, [gameData]);
+
   if (gameData.loading) {
     return (
       <div className="min-h-screen bg-gradient-cave flex items-center justify-center">
