@@ -35,15 +35,38 @@ function generateForcedCrystal(minRarity: number, maxRarity: number): Crystal {
 
     let red: number, green: number, blue: number;
 
-    if (targetRarity >= 5) {
+    if (targetRarity === 9) {
+      // (0,0,0) or (255,255,255) → rarity 9
       const val = Math.random() > 0.5 ? 255 : 0;
       red = green = blue = val;
-    } else if (targetRarity === 4) {
-      const extreme1 = Math.random() > 0.5 ? 255 : 0;
-      const extreme2 = Math.random() > 0.5 ? 255 : 0;
-      red = extreme1;
-      green = extreme2;
-      blue = 50 + Math.floor(Math.random() * 156);
+    } else if (targetRarity === 8) {
+      // Two same extreme + one different extreme: e.g. (0,0,255) → 2+2+2+2=8
+      const extremeA = Math.random() > 0.5 ? 0 : 255;
+      const extremeB = extremeA === 0 ? 255 : 0;
+      const channels = [extremeA, extremeA, extremeB];
+      for (let j = channels.length - 1; j > 0; j--) { const k = Math.floor(Math.random() * (j + 1)); [channels[j], channels[k]] = [channels[k], channels[j]]; }
+      red = channels[0]; green = channels[1]; blue = channels[2];
+    } else if (targetRarity === 7) {
+      // Two same extreme + one near-extreme: e.g. (0,0,15) → 2+2+2+1=7
+      const extreme = Math.random() > 0.5 ? 0 : 255;
+      const nearExtreme = Math.random() > 0.5 ? Math.floor(Math.random() * 25) + 1 : 231 + Math.floor(Math.random() * 24);
+      const pick = Math.floor(Math.random() * 3);
+      if (pick === 0) { red = nearExtreme; green = extreme; blue = extreme; }
+      else if (pick === 1) { red = extreme; green = nearExtreme; blue = extreme; }
+      else { red = extreme; green = extreme; blue = nearExtreme; }
+    } else if (targetRarity === 6) {
+      // Three same near-extreme: e.g. (10,10,10) → 3+1+1+1=6
+      const val = Math.random() > 0.5 ? Math.floor(Math.random() * 25) + 1 : 231 + Math.floor(Math.random() * 24);
+      red = green = blue = val;
+    } else if (targetRarity === 5) {
+      // Two different extremes + one mid: e.g. (0,255,128) → 0+2+2+0=4..5
+      const extreme1 = Math.random() > 0.5 ? 0 : 255;
+      const extreme2 = Math.random() > 0.5 ? 0 : 255;
+      const mid = 26 + Math.floor(Math.random() * 204);
+      const pick = Math.floor(Math.random() * 3);
+      if (pick === 0) { red = mid; green = extreme1; blue = extreme2; }
+      else if (pick === 1) { red = extreme1; green = mid; blue = extreme2; }
+      else { red = extreme1; green = extreme2; blue = mid; }
     } else if (targetRarity === 3) {
       const val = 30 + Math.floor(Math.random() * 196);
       red = green = blue = val;
