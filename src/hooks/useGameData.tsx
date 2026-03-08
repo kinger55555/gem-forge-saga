@@ -39,7 +39,7 @@ export function useGameData() {
       setGameData({
         pickaxes: pickaxesRes.data.map(p => ({
           id: p.id,
-          type: p.type as 'normal' | 'legendary',
+          type: p.type as PickaxeType['type'],
           name: p.name,
           used: p.used
         })),
