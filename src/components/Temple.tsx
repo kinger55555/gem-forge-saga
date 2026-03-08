@@ -2,20 +2,9 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Crystal } from '@/types/game';
 import { getRarityColor, getRarityName } from '@/utils/crystalUtils';
-import { Coins, Sparkles, MousePointerClick, ChevronLeft, AlertTriangle } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { Coins, Sparkles, Landmark, Eye, Shuffle, Trophy, X } from 'lucide-react';
 
 interface TempleProps {
   crystals: Crystal[];
@@ -25,114 +14,147 @@ interface TempleProps {
   language: 'en' | 'ru';
 }
 
+const RUNES = ['ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ', 'ᚺ', 'ᚾ', 'ᛁ', 'ᛃ', 'ᛇ', 'ᛈ', 'ᛉ', 'ᛊ'];
+
+type Phase = 'select' | 'memorize' | 'shuffling' | 'pick' | 'result';
+
 const translations = {
   en: {
     title: 'The Temple',
-    subtitle: 'Offer a crystal to the gods and click for riches',
+    subtitle: 'Offer a crystal — track the glowing rune — win riches',
     selectCrystal: 'Select a crystal to offer',
     noCrystals: 'You need crystals to enter the Temple',
-    clickToEarn: 'Click to earn coins!',
-    perClick: 'per click',
-    earned: 'Earned',
-    back: 'Leave (lose gem!)',
-    totalClicks: 'Clicks',
-    progress: 'Progress',
-    warning: 'Warning!',
-    warningDesc: 'Leaving the Temple will destroy your crystal. Are you sure?',
-    stay: 'Stay',
-    leave: 'Leave',
-    complete: '✨ Crystal fully harvested!',
+    memorize: 'Remember this rune!',
+    shuffling: 'Shuffling...',
+    pickNow: 'Which rune was glowing?',
+    won: 'Correct! Crystal returned + bonus!',
+    lost: 'Wrong! Crystal destroyed...',
+    bonus: 'Bonus',
     worth: 'Worth',
+    playAgain: 'Try another crystal',
+    difficulty: 'Runes',
   },
   ru: {
     title: 'Храм',
-    subtitle: 'Принеси кристалл богам и кликай за богатство',
+    subtitle: 'Принеси кристалл — запомни руну — выиграй богатство',
     selectCrystal: 'Выбери кристалл для подношения',
     noCrystals: 'Тебе нужны кристаллы чтобы войти в Храм',
-    clickToEarn: 'Кликай чтобы заработать монеты!',
-    perClick: 'за клик',
-    earned: 'Заработано',
-    back: 'Уйти (потеря кристалла!)',
-    totalClicks: 'Кликов',
-    progress: 'Прогресс',
-    warning: 'Внимание!',
-    warningDesc: 'Если вы уйдёте из Храма, кристалл будет уничтожен. Вы уверены?',
-    stay: 'Остаться',
-    leave: 'Уйти',
-    complete: '✨ Кристалл полностью переработан!',
+    memorize: 'Запомни эту руну!',
+    shuffling: 'Перемешивание...',
+    pickNow: 'Какая руна светилась?',
+    won: 'Верно! Кристалл возвращён + бонус!',
+    lost: 'Неверно! Кристалл уничтожен...',
+    bonus: 'Бонус',
     worth: 'Стоимость',
+    playAgain: 'Попробовать другой кристалл',
+    difficulty: 'Руны',
   },
 };
 
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, language }: TempleProps) {
+  const [phase, setPhase] = useState<Phase>('select');
   const [selectedCrystal, setSelectedCrystal] = useState<Crystal | null>(null);
-  const [sessionEarnings, setSessionEarnings] = useState(0);
-  const [totalClicks, setTotalClicks] = useState(0);
-  const [clickEffect, setClickEffect] = useState(false);
-  const [floatingTexts, setFloatingTexts] = useState<{ id: number; x: number; y: number; amount: number }[]>([]);
-  const [showLeaveWarning, setShowLeaveWarning] = useState(false);
-  const [completed, setCompleted] = useState(false);
-  const nextId = useRef(0);
+  const [runes, setRunes] = useState<string[]>([]);
+  const [targetIndex, setTargetIndex] = useState(0); // index in current runes array of the correct rune
+  const [targetRune, setTargetRune] = useState('');
+  const [won, setWon] = useState(false);
+  const [pickedIndex, setPickedIndex] = useState<number | null>(null);
+  const [shuffleCount, setShuffleCount] = useState(0);
+  const shuffleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const t = translations[language];
 
-  const TOTAL_CLICKS = 1000;
-
-  const getCoinsPerClick = (crystal: Crystal): number => {
-    return Math.max(1, Math.round(crystal.price / TOTAL_CLICKS));
+  // Number of runes scales with rarity (harder for better crystals)
+  const getRuneCount = (crystal: Crystal) => {
+    if (crystal.rarity <= 2) return 4;
+    if (crystal.rarity <= 4) return 6;
+    if (crystal.rarity <= 6) return 9;
+    return 12;
   };
 
-  const handleClick = useCallback(async (e: React.MouseEvent) => {
-    if (!selectedCrystal || completed) return;
-    const amount = getCoinsPerClick(selectedCrystal);
+  const startGame = useCallback((crystal: Crystal) => {
+    setSelectedCrystal(crystal);
+    setWon(false);
+    setPickedIndex(null);
 
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const id = nextId.current++;
-    setFloatingTexts(prev => [...prev, { id, x, y, amount }]);
-    setTimeout(() => setFloatingTexts(prev => prev.filter(ft => ft.id !== id)), 800);
+    const count = getRuneCount(crystal);
+    const selected = shuffleArray(RUNES).slice(0, count);
+    const tIdx = Math.floor(Math.random() * count);
+    
+    setRunes(selected);
+    setTargetIndex(tIdx);
+    setTargetRune(selected[tIdx]);
+    setPhase('memorize');
 
-    setClickEffect(true);
-    setTimeout(() => setClickEffect(false), 100);
+    // After 2 seconds, start shuffling
+    setTimeout(() => {
+      setPhase('shuffling');
+      setShuffleCount(0);
+    }, 2000);
+  }, []);
 
-    const newClicks = totalClicks + 1;
-    setSessionEarnings(prev => prev + amount);
-    setTotalClicks(newClicks);
-    await onEarnCoins(amount);
+  // Shuffling animation: shuffle several times then let player pick
+  useEffect(() => {
+    if (phase !== 'shuffling') return;
 
-    // Check completion
-    if (newClicks >= TOTAL_CLICKS) {
-      setCompleted(true);
-      // Crystal is fully harvested - consume it
-      await onConsumeCrystal(selectedCrystal.id);
-    }
-  }, [selectedCrystal, onEarnCoins, onConsumeCrystal, totalClicks, completed]);
-
-  const handleLeaveAttempt = () => {
-    if (completed) {
-      // Crystal already consumed, just go back
-      resetState();
+    const totalShuffles = 5 + (selectedCrystal ? Math.floor(selectedCrystal.rarity / 2) : 0);
+    
+    if (shuffleCount >= totalShuffles) {
+      setPhase('pick');
       return;
     }
-    setShowLeaveWarning(true);
-  };
 
-  const handleConfirmLeave = async () => {
-    if (selectedCrystal) {
+    shuffleTimerRef.current = setTimeout(() => {
+      setRunes(prev => {
+        const shuffled = shuffleArray(prev);
+        // Track where the target rune ended up
+        const newIdx = shuffled.indexOf(targetRune);
+        setTargetIndex(newIdx);
+        return shuffled;
+      });
+      setShuffleCount(prev => prev + 1);
+    }, 350);
+
+    return () => {
+      if (shuffleTimerRef.current) clearTimeout(shuffleTimerRef.current);
+    };
+  }, [phase, shuffleCount, targetRune, selectedCrystal]);
+
+  const handlePick = useCallback(async (index: number) => {
+    if (phase !== 'pick' || !selectedCrystal) return;
+    
+    setPickedIndex(index);
+    const isCorrect = runes[index] === targetRune;
+    setWon(isCorrect);
+    setPhase('result');
+
+    if (isCorrect) {
+      // Player wins: keep crystal (don't consume) + earn 50% of price
+      const bonus = Math.floor(selectedCrystal.price * 0.5);
+      await onEarnCoins(bonus);
+    } else {
+      // Player loses: crystal is destroyed
       await onConsumeCrystal(selectedCrystal.id);
     }
-    resetState();
-    setShowLeaveWarning(false);
-  };
+  }, [phase, runes, targetRune, selectedCrystal, onEarnCoins, onConsumeCrystal]);
 
-  const resetState = () => {
+  const resetGame = () => {
+    setPhase('select');
     setSelectedCrystal(null);
-    setSessionEarnings(0);
-    setTotalClicks(0);
-    setCompleted(false);
+    setRunes([]);
+    setPickedIndex(null);
   };
 
-  if (crystals.length === 0 && !selectedCrystal) {
+  // No crystals
+  if (crystals.length === 0 && phase === 'select') {
     return (
       <Card className="p-8 text-center">
         <Sparkles className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
@@ -142,26 +164,27 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
     );
   }
 
-  if (!selectedCrystal) {
+  // Crystal selection
+  if (phase === 'select') {
     return (
       <Card className="p-6">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold mb-1">{t.title}</h2>
-          <p className="text-muted-foreground">{t.selectCrystal}</p>
+          <h2 className="text-2xl font-bold mb-1 flex items-center justify-center gap-2">
+            <Landmark className="w-6 h-6" />
+            {t.title}
+          </h2>
+          <p className="text-sm text-muted-foreground">{t.subtitle}</p>
         </div>
+        <p className="text-sm text-muted-foreground text-center mb-4">{t.selectCrystal}</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[400px] overflow-y-auto">
           {crystals.map(crystal => {
             const rarityColor = getRarityColor(crystal.rarity);
-            const coinsPerClick = getCoinsPerClick(crystal);
+            const bonus = Math.floor(crystal.price * 0.5);
+            const runeCount = getRuneCount(crystal);
             return (
               <button
                 key={crystal.id}
-                onClick={() => {
-                  setSelectedCrystal(crystal);
-                  setSessionEarnings(0);
-                  setTotalClicks(0);
-                  setCompleted(false);
-                }}
+                onClick={() => startGame(crystal)}
                 className="p-3 rounded-lg border-2 bg-card hover:bg-muted/50 transition-all hover:scale-105 flex flex-col items-center gap-2"
                 style={{ borderColor: rarityColor }}
               >
@@ -177,8 +200,11 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
                 </span>
                 <Badge variant="outline" className="text-[10px] gap-1">
                   <Coins className="w-3 h-3" />
-                  +{coinsPerClick}/click
+                  +{bonus.toLocaleString()}
                 </Badge>
+                <span className="text-[10px] text-muted-foreground">
+                  {t.difficulty}: {runeCount}
+                </span>
               </button>
             );
           })}
@@ -187,140 +213,132 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
     );
   }
 
-  const coinsPerClick = getCoinsPerClick(selectedCrystal);
+  // Game phases: memorize, shuffling, pick, result
+  if (!selectedCrystal) return null;
+  
   const rarityColor = getRarityColor(selectedCrystal.rarity);
-  const progressPercent = Math.min(100, (totalClicks / TOTAL_CLICKS) * 100);
+  const bonus = Math.floor(selectedCrystal.price * 0.5);
+  const cols = runes.length <= 4 ? 2 : runes.length <= 6 ? 3 : runes.length <= 9 ? 3 : 4;
 
   return (
-    <>
-      <Card className="p-6 relative overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-5 pointer-events-none"
-          style={{ background: `radial-gradient(circle at center, ${rarityColor}, transparent 70%)` }}
-        />
+    <Card className="p-6 relative overflow-hidden">
+      <div
+        className="absolute inset-0 opacity-5 pointer-events-none"
+        style={{ background: `radial-gradient(circle at center, ${rarityColor}, transparent 70%)` }}
+      />
 
-        <div className="relative z-10">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleLeaveAttempt}
-              className="gap-1"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              {completed ? (language === 'ru' ? 'Назад' : 'Back') : t.back}
-            </Button>
-            <Badge variant="outline" className="gap-1">
+      <div className="relative z-10">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold mb-1 flex items-center justify-center gap-2">
+            <Landmark className="w-6 h-6" />
+            {t.title}
+          </h2>
+          <div className="flex items-center justify-center gap-3 mt-2">
+            <div
+              className="w-6 h-6 rounded border border-foreground/10"
+              style={{ backgroundColor: selectedCrystal.color }}
+            />
+            <span className="text-sm" style={{ color: rarityColor }}>
+              {getRarityName(selectedCrystal.rarity, language)}
+            </span>
+            <Badge variant="outline" className="text-xs gap-1">
               <Coins className="w-3 h-3" />
-              {coins.toLocaleString()}
+              {t.bonus}: +{bonus.toLocaleString()}
             </Badge>
           </div>
+        </div>
 
-          {/* Progress bar */}
-          <div className="mb-4">
-            <div className="flex justify-between text-xs text-muted-foreground mb-1">
-              <span>{t.progress}</span>
-              <span>{totalClicks}/{TOTAL_CLICKS}</span>
-            </div>
-            <Progress value={progressPercent} className="h-3" />
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            <div className="text-center p-3 bg-muted/30 rounded-lg">
-              <p className="text-xs text-muted-foreground">{t.perClick}</p>
-              <p className="text-lg font-bold" style={{ color: rarityColor }}>+{coinsPerClick}</p>
-            </div>
-            <div className="text-center p-3 bg-muted/30 rounded-lg">
-              <p className="text-xs text-muted-foreground">{t.earned}</p>
-              <p className="text-lg font-bold text-primary">{sessionEarnings.toLocaleString()}</p>
-            </div>
-            <div className="text-center p-3 bg-muted/30 rounded-lg">
-              <p className="text-xs text-muted-foreground">{t.totalClicks}</p>
-              <p className="text-lg font-bold text-foreground">{totalClicks}</p>
-            </div>
-          </div>
-
-          {/* Completed message */}
-          {completed && (
-            <div className="text-center p-4 mb-4 bg-primary/10 rounded-lg border border-primary/30">
-              <p className="text-lg font-bold text-primary">{t.complete}</p>
-              <p className="text-sm text-muted-foreground">
-                {language === 'ru'
-                  ? `Заработано ${sessionEarnings.toLocaleString()} монет`
-                  : `Earned ${sessionEarnings.toLocaleString()} coins`}
-              </p>
+        {/* Phase message */}
+        <div className="text-center mb-6">
+          {phase === 'memorize' && (
+            <div className="flex items-center justify-center gap-2 text-primary animate-pulse">
+              <Eye className="w-5 h-5" />
+              <span className="text-lg font-bold">{t.memorize}</span>
             </div>
           )}
-
-          {/* Clicker area */}
-          <div className="flex flex-col items-center gap-4">
-            {!completed && <p className="text-sm text-muted-foreground">{t.clickToEarn}</p>}
-
-            <div
-              className={`
-                relative w-40 h-40 rounded-full select-none
-                flex items-center justify-center
-                border-4 transition-transform duration-100
-                ${completed ? 'opacity-50 cursor-default' : 'cursor-pointer hover:brightness-110 active:scale-95'}
-                ${clickEffect ? 'scale-90' : 'scale-100'}
-              `}
-              style={{
-                borderColor: rarityColor,
-                background: `radial-gradient(circle, ${selectedCrystal.color}cc, ${selectedCrystal.color}40)`,
-                boxShadow: `0 0 30px ${rarityColor}40, inset 0 0 20px ${rarityColor}20`,
-              }}
-              onClick={handleClick}
-            >
-              <MousePointerClick className="w-12 h-12 text-foreground/70 pointer-events-none" />
-
-              {floatingTexts.map(ft => (
-                <span
-                  key={ft.id}
-                  className="absolute text-sm font-bold pointer-events-none animate-[float-coin_0.8s_ease-out_forwards]"
-                  style={{ left: ft.x, top: ft.y, color: rarityColor }}
-                >
-                  +{ft.amount}
-                </span>
-              ))}
+          {phase === 'shuffling' && (
+            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+              <Shuffle className="w-5 h-5 animate-spin" />
+              <span className="text-lg font-bold">{t.shuffling}</span>
             </div>
-
-            {/* Crystal info */}
-            <div className="text-center">
-              <div
-                className="w-6 h-6 rounded mx-auto mb-1 border border-foreground/10"
-                style={{ backgroundColor: selectedCrystal.color }}
-              />
-              <p className="text-xs" style={{ color: rarityColor }}>
-                {getRarityName(selectedCrystal.rarity, language)}
-              </p>
-              <p className="text-[10px] text-muted-foreground">
-                {t.worth}: {selectedCrystal.price.toLocaleString()}
-              </p>
+          )}
+          {phase === 'pick' && (
+            <span className="text-lg font-bold text-accent-foreground">{t.pickNow}</span>
+          )}
+          {phase === 'result' && (
+            <div className={`flex items-center justify-center gap-2 ${won ? 'text-primary' : 'text-destructive'}`}>
+              {won ? <Trophy className="w-6 h-6" /> : <X className="w-6 h-6" />}
+              <span className="text-lg font-bold">{won ? t.won : t.lost}</span>
             </div>
-          </div>
+          )}
         </div>
-      </Card>
 
-      {/* Leave warning dialog */}
-      <AlertDialog open={showLeaveWarning} onOpenChange={setShowLeaveWarning}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-destructive" />
-              {t.warning}
-            </AlertDialogTitle>
-            <AlertDialogDescription>{t.warningDesc}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t.stay}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmLeave} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {t.leave}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+        {/* Rune grid */}
+        <div
+          className="grid gap-3 mx-auto mb-6"
+          style={{
+            gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+            maxWidth: `${cols * 80}px`,
+          }}
+        >
+          {runes.map((rune, i) => {
+            const isTarget = rune === targetRune;
+            const showGlow = phase === 'memorize' && isTarget;
+            const showResult = phase === 'result';
+            const isPicked = pickedIndex === i;
+            const isClickable = phase === 'pick';
+
+            let borderColor = 'hsl(var(--border))';
+            let bgColor = 'hsl(var(--card))';
+            
+            if (showGlow) {
+              borderColor = 'hsl(var(--primary))';
+              bgColor = 'hsl(var(--primary) / 0.2)';
+            }
+            if (showResult && isTarget) {
+              borderColor = 'hsl(142 76% 36%)'; // green
+              bgColor = 'hsl(142 76% 36% / 0.15)';
+            }
+            if (showResult && isPicked && !won) {
+              borderColor = 'hsl(var(--destructive))';
+              bgColor = 'hsl(var(--destructive) / 0.15)';
+            }
+
+            return (
+              <button
+                key={`${rune}-${i}`}
+                onClick={() => handlePick(i)}
+                disabled={!isClickable}
+                className={`
+                  aspect-square rounded-lg text-3xl sm:text-4xl flex items-center justify-center
+                  border-2 transition-all duration-300 select-none font-mono
+                  ${isClickable ? 'cursor-pointer hover:scale-110 active:scale-95' : ''}
+                  ${phase === 'shuffling' ? 'animate-pulse' : ''}
+                  ${showGlow ? 'shadow-[0_0_20px_hsl(var(--primary)/0.5)] scale-110' : ''}
+                `}
+                style={{ borderColor, backgroundColor: bgColor }}
+              >
+                {rune}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Result actions */}
+        {phase === 'result' && (
+          <div className="text-center space-y-3">
+            {won && (
+              <p className="text-sm text-muted-foreground">
+                +{bonus.toLocaleString()} <Coins className="w-3 h-3 inline" />
+              </p>
+            )}
+            <Button onClick={resetGame} variant="outline" className="gap-2">
+              {t.playAgain}
+            </Button>
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }
