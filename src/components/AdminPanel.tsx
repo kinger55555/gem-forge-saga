@@ -23,6 +23,8 @@ import { useAuth } from '@/hooks/useAuth';
 interface AdminPanelProps {
   language?: 'en' | 'ru';
   onRefreshData?: () => void;
+  visible?: boolean;
+  onToggle?: () => void;
 }
 
 const ALL_PICKAXE_TYPES: PickaxeRarity[] = ['trash', 'normal', 'rare', 'epic', 'mythic', 'legendary', 'insane', 'demonic', 'silent', 'artifact'];
@@ -31,7 +33,7 @@ const TIER_INDEX: Record<PickaxeRarity, number> = {
   trash: 0, normal: 1, rare: 2, epic: 3, mythic: 4, legendary: 5, insane: 6, demonic: 7, silent: 8, artifact: 9,
 };
 
-export function AdminPanel({ language = 'ru', onRefreshData }: AdminPanelProps) {
+export function AdminPanel({ language = 'ru', onRefreshData, visible = false, onToggle }: AdminPanelProps) {
   const { user } = useAuth();
   const [adminLinks, setAdminLinks] = useState<AdminLink[]>([]);
   const [customName, setCustomName] = useState('');
@@ -47,6 +49,15 @@ export function AdminPanel({ language = 'ru', onRefreshData }: AdminPanelProps) 
   }, [isAdminUser]);
 
   if (!isAdminUser) return null;
+
+  if (!visible) {
+    return (
+      <Button onClick={onToggle} variant="outline" size="sm" className="gap-1">
+        <Settings className="w-4 h-4" />
+        Админ
+      </Button>
+    );
+  }
 
   const loadAdminLinks = async () => {
     setIsLoadingLinks(true);
@@ -184,6 +195,7 @@ export function AdminPanel({ language = 'ru', onRefreshData }: AdminPanelProps) 
           <Settings className="w-5 h-5" />
           Админ-панель
         </h2>
+        <Button onClick={onToggle} variant="ghost" size="sm">✕</Button>
       </div>
 
       <div className="space-y-6">

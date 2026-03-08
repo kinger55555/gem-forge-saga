@@ -46,6 +46,7 @@ export function GameInterface() {
   const [miningState, setMiningState] = useState<MiningState>(MiningState.IDLE);
   const [currentCrystal, setCurrentCrystal] = useState<Crystal | null>(null);
   const [showMiningModal, setShowMiningModal] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
 
   const translations = {
     en: {
@@ -195,6 +196,8 @@ export function GameInterface() {
               <AdminPanel
                 language={language}
                 onRefreshData={gameData.refreshData}
+                visible={showAdmin}
+                onToggle={() => setShowAdmin(prev => !prev)}
               />
               
               {currentPickaxe && (
