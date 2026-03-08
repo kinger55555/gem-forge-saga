@@ -12,12 +12,22 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { user_id, secret } = await req.json();
+    const { user_id, secret, role } = await req.json();
 
     // Simple secret to prevent unauthorized access
     if (secret !== Deno.env.get("ADMIN_SETUP_SECRET")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate role
+    const validRoles = ["admin", "moderator"];
+    const targetRole = role || "admin";
+    if (!validRoles.includes(targetRole)) {
+      return new Response(JSON.stringify({ error: "Invalid role" }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -29,7 +39,7 @@ Deno.serve(async (req) => {
 
     const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
       user_id,
-      { app_metadata: { role: "admin" } }
+      { app_metadata: { role: targetRole } }
     );
 
     if (error) throw error;
