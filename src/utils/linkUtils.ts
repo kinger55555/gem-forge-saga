@@ -18,11 +18,15 @@ export function generateLinkCode(): string {
 
 const PICKAXE_NAMES: Record<PickaxeRarity, string> = {
   trash: 'Мусорная кирка',
-  common: 'Обычная кирка',
+  normal: 'Обычная кирка',
+  rare: 'Редкая кирка',
   epic: 'Эпическая кирка',
+  mythic: 'Мифическая кирка',
   legendary: 'Легендарная кирка',
+  insane: 'Безумная кирка',
   demonic: 'Демоническая кирка',
   silent: 'Тихая кирка',
+  artifact: 'Артефактная кирка',
 };
 
 export function createAdminLink(
