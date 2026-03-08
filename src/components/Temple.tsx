@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Crystal } from '@/types/game';
-import { Landmark, Dices, Zap, Route, Brain, Palette, Target } from 'lucide-react';
+import { Landmark, Dices, Zap, Route, Brain, Palette, Target, Eclipse } from 'lucide-react';
 import { ShellGame } from '@/components/temple/ShellGame';
 import { CrystalClicker } from '@/components/temple/CrystalClicker';
 import { TwoRoads } from '@/components/temple/TwoRoads';
 import { MemoryGame } from '@/components/temple/MemoryGame';
 import { ColorRoulette } from '@/components/temple/ColorRoulette';
 import { QuickDraw } from '@/components/temple/QuickDraw';
+import { NovaCollapse } from '@/components/temple/NovaCollapse';
 
 interface TempleProps {
   crystals: Crystal[];
