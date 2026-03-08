@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Gift } from 'lucide-react';
+import { Calendar, Gift, Star } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface DailyRewardsProps {
@@ -14,74 +14,111 @@ interface DailyRewardsProps {
 
 export function DailyRewards({ onRewardClaimed, language = 'ru' }: DailyRewardsProps) {
   const { user } = useAuth();
-  const [canClaim, setCanClaim] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [canClaimDaily, setCanClaimDaily] = useState(false);
+  const [canClaimWeekly, setCanClaimWeekly] = useState(false);
+  const [isLoadingDaily, setIsLoadingDaily] = useState(false);
+  const [isLoadingWeekly, setIsLoadingWeekly] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const checkDailyReward = async () => {
+  const getMonday = (date: Date): string => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    return d.toISOString().split('T')[0];
+  };
+
+  const checkRewards = async () => {
     if (!user) return;
 
     try {
       const today = new Date().toISOString().split('T')[0];
-      const { data, error } = await supabase
-        .from('daily_rewards')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('reward_date', today)
-        .maybeSingle();
+      const weekStart = getMonday(new Date());
 
-      if (error) throw error;
+      const [dailyRes, weeklyRes] = await Promise.all([
+        supabase
+          .from('daily_rewards')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('reward_date', today)
+          .eq('reward_type', 'daily_trash')
+          .maybeSingle(),
+        supabase
+          .from('daily_rewards')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('reward_date', weekStart)
+          .eq('reward_type', 'weekly_normal')
+          .maybeSingle()
+      ]);
 
-      setCanClaim(!data || !data.claimed);
+      if (dailyRes.error) throw dailyRes.error;
+      if (weeklyRes.error) throw weeklyRes.error;
+
+      setCanClaimDaily(!dailyRes.data || !dailyRes.data.claimed);
+      setCanClaimWeekly(!weeklyRes.data || !weeklyRes.data.claimed);
       setLoading(false);
     } catch (error: any) {
-      console.error('Error checking daily reward:', error);
+      console.error('Error checking rewards:', error);
       setLoading(false);
     }
   };
 
   useEffect(() => {
     if (user) {
-      checkDailyReward();
+      checkRewards();
     }
   }, [user]);
 
-  const claimDailyReward = async () => {
+  const claimReward = async (type: 'daily' | 'weekly') => {
     if (!user) return;
 
+    const setIsLoading = type === 'daily' ? setIsLoadingDaily : setIsLoadingWeekly;
     setIsLoading(true);
+
     try {
-      const today = new Date().toISOString().split('T')[0];
-      
-      // Insert or update daily reward
+      const rewardDate = type === 'daily'
+        ? new Date().toISOString().split('T')[0]
+        : getMonday(new Date());
+      const rewardType = type === 'daily' ? 'daily_trash' : 'weekly_normal';
+      const pickaxeType = type === 'daily' ? 'trash' : 'normal';
+      const pickaxeName = type === 'daily'
+        ? (language === 'ru' ? 'Ежедневная кирка' : 'Daily Pickaxe')
+        : (language === 'ru' ? 'Еженедельная кирка' : 'Weekly Pickaxe');
+
       const { error: rewardError } = await supabase
         .from('daily_rewards')
         .upsert({
           user_id: user.id,
-          reward_date: today,
+          reward_date: rewardDate,
           claimed: true,
-          reward_type: 'pickaxe'
+          reward_type: rewardType
         });
 
       if (rewardError) throw rewardError;
 
-      // Give a normal pickaxe
       const { error: pickaxeError } = await supabase
         .from('pickaxes')
         .insert({
           user_id: user.id,
-          type: 'normal',
-          name: 'Daily Pickaxe',
+          type: pickaxeType,
+          name: pickaxeName,
           used: false
         });
 
       if (pickaxeError) throw pickaxeError;
 
-      setCanClaim(false);
+      if (type === 'daily') setCanClaimDaily(false);
+      else setCanClaimWeekly(false);
+
       onRewardClaimed();
-      toast.success(language === 'ru' ? '🎁 Получена ежедневная кирка!' : '🎁 Daily pickaxe received!');
+
+      const msg = type === 'daily'
+        ? (language === 'ru' ? '🎁 Получена ежедневная кирка (trash)!' : '🎁 Daily trash pickaxe received!')
+        : (language === 'ru' ? '⭐ Получена еженедельная кирка (normal)!' : '⭐ Weekly normal pickaxe received!');
+      toast.success(msg);
     } catch (error: any) {
-      console.error('Error claiming daily reward:', error);
+      console.error('Error claiming reward:', error);
       toast.error(language === 'ru' ? 'Ошибка получения награды' : 'Failed to claim reward');
     } finally {
       setIsLoading(false);
@@ -103,38 +140,74 @@ export function DailyRewards({ onRewardClaimed, language = 'ru' }: DailyRewardsP
     <Card className="p-6">
       <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
         <Calendar className="w-5 h-5" />
-        {language === 'ru' ? 'Ежедневная награда' : 'Daily Reward'}
+        {language === 'ru' ? 'Награды' : 'Rewards'}
       </h2>
       
-      <div className="space-y-4">
+      <div className="space-y-3">
+        {/* Daily trash pickaxe */}
         <div className="flex items-center justify-between p-4 border rounded-lg">
           <div className="flex items-center gap-3">
-            <Gift className="w-6 h-6 text-green-500" />
+            <Gift className="w-6 h-6 text-muted-foreground" />
             <div>
               <h3 className="font-semibold">
                 {language === 'ru' ? 'Ежедневная кирка' : 'Daily Pickaxe'}
               </h3>
               <p className="text-sm text-muted-foreground">
-                {language === 'ru' ? 'Получайте бесплатную кирку каждый день' : 'Get a free pickaxe every day'}
+                {language === 'ru' ? 'Trash кирка каждый день' : 'Free trash pickaxe every day'}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {canClaim ? (
+            {canClaimDaily ? (
               <Button 
-                onClick={claimDailyReward}
-                disabled={isLoading}
+                onClick={() => claimReward('daily')}
+                disabled={isLoadingDaily}
+                variant="outline"
                 className="gap-2"
               >
                 <Gift className="w-4 h-4" />
-                {isLoading 
+                {isLoadingDaily 
                   ? (language === 'ru' ? 'Получение...' : 'Claiming...') 
                   : (language === 'ru' ? 'Получить' : 'Claim')
                 }
               </Button>
             ) : (
               <Badge variant="secondary">
-                {language === 'ru' ? 'Получено сегодня' : 'Claimed today'}
+                {language === 'ru' ? 'Получено' : 'Claimed'}
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        {/* Weekly normal pickaxe */}
+        <div className="flex items-center justify-between p-4 border rounded-lg border-primary/30">
+          <div className="flex items-center gap-3">
+            <Star className="w-6 h-6 text-primary" />
+            <div>
+              <h3 className="font-semibold">
+                {language === 'ru' ? 'Еженедельная кирка' : 'Weekly Pickaxe'}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {language === 'ru' ? 'Normal кирка каждую неделю' : 'Free normal pickaxe every week'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {canClaimWeekly ? (
+              <Button 
+                onClick={() => claimReward('weekly')}
+                disabled={isLoadingWeekly}
+                className="gap-2"
+              >
+                <Star className="w-4 h-4" />
+                {isLoadingWeekly 
+                  ? (language === 'ru' ? 'Получение...' : 'Claiming...') 
+                  : (language === 'ru' ? 'Получить' : 'Claim')
+                }
+              </Button>
+            ) : (
+              <Badge variant="secondary">
+                {language === 'ru' ? 'Получено' : 'Claimed'}
               </Badge>
             )}
           </div>
