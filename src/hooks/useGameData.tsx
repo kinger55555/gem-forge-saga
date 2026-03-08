@@ -81,7 +81,7 @@ export function useGameData() {
     if (!user) return;
 
     try {
-      const { error } = await supabase.from('crystals').insert({
+      const { data, error } = await supabase.from('crystals').insert({
         user_id: user.id,
         red: crystal.red,
         green: crystal.green,
@@ -89,13 +89,23 @@ export function useGameData() {
         rarity: crystal.rarity,
         price: crystal.price,
         color: crystal.color
-      });
+      }).select().single();
 
       if (error) throw error;
 
+      const savedCrystal: Crystal = {
+        id: data.id,
+        red: data.red,
+        green: data.green,
+        blue: data.blue,
+        rarity: data.rarity,
+        price: data.price,
+        color: data.color
+      };
+
       setGameData(prev => ({
         ...prev,
-        crystals: [...prev.crystals, crystal]
+        crystals: [...prev.crystals, savedCrystal]
       }));
     } catch (error: any) {
       console.error('Error saving crystal:', error);
