@@ -9,13 +9,3 @@ export function PickaxeHelp({ language = 'ru', onShowTutorial }: { language?: 'e
     </Button>
   );
 }
-          <div className="pt-2 border-t">
-            <p className="text-xs text-muted-foreground text-center">
-              Каждая кирка одноразовая и исчезает после использования
-            </p>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
