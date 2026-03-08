@@ -43,19 +43,21 @@ export function calculateRarity(red: number, green: number, blue: number): numbe
 }
 
 export function getRarityColor(rarity: number): string {
-  if (rarity === 0) return 'hsl(var(--rarity-common))';
-  if (rarity === 1) return 'hsl(var(--rarity-uncommon))';
-  if (rarity === 2) return 'hsl(var(--rarity-rare))';
-  return 'hsl(var(--rarity-legendary))';
+  if (rarity === 0) return 'hsl(var(--rarity-trash))';
+  if (rarity === 1) return 'hsl(var(--rarity-common))';
+  if (rarity === 2) return 'hsl(var(--rarity-epic))';
+  if (rarity === 3) return 'hsl(var(--rarity-legendary))';
+  if (rarity === 4) return 'hsl(var(--rarity-demonic))';
+  return 'hsl(var(--rarity-silent))';
 }
 
 export function getRarityName(rarity: number, language: 'en' | 'ru' = 'ru'): string {
   const names = {
-    en: ['Common', 'Uncommon', 'Rare', 'Legendary'],
-    ru: ['Обычный', 'Необычный', 'Редкий', 'Легендарный']
+    en: ['Trash', 'Common', 'Epic', 'Legendary', 'Demonic', 'Silent'],
+    ru: ['Мусор', 'Обычный', 'Эпический', 'Легендарный', 'Демонический', 'Тихий']
   };
   
-  const index = Math.min(rarity, 3);
+  const index = Math.min(rarity, 5);
   return names[language][index];
 }
 
