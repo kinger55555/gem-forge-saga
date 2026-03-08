@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Crystal } from '@/types/game';
 import { getRarityColor, getRarityName } from '@/utils/crystalUtils';
-import { Coins, Sparkles, ArrowLeft, Trophy, X, Eye, EyeOff, Zap, Brain } from 'lucide-react';
+import { Coins, ArrowLeft, Trophy, X, Brain } from 'lucide-react';
 
 interface SingularityProps {
   crystals: Crystal[];
@@ -17,176 +17,146 @@ interface SingularityProps {
 
 const translations = {
   en: {
-    title: 'Singularity',
-    subtitle: 'Survive 5 phases of pure skill',
+    title: 'Timing Tap',
+    subtitle: 'Tap at the perfect moment — not too early, not too late',
     selectCrystal: 'Select a crystal to offer',
     noCrystals: 'You need crystals to play',
     back: 'Back',
     worth: 'Worth',
     bonus: 'Bonus',
     playAgain: 'Try another crystal',
-    phase: 'Phase',
+    round: 'Round',
     tap: 'TAP!',
-    won: 'You survived the Singularity!',
-    lost: 'Destroyed by the Singularity...',
-    phases: [
-      'The Vise — Hit the narrow zone',
-      'Blindness — Tap in the dark',
-      'Onslaught — Triple speed',
-      'The Needle — Perfect precision',
-      'Judgment — Trust the rhythm',
-    ],
+    won: 'Perfect timing!',
+    lost: 'Missed the mark...',
+    tooEarly: 'Too early!',
+    tooLate: 'Too late!',
     getReady: 'Get ready...',
   },
   ru: {
-    title: 'Сингулярность',
-    subtitle: 'Пройди 5 фаз чистого скилла',
+    title: 'Тайминг',
+    subtitle: 'Жми в нужный момент — не рано и не поздно',
     selectCrystal: 'Выбери кристалл для подношения',
     noCrystals: 'Тебе нужны кристаллы чтобы играть',
     back: 'Назад',
     worth: 'Стоимость',
     bonus: 'Бонус',
     playAgain: 'Попробовать другой кристалл',
-    phase: 'Фаза',
+    round: 'Раунд',
     tap: 'ЖМИИ!',
-    won: 'Ты пережил Сингулярность!',
-    lost: 'Уничтожен Сингулярностью...',
-    phases: [
-      'Тиски — Попади в узкую зону',
-      'Слепота — Жми в темноте',
-      'Натиск — Тройная скорость',
-      'Игла — Идеальная точность',
-      'Суд — Доверься ритму',
-    ],
+    won: 'Идеальный тайминг!',
+    lost: 'Мимо...',
+    tooEarly: 'Слишком рано!',
+    tooLate: 'Слишком поздно!',
     getReady: 'Приготовься...',
   },
 };
 
 type Phase = 'select' | 'playing' | 'result';
 
-interface PhaseConfig {
-  barSpeed: number;       // ms for full sweep
-  zoneWidth: number;      // % of bar width for target zone
-  isDark: boolean;        // hide the bar indicator
-  isBlindTap: boolean;    // hide everything, rhythm-based
-  attempts: number;       // how many taps needed
+function getRounds(rarity: number): number {
+  if (rarity <= 2) return 5;
+  if (rarity <= 4) return 6;
+  if (rarity <= 6) return 7;
+  return 8;
 }
 
-function getPhaseConfigs(rarity: number): PhaseConfig[] {
-  const diff = rarity <= 2 ? 1 : rarity <= 5 ? 1.3 : rarity <= 7 ? 1.6 : 2;
-  return [
-    { barSpeed: 1200 / diff, zoneWidth: 20 / diff, isDark: false, isBlindTap: false, attempts: 1 },
-    { barSpeed: 1400 / diff, zoneWidth: 22 / diff, isDark: true, isBlindTap: false, attempts: 1 },
-    { barSpeed: 500 / diff, zoneWidth: 18 / diff, isDark: false, isBlindTap: false, attempts: 2 },
-    { barSpeed: 1600 / diff, zoneWidth: 8 / diff, isDark: false, isBlindTap: false, attempts: 1 },
-    { barSpeed: 1200 / diff, zoneWidth: 20 / diff, isDark: false, isBlindTap: true, attempts: 1 },
-  ];
+function getZoneWidth(rarity: number, round: number): number {
+  const base = rarity <= 2 ? 25 : rarity <= 5 ? 20 : 15;
+  return Math.max(8, base - round * 1.5);
+}
+
+function getBarSpeed(rarity: number, round: number): number {
+  const base = rarity <= 2 ? 2200 : rarity <= 5 ? 1800 : 1400;
+  return Math.max(600, base - round * 120);
 }
 
 export function Singularity({ crystals, coins, onEarnCoins, onConsumeCrystal, onBack, language }: SingularityProps) {
   const [phase, setPhase] = useState<Phase>('select');
   const [selectedCrystal, setSelectedCrystal] = useState<Crystal | null>(null);
-  const [currentPhaseIdx, setCurrentPhaseIdx] = useState(0);
-  const [currentAttempt, setCurrentAttempt] = useState(0);
-  const [barPosition, setBarPosition] = useState(0); // 0-100
-  const [zoneStart, setZoneStart] = useState(40);
+  const [currentRound, setCurrentRound] = useState(0);
+  const [totalRounds, setTotalRounds] = useState(5);
+  const [barPosition, setBarPosition] = useState(0);
+  const [zoneStart, setZoneStart] = useState(30);
+  const [zoneWidth, setZoneWidth] = useState(20);
   const [won, setWon] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [showFlash, setShowFlash] = useState(false);
-  const [phaseConfigs, setPhaseConfigs] = useState<PhaseConfig[]>([]);
+  const [missText, setMissText] = useState('');
   const animRef = useRef<number | null>(null);
   const startTimeRef = useRef(0);
-  const directionRef = useRef(1);
+  const speedRef = useRef(2000);
   const t = translations[language];
 
   useEffect(() => {
     return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
   }, []);
 
-  const startGame = (crystal: Crystal) => {
-    setSelectedCrystal(crystal);
-    setWon(false);
-    setCurrentPhaseIdx(0);
-    setCurrentAttempt(0);
-    const configs = getPhaseConfigs(crystal.rarity);
-    setPhaseConfigs(configs);
-    setPhase('playing');
-    startPhase(configs, 0);
-  };
-
-  const startPhase = (configs: PhaseConfig[], idx: number) => {
+  const startRound = useCallback((crystal: Crystal, round: number) => {
     setIsTransitioning(true);
-    setCurrentPhaseIdx(idx);
-    setCurrentAttempt(0);
-
-    // Random zone position
-    const config = configs[idx];
-    const zs = 10 + Math.random() * (80 - config.zoneWidth);
+    setCurrentRound(round);
+    const zw = getZoneWidth(crystal.rarity, round);
+    const zs = 10 + Math.random() * (80 - zw);
     setZoneStart(zs);
+    setZoneWidth(zw);
+    setBarPosition(0);
+
+    const speed = getBarSpeed(crystal.rarity, round);
+    speedRef.current = speed;
 
     setTimeout(() => {
       setIsTransitioning(false);
-      startBarAnimation(configs[idx].barSpeed);
-    }, 1500);
-  };
-
-  const startBarAnimation = (speed: number) => {
-    startTimeRef.current = performance.now();
-    directionRef.current = 1;
-    const animate = (now: number) => {
-      const elapsed = now - startTimeRef.current;
-      const cycleTime = speed;
-      const progress = (elapsed % (cycleTime * 2)) / cycleTime;
-      const pos = progress <= 1 ? progress * 100 : (2 - progress) * 100;
-      setBarPosition(pos);
+      startTimeRef.current = performance.now();
+      const animate = (now: number) => {
+        const elapsed = now - startTimeRef.current;
+        const progress = Math.min((elapsed / speed) * 100, 100);
+        setBarPosition(progress);
+        if (progress < 100) {
+          animRef.current = requestAnimationFrame(animate);
+        } else {
+          // Ran out — too late
+          animRef.current = null;
+        }
+      };
       animRef.current = requestAnimationFrame(animate);
-    };
-    animRef.current = requestAnimationFrame(animate);
+    }, 800);
+  }, []);
+
+  const startGame = (crystal: Crystal) => {
+    setSelectedCrystal(crystal);
+    setWon(false);
+    setMissText('');
+    const rounds = getRounds(crystal.rarity);
+    setTotalRounds(rounds);
+    setPhase('playing');
+    startRound(crystal, 0);
   };
 
   const handleTap = useCallback(async () => {
     if (phase !== 'playing' || isTransitioning || !selectedCrystal) return;
 
-    const config = phaseConfigs[currentPhaseIdx];
-    const inZone = barPosition >= zoneStart && barPosition <= zoneStart + config.zoneWidth;
-
     if (animRef.current) cancelAnimationFrame(animRef.current);
     animRef.current = null;
 
-    // Flash feedback
-    setShowFlash(true);
-    setTimeout(() => setShowFlash(false), 150);
+    const inZone = barPosition >= zoneStart && barPosition <= zoneStart + zoneWidth;
 
     if (!inZone) {
-      // Failed
+      setMissText(barPosition < zoneStart ? t.tooEarly : t.tooLate);
       setWon(false);
       setPhase('result');
       await onConsumeCrystal(selectedCrystal.id);
       return;
     }
 
-    const nextAttempt = currentAttempt + 1;
-    if (nextAttempt < config.attempts) {
-      // More attempts needed in this phase
-      setCurrentAttempt(nextAttempt);
-      const zs = 10 + Math.random() * (80 - config.zoneWidth);
-      setZoneStart(zs);
-      startBarAnimation(config.barSpeed);
-      return;
-    }
-
-    // Phase cleared
-    const nextPhase = currentPhaseIdx + 1;
-    if (nextPhase >= phaseConfigs.length) {
-      // Won!
+    const nextRound = currentRound + 1;
+    if (nextRound >= totalRounds) {
       setWon(true);
       setPhase('result');
       const bonus = Math.floor(selectedCrystal.price * 0.7);
       await onEarnCoins(bonus);
     } else {
-      startPhase(phaseConfigs, nextPhase);
+      startRound(selectedCrystal, nextRound);
     }
-  }, [phase, isTransitioning, barPosition, zoneStart, currentPhaseIdx, currentAttempt, phaseConfigs, selectedCrystal, onEarnCoins, onConsumeCrystal]);
+  }, [phase, isTransitioning, barPosition, zoneStart, zoneWidth, currentRound, totalRounds, selectedCrystal, onEarnCoins, onConsumeCrystal, startRound, t]);
 
   const resetGame = () => {
     if (animRef.current) cancelAnimationFrame(animRef.current);
@@ -223,21 +193,12 @@ export function Singularity({ crystals, coins, onEarnCoins, onConsumeCrystal, on
           </div>
         </div>
 
-        {/* Phase descriptions */}
-        <div className="mb-6 space-y-2">
-          {t.phases.map((desc, i) => (
-            <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">{i + 1}</span>
-              {desc}
-            </div>
-          ))}
-        </div>
-
         <p className="text-sm text-muted-foreground text-center mb-4">{t.selectCrystal}</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[300px] overflow-y-auto">
           {crystals.map(crystal => {
             const rarityColor = getRarityColor(crystal.rarity);
             const bonus = Math.floor(crystal.price * 0.7);
+            const rounds = getRounds(crystal.rarity);
             return (
               <button
                 key={crystal.id}
@@ -249,7 +210,7 @@ export function Singularity({ crystals, coins, onEarnCoins, onConsumeCrystal, on
                 <span className="text-xs font-medium" style={{ color: rarityColor }}>
                   {getRarityName(crystal.rarity, language)}
                 </span>
-                <span className="text-[10px] text-muted-foreground">{t.worth}: {crystal.price.toLocaleString()}</span>
+                <span className="text-[10px] text-muted-foreground">{rounds} {t.round.toLowerCase()}s</span>
                 <Badge variant="outline" className="text-[10px] gap-1">
                   <Coins className="w-3 h-3" />+{bonus.toLocaleString()}
                 </Badge>
@@ -265,156 +226,119 @@ export function Singularity({ crystals, coins, onEarnCoins, onConsumeCrystal, on
 
   const rarityColor = getRarityColor(selectedCrystal.rarity);
   const bonus = Math.floor(selectedCrystal.price * 0.7);
-  const config = phaseConfigs[currentPhaseIdx] || phaseConfigs[0];
 
-  // Playing / result
   return (
     <Card className="p-6 relative overflow-hidden">
-      {/* Flash overlay */}
-      {showFlash && (
-        <div className="absolute inset-0 z-50 pointer-events-none bg-foreground/20" />
+      {/* Header */}
+      <div className="text-center mb-4">
+        <h2 className="text-2xl font-bold mb-1">{t.title}</h2>
+        <div className="flex items-center justify-center gap-3 mt-2">
+          <div className="w-6 h-6 rounded border border-foreground/10" style={{ backgroundColor: selectedCrystal.color }} />
+          <span className="text-sm" style={{ color: rarityColor }}>{getRarityName(selectedCrystal.rarity, language)}</span>
+          <Badge variant="outline" className="text-xs gap-1">
+            <Coins className="w-3 h-3" />{t.bonus}: +{bonus.toLocaleString()}
+          </Badge>
+        </div>
+      </div>
+
+      {/* Round indicator */}
+      {phase === 'playing' && (
+        <div className="mb-4">
+          <div className="flex items-center justify-center gap-1 mb-2">
+            {Array.from({ length: totalRounds }).map((_, i) => (
+              <div
+                key={i}
+                className={`w-8 h-1.5 rounded-full transition-all duration-300 ${
+                  i < currentRound ? 'bg-primary' :
+                  i === currentRound ? 'bg-primary animate-pulse' :
+                  'bg-muted'
+                }`}
+              />
+            ))}
+          </div>
+          <p className="text-center text-sm font-medium text-muted-foreground">
+            {isTransitioning ? t.getReady : `${t.round} ${currentRound + 1}/${totalRounds}`}
+          </p>
+        </div>
       )}
 
-      {/* Phase-specific screen shake */}
-      <div className={`relative z-10 ${currentPhaseIdx === 2 && !isTransitioning && phase === 'playing' ? 'animate-[insane-shake_0.1s_infinite]' : ''}`}>
-        {/* Header */}
-        <div className="text-center mb-4">
-          <h2 className="text-2xl font-bold mb-1">{t.title}</h2>
-          <div className="flex items-center justify-center gap-3 mt-2">
-            <div className="w-6 h-6 rounded border border-foreground/10" style={{ backgroundColor: selectedCrystal.color }} />
-            <span className="text-sm" style={{ color: rarityColor }}>{getRarityName(selectedCrystal.rarity, language)}</span>
-            <Badge variant="outline" className="text-xs gap-1">
-              <Coins className="w-3 h-3" />{t.bonus}: +{bonus.toLocaleString()}
-            </Badge>
+      {/* Timing bar */}
+      {phase === 'playing' && !isTransitioning && (
+        <div className="mb-8">
+          <div
+            className="relative w-full h-16 rounded-xl border-2 border-border overflow-hidden cursor-pointer select-none bg-muted"
+            onClick={handleTap}
+          >
+            {/* Sweet zone */}
+            <div
+              className="absolute top-0 h-full rounded"
+              style={{
+                left: `${zoneStart}%`,
+                width: `${zoneWidth}%`,
+                backgroundColor: 'hsl(142 76% 36% / 0.3)',
+                borderLeft: '2px solid hsl(142 76% 36% / 0.6)',
+                borderRight: '2px solid hsl(142 76% 36% / 0.6)',
+              }}
+            />
+
+            {/* Moving indicator (fills from left) */}
+            <div
+              className="absolute top-0 left-0 h-full bg-primary/30 transition-none"
+              style={{ width: `${barPosition}%` }}
+            />
+
+            {/* Needle */}
+            <div
+              className="absolute top-0 h-full w-1 rounded-full bg-primary transition-none"
+              style={{
+                left: `${barPosition}%`,
+                boxShadow: '0 0 10px hsl(var(--primary) / 0.5)',
+              }}
+            />
+
+            {/* Tap text */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <span className="text-lg font-bold text-foreground/30">{t.tap}</span>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Phase indicator */}
-        {phase === 'playing' && (
-          <div className="mb-4">
-            <div className="flex items-center justify-center gap-1 mb-2">
-              {phaseConfigs.map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-8 h-1.5 rounded-full transition-all duration-300 ${
-                    i < currentPhaseIdx ? 'bg-primary' :
-                    i === currentPhaseIdx ? 'bg-primary animate-pulse' :
-                    'bg-muted'
-                  }`}
-                />
-              ))}
-            </div>
-            <p className="text-center text-sm font-medium text-muted-foreground">
-              {isTransitioning ? t.getReady : `${t.phase} ${currentPhaseIdx + 1}: ${t.phases[currentPhaseIdx]?.split('—')[0]}`}
+      {/* Transition */}
+      {phase === 'playing' && isTransitioning && (
+        <div className="py-16 text-center animate-pulse">
+          <p className="text-lg font-bold text-foreground">{t.round} {currentRound + 1}</p>
+          <p className="text-sm text-muted-foreground mt-2">{t.getReady}</p>
+        </div>
+      )}
+
+      {/* Result */}
+      {phase === 'result' && (
+        <div className="text-center space-y-4 animate-fade-in py-8">
+          <div className={`text-6xl ${won ? '' : 'grayscale opacity-50'}`}>
+            {won ? '✨' : '💀'}
+          </div>
+          <div className={`flex items-center justify-center gap-2 ${won ? 'text-primary' : 'text-destructive'}`}>
+            {won ? <Trophy className="w-6 h-6" /> : <X className="w-6 h-6" />}
+            <span className="text-lg font-bold">{won ? t.won : t.lost}</span>
+          </div>
+          {!won && missText && (
+            <p className="text-sm text-destructive/80">{missText}</p>
+          )}
+          {won && (
+            <p className="text-sm text-muted-foreground">
+              +{bonus.toLocaleString()} <Coins className="w-3 h-3 inline" />
             </p>
+          )}
+          <p className="text-xs text-muted-foreground">
+            {t.round} {currentRound + 1}/{totalRounds}
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <Button onClick={resetGame} variant="outline">{t.playAgain}</Button>
+            <Button onClick={onBack} variant="ghost" className="gap-2"><ArrowLeft className="w-4 h-4" /> {t.back}</Button>
           </div>
-        )}
-
-        {/* Timing bar */}
-        {phase === 'playing' && !isTransitioning && (
-          <div className="mb-8">
-            <div
-              className="relative w-full h-16 rounded-xl border-2 border-border overflow-hidden cursor-pointer select-none"
-              onClick={handleTap}
-              style={{
-                backgroundColor: config.isDark ? 'hsl(var(--background))' : 'hsl(var(--muted))',
-              }}
-            >
-              {/* Target zone - hidden in blind tap mode */}
-              {!config.isBlindTap && (
-                <div
-                  className="absolute top-0 h-full rounded transition-opacity duration-300"
-                  style={{
-                    left: `${zoneStart}%`,
-                    width: `${config.zoneWidth}%`,
-                    backgroundColor: 'hsl(142 76% 36% / 0.3)',
-                    borderLeft: '2px solid hsl(142 76% 36% / 0.6)',
-                    borderRight: '2px solid hsl(142 76% 36% / 0.6)',
-                    opacity: config.isDark ? 0.15 : 1,
-                  }}
-                />
-              )}
-
-              {/* Moving indicator - hidden in dark mode */}
-              <div
-                className="absolute top-0 h-full w-1 rounded-full transition-none"
-                style={{
-                  left: `${barPosition}%`,
-                  backgroundColor: config.isDark ? 'hsl(var(--foreground) / 0.1)' : 'hsl(var(--primary))',
-                  boxShadow: config.isDark ? 'none' : '0 0 10px hsl(var(--primary) / 0.5)',
-                }}
-              />
-
-              {/* Dark mode strobe flashes */}
-              {config.isDark && !config.isBlindTap && (
-                <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{
-                    animation: 'flicker 0.8s infinite',
-                    backgroundColor: 'hsl(var(--foreground) / 0.03)',
-                  }}
-                />
-              )}
-
-              {/* Tap instruction */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <span className={`text-lg font-bold ${config.isDark ? 'text-foreground/10' : 'text-foreground/30'}`}>
-                  {t.tap}
-                </span>
-              </div>
-            </div>
-
-            {/* Phase icon */}
-            <div className="flex justify-center mt-3">
-              {currentPhaseIdx === 0 && <Zap className="w-5 h-5 text-primary" />}
-              {currentPhaseIdx === 1 && <EyeOff className="w-5 h-5 text-muted-foreground" />}
-              {currentPhaseIdx === 2 && <Zap className="w-5 h-5 text-destructive animate-pulse" />}
-              {currentPhaseIdx === 3 && <Eye className="w-5 h-5 text-primary" />}
-              {currentPhaseIdx === 4 && <Brain className="w-5 h-5 text-muted-foreground" />}
-            </div>
-          </div>
-        )}
-
-        {/* Transition screen */}
-        {phase === 'playing' && isTransitioning && (
-          <div className="py-16 text-center animate-pulse">
-            <div className="text-4xl mb-4">
-              {currentPhaseIdx === 0 && '⚡'}
-              {currentPhaseIdx === 1 && '🌑'}
-              {currentPhaseIdx === 2 && '🔥'}
-              {currentPhaseIdx === 3 && '🎯'}
-              {currentPhaseIdx === 4 && '👁️'}
-            </div>
-            <p className="text-lg font-bold text-foreground">{t.phases[currentPhaseIdx]}</p>
-            <p className="text-sm text-muted-foreground mt-2">{t.getReady}</p>
-          </div>
-        )}
-
-        {/* Result */}
-        {phase === 'result' && (
-          <div className="text-center space-y-4 animate-fade-in py-8">
-            <div className={`text-6xl ${won ? '' : 'grayscale opacity-50'}`}>
-              {won ? '✨' : '💀'}
-            </div>
-            <div className={`flex items-center justify-center gap-2 ${won ? 'text-primary' : 'text-destructive'}`}>
-              {won ? <Trophy className="w-6 h-6" /> : <X className="w-6 h-6" />}
-              <span className="text-lg font-bold">{won ? t.won : t.lost}</span>
-            </div>
-            {won && (
-              <p className="text-sm text-muted-foreground">
-                +{bonus.toLocaleString()} <Coins className="w-3 h-3 inline" />
-              </p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              {t.phase} {currentPhaseIdx + 1}/5
-            </p>
-            <div className="flex items-center justify-center gap-3">
-              <Button onClick={resetGame} variant="outline">{t.playAgain}</Button>
-              <Button onClick={onBack} variant="ghost" className="gap-2"><ArrowLeft className="w-4 h-4" /> {t.back}</Button>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </Card>
   );
 }
