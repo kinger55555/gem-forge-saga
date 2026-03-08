@@ -1,6 +1,31 @@
-import { Crystal } from '@/types/game';
+import { Crystal, PickaxeRarity } from '@/types/game';
 
-export function generateCrystal(): Crystal {
+const PICKAXE_TIER: Record<PickaxeRarity, number> = {
+  trash: 0,
+  common: 1,
+  epic: 2,
+  legendary: 3,
+  demonic: 4,
+  silent: 5,
+};
+
+export function generateCrystal(pickaxeType: PickaxeRarity = 'common'): Crystal {
+  const tier = PICKAXE_TIER[pickaxeType];
+  const minRarity = Math.max(0, tier - 1);
+  const maxRarity = Math.min(5, tier + 4);
+
+  let crystal: Crystal;
+  let attempts = 0;
+  do {
+    crystal = generateRandomCrystal();
+    attempts++;
+    // Safety: after 100 attempts just accept whatever we got
+  } while ((crystal.rarity < minRarity || crystal.rarity > maxRarity) && attempts < 100);
+
+  return crystal;
+}
+
+function generateRandomCrystal(): Crystal {
   let red = Math.floor(Math.random() * 256);
   let green = Math.floor(Math.random() * 256);
   let blue = Math.floor(Math.random() * 256);

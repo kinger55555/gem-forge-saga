@@ -8,9 +8,11 @@ export interface Crystal {
   color: string;
 }
 
+export type PickaxeRarity = 'trash' | 'common' | 'epic' | 'legendary' | 'demonic' | 'silent';
+
 export interface Pickaxe {
   id: string;
-  type: 'normal' | 'legendary';
+  type: PickaxeRarity;
   name: string;
   used: boolean;
 }
