@@ -49,9 +49,14 @@ export function GameInterface() {
   const [currentCrystal, setCurrentCrystal] = useState<Crystal | null>(null);
   const [showMiningModal, setShowMiningModal] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [activeTab, setActiveTab] = useState('mine');
   const [showTutorial, setShowTutorial] = useState(() => {
     return !localStorage.getItem('gem_forge_tutorial_seen');
   });
+
+  const handlePlayInTemple = useCallback((crystal: Crystal) => {
+    setActiveTab('temple');
+  }, []);
 
   const translations = {
     en: {
@@ -231,7 +236,7 @@ export function GameInterface() {
         </Card>
 
         {/* Tabs */}
-        <Tabs defaultValue="mine" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full max-w-lg grid-cols-3 mx-auto">
             <TabsTrigger value="mine" className="gap-2">
               <PickaxeIcon className="w-4 h-4" />
@@ -289,6 +294,7 @@ export function GameInterface() {
                     crystals={gameData.crystals}
                     coins={gameData.coins}
                     onSellCrystal={gameData.sellCrystal}
+                    onPlayInTemple={handlePlayInTemple}
                     language={language}
                   />
                 </Card>
@@ -313,6 +319,7 @@ export function GameInterface() {
                     crystals={gameData.crystals}
                     coins={gameData.coins}
                     onSellCrystal={gameData.sellCrystal}
+                    onPlayInTemple={handlePlayInTemple}
                     language={language}
                   />
                 </Card>
