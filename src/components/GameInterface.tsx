@@ -344,6 +344,12 @@ export function GameInterface() {
                 <Forge
                   crystals={gameData.crystals}
                   coins={gameData.coins}
+                  onConsumeCrystals={async (ids: string[]) => {
+                    for (const id of ids) {
+                      await gameData.consumeCrystal(id);
+                    }
+                  }}
+                  onEarnCoins={handleTempleEarnCoins}
                   language={language}
                 />
               </div>
