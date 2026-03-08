@@ -15,14 +15,18 @@ interface DiceBattleProps {
 
 type Phase = 'select-deck' | 'select-difficulty' | 'rolling' | 'result-round' | 'game-over';
 
+interface BonusRoll {
+  tier: number;
+  face: DiceFace;
+}
+
 interface RolledDie {
   tier: number;
   color: string;
   face: DiceFace;
   alive: boolean;
   isArtifact: boolean;
-  bonusFace?: DiceFace;
-  bonusTier?: number;
+  bonusChain: BonusRoll[]; // recursive tree bonuses
 }
 
 interface BattleState {
