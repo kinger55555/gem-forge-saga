@@ -11,7 +11,7 @@ import { Shop } from './Shop';
 import { PickaxeCodeInput } from './PickaxeCodeInput';
 import { DailyRewards } from './DailyRewards';
 import { Temple } from './Temple';
-import { GlyphCipher } from './GlyphCipher';
+
 import { WelcomeTutorial } from './WelcomeTutorial';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,7 @@ import {
   getRarityName 
 } from '@/utils/crystalUtils';
 import { parsePickaxeFromUrl } from '@/utils/linkUtils';
-import { Plus, LogOut, Globe, RotateCcw, Pickaxe as PickaxeIcon, Landmark, Eye } from 'lucide-react';
+import { Plus, LogOut, Globe, RotateCcw, Pickaxe as PickaxeIcon, Landmark } from 'lucide-react';
 import { toast } from 'sonner';
 
 const SeoHeader = () => (
@@ -62,7 +62,7 @@ export function GameInterface() {
       signOut: 'Sign Out',
       mine: 'Mine',
       temple: 'Temple',
-      scribe: "Scribe's Vigil",
+      
     },
     ru: {
       title: 'Gem Forge Saga',
@@ -72,7 +72,7 @@ export function GameInterface() {
       signOut: 'Выйти',
       mine: 'Шахта',
       temple: 'Храм',
-      scribe: 'Бдение Писца',
+      
     }
   };
 
@@ -241,10 +241,6 @@ export function GameInterface() {
               <Landmark className="w-4 h-4" />
               {t.temple}
             </TabsTrigger>
-            <TabsTrigger value="scribe" className="gap-2">
-              <Eye className="w-4 h-4" />
-              {t.scribe}
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="mine">
@@ -324,27 +320,6 @@ export function GameInterface() {
             </div>
           </TabsContent>
 
-          <TabsContent value="scribe">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <GlyphCipher
-                  onEarnCoins={handleTempleEarnCoins}
-                  coins={gameData.coins}
-                  language={language}
-                />
-              </div>
-              <div>
-                <Card className="p-6">
-                  <CrystalInventory
-                    crystals={gameData.crystals}
-                    coins={gameData.coins}
-                    onSellCrystal={gameData.sellCrystal}
-                    language={language}
-                  />
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
         </Tabs>
 
         {/* Mining Modal */}

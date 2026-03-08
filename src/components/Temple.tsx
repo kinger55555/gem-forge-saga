@@ -53,13 +53,13 @@ const translations = {
   },
 };
 
-// Difficulty config by rarity
+// Difficulty config by rarity — always 8 cups, Limbo-style
 function getDifficulty(rarity: number) {
-  if (rarity <= 1) return { cups: 3, shuffles: 4, speed: 500 };
-  if (rarity <= 3) return { cups: 4, shuffles: 6, speed: 400 };
-  if (rarity <= 5) return { cups: 5, shuffles: 8, speed: 320 };
-  if (rarity <= 7) return { cups: 5, shuffles: 11, speed: 260 };
-  return { cups: 6, shuffles: 14, speed: 220 };
+  if (rarity <= 1) return { cups: 8, shuffles: 8, speed: 420 };
+  if (rarity <= 3) return { cups: 8, shuffles: 12, speed: 350 };
+  if (rarity <= 5) return { cups: 8, shuffles: 16, speed: 280 };
+  if (rarity <= 7) return { cups: 8, shuffles: 22, speed: 220 };
+  return { cups: 8, shuffles: 30, speed: 180 };
 }
 
 export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, language }: TempleProps) {
