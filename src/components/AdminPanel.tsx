@@ -149,7 +149,18 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
     }
   };
 
-  const handleCopyLink = (code: string) => {
+  const handleClearCrystals = async () => {
+    if (!confirm('Удалить ВСЕ кристаллы? Это действие необратимо!')) return;
+    try {
+      const { error } = await supabase.from('crystals').delete().eq('user_id', user!.id);
+      if (error) { toast.error('Ошибка удаления!'); return; }
+      onRefreshData?.();
+      toast.success('Все кристаллы удалены!');
+    } catch {
+      toast.error('Ошибка!');
+    }
+  };
+
     const url = getActivationUrl(code);
     navigator.clipboard.writeText(url);
     toast.success('Ссылка скопирована в буфер обмена!');
