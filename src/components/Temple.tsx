@@ -69,7 +69,7 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
   const [targetRune, setTargetRune] = useState('');
   // positions[i] = which visual slot cup i occupies (for animation)
   const [positions, setPositions] = useState<number[]>([]);
-  const [swapping, setSwapping] = useState<[number, number] | null>(null);
+  const [isShuffling, setIsShuffling] = useState(false);
   const [won, setWon] = useState(false);
   const [pickedCup, setPickedCup] = useState<number | null>(null);
   const [revealedCup, setRevealedCup] = useState<number | null>(null);
