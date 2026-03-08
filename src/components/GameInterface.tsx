@@ -221,8 +221,6 @@ export function GameInterface() {
               <PickaxeHelp language={language} />
               
               <AdminPanel
-                isAdminMode={isAdminMode}
-                onToggleAdmin={handleToggleAdmin}
                 language={language}
               />
               
