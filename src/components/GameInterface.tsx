@@ -10,10 +10,12 @@ import { PickaxeHelp } from './PickaxeHelp';
 import { Shop } from './Shop';
 import { PickaxeCodeInput } from './PickaxeCodeInput';
 import { DailyRewards } from './DailyRewards';
+import { Temple } from './Temple';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { 
   MiningState, 
   Pickaxe as PickaxeType, 
@@ -25,7 +27,7 @@ import {
   getRarityName 
 } from '@/utils/crystalUtils';
 import { parsePickaxeFromUrl } from '@/utils/linkUtils';
-import { Plus, LogOut, Globe, RotateCcw } from 'lucide-react';
+import { Plus, LogOut, Globe, RotateCcw, Pickaxe as PickaxeIcon, Landmark } from 'lucide-react';
 import { toast } from 'sonner';
 
 const SeoHeader = () => (
@@ -44,7 +46,6 @@ export function GameInterface() {
   const [miningState, setMiningState] = useState<MiningState>(MiningState.IDLE);
   const [currentCrystal, setCurrentCrystal] = useState<Crystal | null>(null);
   const [showMiningModal, setShowMiningModal] = useState(false);
-  
 
   const translations = {
     en: {
@@ -53,6 +54,8 @@ export function GameInterface() {
       pickaxes: 'Pickaxes',
       selected: 'Selected',
       signOut: 'Sign Out',
+      mine: 'Mine',
+      temple: 'Temple',
     },
     ru: {
       title: 'Gem Forge Saga',
@@ -60,6 +63,8 @@ export function GameInterface() {
       pickaxes: 'Кирки',
       selected: 'Выбрана',
       signOut: 'Выйти',
+      mine: 'Шахта',
+      temple: 'Храм',
     }
   };
 
@@ -97,8 +102,6 @@ export function GameInterface() {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [activateAdminLinkFromCode]);
-
-  
 
   const selectPickaxe = useCallback((pickaxe: PickaxeType) => {
     if (pickaxe.used) {
@@ -144,6 +147,10 @@ export function GameInterface() {
   const handleSignOut = async () => {
     await signOut();
   };
+
+  const handleTempleEarnCoins = useCallback(async (amount: number) => {
+    await gameData.addClickerEarnings(amount);
+  }, [gameData]);
 
   if (gameData.loading) {
     return (
@@ -208,77 +215,116 @@ export function GameInterface() {
           </div>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Panel */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Pickaxes */}
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <Plus className="w-5 h-5" />
-                {t.pickaxes}
-              </h2>
-              
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div></div>
-                  <Button
-                    onClick={gameData.clearUsedPickaxes}
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    disabled={!gameData.pickaxes.some(p => p.used)}
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    {language === 'ru' ? 'Удалить использованные' : 'Delete used pickaxes'}
-                  </Button>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {gameData.pickaxes.map((pickaxe) => (
-                    <Pickaxe
-                      key={pickaxe.id}
-                      pickaxe={pickaxe}
-                      onSelect={selectPickaxe}
-                      isSelected={currentPickaxe?.id === pickaxe.id}
-                      disabled={pickaxe.used}
-                      language={language}
-                    />
-                  ))}
-                </div>
+        {/* Tabs */}
+        <Tabs defaultValue="mine" className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2 mx-auto">
+            <TabsTrigger value="mine" className="gap-2">
+              <PickaxeIcon className="w-4 h-4" />
+              {t.mine}
+            </TabsTrigger>
+            <TabsTrigger value="temple" className="gap-2">
+              <Landmark className="w-4 h-4" />
+              {t.temple}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="mine">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Panel */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Pickaxes */}
+                <Card className="p-6">
+                  <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <Plus className="w-5 h-5" />
+                    {t.pickaxes}
+                  </h2>
+                  
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <div></div>
+                      <Button
+                        onClick={gameData.clearUsedPickaxes}
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        disabled={!gameData.pickaxes.some(p => p.used)}
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        {language === 'ru' ? 'Удалить использованные' : 'Delete used pickaxes'}
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {gameData.pickaxes.map((pickaxe) => (
+                        <Pickaxe
+                          key={pickaxe.id}
+                          pickaxe={pickaxe}
+                          onSelect={selectPickaxe}
+                          isSelected={currentPickaxe?.id === pickaxe.id}
+                          disabled={pickaxe.used}
+                          language={language}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Shop */}
+                <Shop 
+                  coins={gameData.coins}
+                  onBuyPickaxe={gameData.buyPickaxe}
+                />
+
+                {/* Daily Rewards */}
+                <DailyRewards 
+                  onRewardClaimed={gameData.refreshData}
+                  language={language}
+                />
+
+                {/* Pickaxe Code Input */}
+                <PickaxeCodeInput 
+                  onRedeemCode={activateAdminLinkFromCode}
+                  language={language}
+                />
               </div>
-            </Card>
 
-            {/* Shop */}
-            <Shop 
-              coins={gameData.coins}
-              onBuyPickaxe={gameData.buyPickaxe}
-            />
+              {/* Right Panel - Inventory */}
+              <div>
+                <Card className="p-6">
+                  <CrystalInventory 
+                    crystals={gameData.crystals}
+                    coins={gameData.coins}
+                    onSellCrystal={gameData.sellCrystal}
+                    language={language}
+                  />
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
 
-            {/* Daily Rewards */}
-            <DailyRewards 
-              onRewardClaimed={gameData.refreshData}
-              language={language}
-            />
-
-            {/* Pickaxe Code Input */}
-            <PickaxeCodeInput 
-              onRedeemCode={activateAdminLinkFromCode}
-              language={language}
-            />
-          </div>
-
-          {/* Right Panel - Inventory */}
-          <div>
-            <Card className="p-6">
-              <CrystalInventory 
-                crystals={gameData.crystals}
-                coins={gameData.coins}
-                onSellCrystal={gameData.sellCrystal}
-                language={language}
-              />
-            </Card>
-          </div>
-        </div>
+          <TabsContent value="temple">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <Temple
+                  crystals={gameData.crystals}
+                  coins={gameData.coins}
+                  onEarnCoins={handleTempleEarnCoins}
+                  language={language}
+                />
+              </div>
+              <div>
+                <Card className="p-6">
+                  <CrystalInventory 
+                    crystals={gameData.crystals}
+                    coins={gameData.coins}
+                    onSellCrystal={gameData.sellCrystal}
+                    language={language}
+                  />
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
 
         {/* Mining Modal */}
         <Dialog open={showMiningModal} onOpenChange={setShowMiningModal}>
