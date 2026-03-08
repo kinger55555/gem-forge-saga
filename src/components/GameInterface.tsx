@@ -44,7 +44,7 @@ export function GameInterface() {
   const [miningState, setMiningState] = useState<MiningState>(MiningState.IDLE);
   const [currentCrystal, setCurrentCrystal] = useState<Crystal | null>(null);
   const [showMiningModal, setShowMiningModal] = useState(false);
-  const [isAdminMode, setIsAdminMode] = useState(false);
+  
 
   const translations = {
     en: {
