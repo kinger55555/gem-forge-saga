@@ -48,6 +48,9 @@ export function GameInterface() {
   const [currentCrystal, setCurrentCrystal] = useState<Crystal | null>(null);
   const [showMiningModal, setShowMiningModal] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(() => {
+    return !localStorage.getItem('gem_forge_tutorial_seen');
+  });
 
   const translations = {
     en: {
