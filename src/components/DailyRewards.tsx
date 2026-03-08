@@ -41,8 +41,9 @@ export function DailyRewards({ onRewardClaimed, language = 'ru' }: DailyRewardsP
 
       if (error) throw error;
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      const today = new Date(todayStr + 'T00:00:00Z');
 
       // Daily check
       if (gameState?.last_daily_claim) {
