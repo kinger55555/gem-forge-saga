@@ -55,7 +55,7 @@ export function DailyRewards({ onRewardClaimed, language = 'ru' }: DailyRewardsP
 
       // Weekly check: 7 days since last weekly claim
       if (gameState?.last_weekly_claim) {
-        const lastWeekly = new Date(gameState.last_weekly_claim + 'T00:00:00');
+        const lastWeekly = new Date(gameState.last_weekly_claim + 'T00:00:00Z');
         const diffDays = Math.floor((today.getTime() - lastWeekly.getTime()) / (1000 * 60 * 60 * 24));
         setCanClaimWeekly(diffDays >= 7);
         setDaysUntilWeekly(Math.max(0, 7 - diffDays));
