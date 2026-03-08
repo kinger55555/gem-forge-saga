@@ -12,7 +12,7 @@ const PICKAXE_TIER: Record<PickaxeRarity, number> = {
 export function generateCrystal(pickaxeType: PickaxeRarity = 'common'): Crystal {
   const tier = PICKAXE_TIER[pickaxeType];
   const minRarity = Math.max(0, tier - 1);
-  const maxRarity = Math.min(5, tier + 4);
+  const maxRarity = Math.min(5, tier + 2);
 
   // Try random generation first
   for (let i = 0; i < 200; i++) {
