@@ -42,23 +42,6 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
 
   const isAdminUser = user ? isAdmin(user) : false;
 
-  useEffect(() => {
-    if (isAdminUser) {
-      loadAdminLinks();
-    }
-  }, [isAdminUser]);
-
-  if (!isAdminUser) return null;
-
-  if (!visible) {
-    return (
-      <Button onClick={onToggle} variant="outline" size="sm" className="gap-1">
-        <Settings className="w-4 h-4" />
-        Админ
-      </Button>
-    );
-  }
-
   const loadAdminLinks = async () => {
     setIsLoadingLinks(true);
     try {
@@ -85,6 +68,23 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
       setIsLoadingLinks(false);
     }
   };
+
+  useEffect(() => {
+    if (isAdminUser) {
+      loadAdminLinks();
+    }
+  }, [isAdminUser]);
+
+  if (!isAdminUser) return null;
+
+  if (!visible) {
+    return (
+      <Button onClick={onToggle} variant="outline" size="sm" className="gap-1">
+        <Settings className="w-4 h-4" />
+        Админ
+      </Button>
+    );
+  }
 
   const handleCreateLink = async (type: PickaxeRarity | 'coins') => {
     let value: number | undefined;
