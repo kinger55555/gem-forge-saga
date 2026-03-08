@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Crystal } from '@/types/game';
-import { Landmark, Dices, Zap, Route } from 'lucide-react';
+import { Landmark, Dices, Zap, Route, Brain, Palette, Target } from 'lucide-react';
 import { ShellGame } from '@/components/temple/ShellGame';
 import { CrystalClicker } from '@/components/temple/CrystalClicker';
 import { TwoRoads } from '@/components/temple/TwoRoads';
+import { MemoryGame } from '@/components/temple/MemoryGame';
+import { ColorRoulette } from '@/components/temple/ColorRoulette';
+import { QuickDraw } from '@/components/temple/QuickDraw';
 
 interface TempleProps {
   crystals: Crystal[];
@@ -14,7 +17,7 @@ interface TempleProps {
   language: 'en' | 'ru';
 }
 
-export type MiniGameId = 'menu' | 'shell' | 'clicker' | 'tworoads';
+export type MiniGameId = 'menu' | 'shell' | 'clicker' | 'tworoads' | 'memory' | 'roulette' | 'quickdraw';
 
 const translations = {
   en: {
@@ -26,6 +29,12 @@ const translations = {
     clickerDesc: 'Tap fast enough to charge the crystal. Win: crystal + 30% bonus.',
     tworoadsTitle: 'Two Roads',
     tworoadsDesc: 'Pick one of two paths — 50/50 chance. Win: crystal + 10% bonus.',
+    memoryTitle: 'Memory',
+    memoryDesc: 'Memorize the pattern and reproduce it. Win: crystal + 40% bonus.',
+    rouletteTitle: 'Color Roulette',
+    rouletteDesc: 'Stop the wheel near your crystal\'s color. Win: up to 60% bonus.',
+    quickdrawTitle: 'Quick Draw',
+    quickdrawDesc: 'React to the signal ASAP. False start = loss. Win: 10-50% bonus.',
     comingSoon: 'More games coming soon...',
   },
   ru: {
@@ -37,6 +46,12 @@ const translations = {
     clickerDesc: 'Нажимай достаточно быстро. Победа: кристалл + 30% бонус.',
     tworoadsTitle: 'Два Пути',
     tworoadsDesc: 'Выбери одну из двух дорог — шанс 50/50. Победа: кристалл + 10% бонус.',
+    memoryTitle: 'Память',
+    memoryDesc: 'Запомни узор и воспроизведи. Победа: кристалл + 40% бонус.',
+    rouletteTitle: 'Рулетка цветов',
+    rouletteDesc: 'Останови колесо рядом с цветом кристалла. До 60% бонус.',
+    quickdrawTitle: 'Реакция',
+    quickdrawDesc: 'Среагируй на сигнал. Фальстарт = потеря. Победа: 10-50% бонус.',
     comingSoon: 'Скоро больше игр...',
   },
 };
@@ -45,6 +60,9 @@ const MINI_GAMES: { id: MiniGameId; icon: typeof Dices; titleKey: keyof typeof t
   { id: 'shell', icon: Dices, titleKey: 'shellTitle', descKey: 'shellDesc' },
   { id: 'clicker', icon: Zap, titleKey: 'clickerTitle', descKey: 'clickerDesc' },
   { id: 'tworoads', icon: Route, titleKey: 'tworoadsTitle', descKey: 'tworoadsDesc' },
+  { id: 'memory', icon: Brain, titleKey: 'memoryTitle', descKey: 'memoryDesc' },
+  { id: 'roulette', icon: Palette, titleKey: 'rouletteTitle', descKey: 'rouletteDesc' },
+  { id: 'quickdraw', icon: Target, titleKey: 'quickdrawTitle', descKey: 'quickdrawDesc' },
 ];
 
 export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, language }: TempleProps) {
@@ -52,16 +70,14 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
   const t = translations[language];
 
   const goBack = () => setCurrentGame('menu');
+  const gameProps = { crystals, coins, onEarnCoins, onConsumeCrystal, onBack: goBack, language };
 
-  if (currentGame === 'shell') {
-    return <ShellGame crystals={crystals} coins={coins} onEarnCoins={onEarnCoins} onConsumeCrystal={onConsumeCrystal} onBack={goBack} language={language} />;
-  }
-  if (currentGame === 'clicker') {
-    return <CrystalClicker crystals={crystals} coins={coins} onEarnCoins={onEarnCoins} onConsumeCrystal={onConsumeCrystal} onBack={goBack} language={language} />;
-  }
-  if (currentGame === 'tworoads') {
-    return <TwoRoads crystals={crystals} coins={coins} onEarnCoins={onEarnCoins} onConsumeCrystal={onConsumeCrystal} onBack={goBack} language={language} />;
-  }
+  if (currentGame === 'shell') return <ShellGame {...gameProps} />;
+  if (currentGame === 'clicker') return <CrystalClicker {...gameProps} />;
+  if (currentGame === 'tworoads') return <TwoRoads {...gameProps} />;
+  if (currentGame === 'memory') return <MemoryGame {...gameProps} />;
+  if (currentGame === 'roulette') return <ColorRoulette {...gameProps} />;
+  if (currentGame === 'quickdraw') return <QuickDraw {...gameProps} />;
 
   // Menu
   return (
@@ -94,8 +110,6 @@ export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, languag
           );
         })}
       </div>
-
-      <p className="text-xs text-muted-foreground text-center mt-6">{t.comingSoon}</p>
     </Card>
   );
 }
