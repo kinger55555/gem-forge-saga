@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { createAdminLink, getActivationUrl, isAdmin, hasModeratorAccess, isModerator } from '@/utils/linkUtils';
 import { AdminLink } from '@/types/admin';
 import { PickaxeRarity } from '@/types/game';
-import { getRarityColor, getRarityName } from '@/utils/crystalUtils';
+import { getRarityColor, getRarityName, calculateRarity, calculatePrice } from '@/utils/crystalUtils';
 import { 
   Settings, 
   Link,
