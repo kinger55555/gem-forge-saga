@@ -22,6 +22,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface AdminPanelProps {
   language?: 'en' | 'ru';
+  onRefreshData?: () => void;
 }
 
 const ALL_PICKAXE_TYPES: PickaxeRarity[] = ['trash', 'normal', 'rare', 'epic', 'mythic', 'legendary', 'insane', 'demonic', 'silent', 'artifact'];
@@ -30,7 +31,7 @@ const TIER_INDEX: Record<PickaxeRarity, number> = {
   trash: 0, normal: 1, rare: 2, epic: 3, mythic: 4, legendary: 5, insane: 6, demonic: 7, silent: 8, artifact: 9,
 };
 
-export function AdminPanel({ language = 'ru' }: AdminPanelProps) {
+export function AdminPanel({ language = 'ru', onRefreshData }: AdminPanelProps) {
   const { user } = useAuth();
   const [adminLinks, setAdminLinks] = useState<AdminLink[]>([]);
   const [customName, setCustomName] = useState('');
@@ -111,6 +112,32 @@ export function AdminPanel({ language = 'ru' }: AdminPanelProps) {
     }
   };
 
+  const handleGiveToSelf = async (type: PickaxeRarity | 'coins') => {
+    let value: number | undefined;
+    if (type === 'coins') {
+      value = parseInt(coinAmount) || 100;
+    }
+    const link = createAdminLink(type, 'Self-grant', value);
+
+    try {
+      const { error: insertError } = await supabase
+        .from('admin_links')
+        .insert({ code: link.code, type: link.type, name: link.name, used: false, value: link.value });
+      if (insertError) { toast.error('Ошибка создания!'); return; }
+
+      const { data, error: redeemError } = await supabase.rpc('redeem_admin_link', { p_code: link.code });
+      if (redeemError) { toast.error('Ошибка активации!'); return; }
+
+      onRefreshData?.();
+      toast.success(type === 'coins'
+        ? `Получено ${value} монет!`
+        : `Получена ${getRarityName(TIER_INDEX[type as PickaxeRarity], language)} кирка!`
+      );
+    } catch {
+      toast.error('Ошибка!');
+    }
+  };
+
   const handleCopyLink = (code: string) => {
     const url = getActivationUrl(code);
     navigator.clipboard.writeText(url);
@@ -180,17 +207,27 @@ export function AdminPanel({ language = 'ru' }: AdminPanelProps) {
               const tier = TIER_INDEX[type];
               const color = getRarityColor(tier);
               return (
-                <Button
-                  key={type}
-                  onClick={() => handleCreateLink(type)}
-                  variant="outline"
-                  size="sm"
-                  className="gap-1 text-xs"
-                  style={{ borderColor: color, color }}
-                >
-                  <Link className="w-3 h-3" />
-                  {getRarityName(tier, language)}
-                </Button>
+                <div key={type} className="flex gap-1">
+                  <Button
+                    onClick={() => handleCreateLink(type)}
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 text-xs flex-1"
+                    style={{ borderColor: color, color }}
+                  >
+                    <Link className="w-3 h-3" />
+                    {getRarityName(tier, language)}
+                  </Button>
+                  <Button
+                    onClick={() => handleGiveToSelf(type)}
+                    size="sm"
+                    className="text-xs px-2"
+                    style={{ backgroundColor: color, color: 'hsl(var(--background))' }}
+                    title="Дать себе"
+                  >
+                    +
+                  </Button>
+                </div>
               );
             })}
           </div>
@@ -215,14 +252,23 @@ export function AdminPanel({ language = 'ru' }: AdminPanelProps) {
             />
           </div>
           
-          <Button 
-            onClick={() => handleCreateLink('coins')}
-            variant="outline"
-            className="w-full gap-2"
-          >
-            <Coins className="w-4 h-4" />
-            Создать ссылку на монеты
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => handleCreateLink('coins')}
+              variant="outline"
+              className="flex-1 gap-2"
+            >
+              <Coins className="w-4 h-4" />
+              Создать ссылку
+            </Button>
+            <Button
+              onClick={() => handleGiveToSelf('coins')}
+              className="gap-2"
+            >
+              <Coins className="w-4 h-4" />
+              Дать себе
+            </Button>
+          </div>
         </div>
 
         {adminLinks.length > 0 && (

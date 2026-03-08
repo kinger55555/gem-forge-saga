@@ -194,6 +194,7 @@ export function GameInterface() {
               
               <AdminPanel
                 language={language}
+                onRefreshData={gameData.refreshData}
               />
               
               {currentPickaxe && (
