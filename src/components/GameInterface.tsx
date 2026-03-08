@@ -196,6 +196,8 @@ export function GameInterface() {
               <AdminPanel
                 language={language}
                 onRefreshData={gameData.refreshData}
+                visible={showAdmin}
+                onToggle={() => setShowAdmin(prev => !prev)}
               />
               
               {currentPickaxe && (
