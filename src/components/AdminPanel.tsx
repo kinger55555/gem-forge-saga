@@ -161,6 +161,7 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
     }
   };
 
+  const handleCopyLink = (code: string) => {
     const url = getActivationUrl(code);
     navigator.clipboard.writeText(url);
     toast.success('Ссылка скопирована в буфер обмена!');
