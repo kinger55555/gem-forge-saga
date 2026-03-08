@@ -75,12 +75,12 @@ export function QuickDraw({ crystals, coins, onEarnCoins, onConsumeCrystal, onBa
       setPhase('go');
 
       // Auto-fail after 2 seconds
-      timerRef.current = setTimeout(() => {
+      timerRef.current = setTimeout(async () => {
         setPhase('result');
         setWon(false);
         setReactionTime(2000);
         setBonusPercent(0);
-        onConsumeCrystal(crystal.id);
+        await onConsumeCrystal(crystal.id);
       }, 2000);
     }, delay);
   }, [onConsumeCrystal]);
