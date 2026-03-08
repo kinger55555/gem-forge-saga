@@ -40,6 +40,10 @@ const translations = {
     quickdrawDesc: 'React to the signal ASAP. False start = loss. Win: 10-50% bonus.',
     novaTitle: 'Nova Collapse',
     novaDesc: 'Time the shrinking ring to match the circle. Win: up to 55% bonus.',
+    pressureTitle: 'Pressure Hold',
+    pressureDesc: 'Hold the button — release before the bar explodes! Win: 10-50% bonus.',
+    spamTitle: 'Spam Race',
+    spamDesc: 'Click as fast as you can in 3 seconds! Win: 10-45% bonus.',
     comingSoon: 'More games coming soon...',
   },
   ru: {
@@ -59,6 +63,10 @@ const translations = {
     quickdrawDesc: 'Среагируй на сигнал. Фальстарт = потеря. Победа: 10-50% бонус.',
     novaTitle: 'Коллапс Новы',
     novaDesc: 'Попади в момент совпадения кольца с кругом. До 55% бонус.',
+    pressureTitle: 'Давление',
+    pressureDesc: 'Держи кнопку — отпусти до взрыва шкалы! Победа: 10-50% бонус.',
+    spamTitle: 'Спам-гонка',
+    spamDesc: 'Кликай как можно быстрее за 3 секунды! Победа: 10-45% бонус.',
     comingSoon: 'Скоро больше игр...',
   },
 };
@@ -71,6 +79,8 @@ const MINI_GAMES: { id: MiniGameId; icon: typeof Dices; titleKey: keyof typeof t
   { id: 'roulette', icon: Palette, titleKey: 'rouletteTitle', descKey: 'rouletteDesc' },
   { id: 'quickdraw', icon: Target, titleKey: 'quickdrawTitle', descKey: 'quickdrawDesc' },
   { id: 'nova', icon: Eclipse, titleKey: 'novaTitle', descKey: 'novaDesc' },
+  { id: 'pressure', icon: Gauge, titleKey: 'pressureTitle', descKey: 'pressureDesc' },
+  { id: 'spam', icon: MousePointerClick, titleKey: 'spamTitle', descKey: 'spamDesc' },
 ];
 
 export function Temple({ crystals, coins, onEarnCoins, onConsumeCrystal, language }: TempleProps) {
