@@ -14,7 +14,183 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      admin_links: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          type: string
+          used: boolean
+          used_at: string | null
+          used_by: string | null
+          value: number | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name?: string
+          type?: string
+          used?: boolean
+          used_at?: string | null
+          used_by?: string | null
+          value?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          type?: string
+          used?: boolean
+          used_at?: string | null
+          used_by?: string | null
+          value?: number | null
+        }
+        Relationships: []
+      }
+      crystals: {
+        Row: {
+          blue: number
+          color: string
+          created_at: string
+          green: number
+          id: string
+          price: number
+          rarity: number
+          red: number
+          user_id: string
+        }
+        Insert: {
+          blue?: number
+          color?: string
+          created_at?: string
+          green?: number
+          id?: string
+          price?: number
+          rarity?: number
+          red?: number
+          user_id: string
+        }
+        Update: {
+          blue?: number
+          color?: string
+          created_at?: string
+          green?: number
+          id?: string
+          price?: number
+          rarity?: number
+          red?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_rewards: {
+        Row: {
+          claimed: boolean
+          created_at: string
+          id: string
+          reward_date: string
+          reward_type: string
+          user_id: string
+        }
+        Insert: {
+          claimed?: boolean
+          created_at?: string
+          id?: string
+          reward_date?: string
+          reward_type?: string
+          user_id: string
+        }
+        Update: {
+          claimed?: boolean
+          created_at?: string
+          id?: string
+          reward_date?: string
+          reward_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      game_state: {
+        Row: {
+          clicker_earnings: number
+          coins: number
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          clicker_earnings?: number
+          coins?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          clicker_earnings?: number
+          coins?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pickaxes: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          type: string
+          used: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string
+          type?: string
+          used?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          type?: string
+          used?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      special_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          used_date: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          used_date?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          used_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
