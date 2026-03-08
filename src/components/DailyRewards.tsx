@@ -83,9 +83,9 @@ export function DailyRewards({ onRewardClaimed, language = 'ru' }: DailyRewardsP
     setIsLoadingDaily(true);
 
     try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayStr = today.toISOString().split('T')[0];
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      const today = new Date(todayStr + 'T00:00:00Z');
 
       // Get current game state for streak calc
       const { data: gameState } = await supabase
