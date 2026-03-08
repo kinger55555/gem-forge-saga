@@ -21,7 +21,7 @@ const PICKAXE_SHOP_ITEMS: { type: PickaxeRarity; price: number; tierIndex: numbe
   { type: 'insane', price: Math.ceil(5000000 * 1.5), tierIndex: 6 },    // 7,500,000
   { type: 'demonic', price: Math.ceil(50000000 * 1.5), tierIndex: 7 },  // 75,000,000
   { type: 'silent', price: Math.ceil(500000000 * 1.5), tierIndex: 8 },  // 750,000,000
-  { type: 'artifact', price: Math.ceil(5000000000 * 1.5), tierIndex: 9 }, // 7,500,000,000
+  // artifact removed from shop — will be obtainable through other means
 ];
 
 export function Shop({ coins, onBuyPickaxe }: ShopProps) {
