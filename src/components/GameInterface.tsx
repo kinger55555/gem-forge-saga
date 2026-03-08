@@ -347,6 +347,16 @@ export function GameInterface() {
             />
           </DialogContent>
         </Dialog>
+
+        {/* Welcome Tutorial */}
+        <WelcomeTutorial
+          open={showTutorial}
+          onClose={() => {
+            setShowTutorial(false);
+            localStorage.setItem('gem_forge_tutorial_seen', 'true');
+          }}
+          language={language}
+        />
       </div>
     </div>
   );
