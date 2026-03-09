@@ -85,6 +85,7 @@ export function ShellGame({ crystals, coins, onEarnCoins, onConsumeCrystal, onBa
   }, []);
 
   const startGame = useCallback((crystal: Crystal) => {
+    supabase.rpc('increment_game_play', { p_game_id: 'shell' });
     setSelectedCrystal(crystal);
     setWon(false);
     setPickedCup(null);
