@@ -15,7 +15,8 @@ Deno.serve(async (req) => {
     const { user_id, secret, role } = await req.json();
 
     // Simple secret to prevent unauthorized access
-    if (secret !== Deno.env.get("ADMIN_SETUP_SECRET")) {
+    const envSecret = Deno.env.get("ADMIN_SETUP_SECRET");
+    if (!envSecret || secret !== envSecret) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
