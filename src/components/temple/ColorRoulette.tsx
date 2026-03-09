@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -88,6 +89,7 @@ export function ColorRoulette({ crystals, coins, onEarnCoins, onConsumeCrystal, 
   const angleRef = useRef(0);
 
   const startSpin = useCallback((crystal: Crystal) => {
+    supabase.rpc('increment_game_play', { p_game_id: 'roulette' });
     setSelectedCrystal(crystal);
     setPhase('spinning');
     setStoppedIndex(-1);

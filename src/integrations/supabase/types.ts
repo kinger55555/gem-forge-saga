@@ -257,6 +257,30 @@ export type Database = {
         }
         Relationships: []
       }
+      game_stats: {
+        Row: {
+          blocked: boolean
+          game_id: string
+          id: string
+          play_count: number
+          updated_at: string
+        }
+        Insert: {
+          blocked?: boolean
+          game_id: string
+          id?: string
+          play_count?: number
+          updated_at?: string
+        }
+        Update: {
+          blocked?: boolean
+          game_id?: string
+          id?: string
+          play_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mod_transfers: {
         Row: {
           amount: number
@@ -337,6 +361,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      increment_game_play: { Args: { p_game_id: string }; Returns: boolean }
       redeem_admin_link: { Args: { p_code: string }; Returns: Json }
       redeem_crystal_gift: { Args: { p_code: string }; Returns: Json }
       send_mod_coins: {

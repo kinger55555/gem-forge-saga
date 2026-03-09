@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -61,6 +62,7 @@ export function TwoRoads({ crystals, coins, onEarnCoins, onConsumeCrystal, onBac
   const t = translations[language];
 
   const startGame = (crystal: Crystal) => {
+    supabase.rpc('increment_game_play', { p_game_id: 'tworoads' });
     setSelectedCrystal(crystal);
     setCorrectPath(Math.random() < 0.5 ? 'left' : 'right');
     setChosenPath(null);

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -64,6 +65,7 @@ export function QuickDraw({ crystals, coins, onEarnCoins, onConsumeCrystal, onBa
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const startGame = useCallback((crystal: Crystal) => {
+    supabase.rpc('increment_game_play', { p_game_id: 'quickdraw' });
     setSelectedCrystal(crystal);
     setFalseStart(false);
     setPhase('waiting');

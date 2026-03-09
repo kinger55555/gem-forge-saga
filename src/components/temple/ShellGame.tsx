@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -84,6 +85,7 @@ export function ShellGame({ crystals, coins, onEarnCoins, onConsumeCrystal, onBa
   }, []);
 
   const startGame = useCallback((crystal: Crystal) => {
+    supabase.rpc('increment_game_play', { p_game_id: 'shell' });
     setSelectedCrystal(crystal);
     setWon(false);
     setPickedCup(null);
