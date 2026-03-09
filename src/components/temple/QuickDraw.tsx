@@ -65,6 +65,7 @@ export function QuickDraw({ crystals, coins, onEarnCoins, onConsumeCrystal, onBa
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const startGame = useCallback((crystal: Crystal) => {
+    supabase.rpc('increment_game_play', { p_game_id: 'quickdraw' });
     setSelectedCrystal(crystal);
     setFalseStart(false);
     setPhase('waiting');

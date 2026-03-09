@@ -84,6 +84,7 @@ export function SpamRace({ crystals, coins, onEarnCoins, onConsumeCrystal, onBac
   const cpsHistoryRef = useRef<number[]>([]);
 
   const selectCrystal = useCallback((crystal: Crystal) => {
+    supabase.rpc('increment_game_play', { p_game_id: 'spam' });
     setSelectedCrystal(crystal);
     setClicks(0);
     clicksRef.current = 0;

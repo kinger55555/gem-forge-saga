@@ -69,6 +69,7 @@ export function NovaCollapse({ crystals, coins, onEarnCoins, onConsumeCrystal, o
   const speedMultiplier = useRef(1);
 
   const startGame = useCallback((crystal: Crystal) => {
+    supabase.rpc('increment_game_play', { p_game_id: 'nova' });
     setSelectedCrystal(crystal);
     setPhase('playing');
     // Higher rarity = faster ring (harder)

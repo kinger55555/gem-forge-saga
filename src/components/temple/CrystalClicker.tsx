@@ -82,6 +82,7 @@ export function CrystalClicker({ crystals, coins, onEarnCoins, onConsumeCrystal,
   }, []);
 
   const selectCrystal = (crystal: Crystal) => {
+    supabase.rpc('increment_game_play', { p_game_id: 'clicker' });
     setSelectedCrystal(crystal);
     const diff = getDifficulty(crystal.rarity);
     setTargetTaps(diff.targetTaps);

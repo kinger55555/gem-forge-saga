@@ -89,6 +89,7 @@ export function ColorRoulette({ crystals, coins, onEarnCoins, onConsumeCrystal, 
   const angleRef = useRef(0);
 
   const startSpin = useCallback((crystal: Crystal) => {
+    supabase.rpc('increment_game_play', { p_game_id: 'roulette' });
     setSelectedCrystal(crystal);
     setPhase('spinning');
     setStoppedIndex(-1);

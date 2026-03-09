@@ -59,6 +59,7 @@ export function PressureHold({ crystals, coins, onEarnCoins, onConsumeCrystal, o
   const speedRef = useRef(1);
 
   const selectCrystal = useCallback((crystal: Crystal) => {
+    supabase.rpc('increment_game_play', { p_game_id: 'pressure' });
     setSelectedCrystal(crystal);
     setFillPercent(0);
     // Higher rarity = faster fill = harder

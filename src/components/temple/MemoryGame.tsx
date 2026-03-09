@@ -75,6 +75,7 @@ export function MemoryGame({ crystals, coins, onEarnCoins, onConsumeCrystal, onB
   const BONUS = 0.4;
 
   const startGame = useCallback((crystal: Crystal) => {
+    supabase.rpc('increment_game_play', { p_game_id: 'memory' });
     setSelectedCrystal(crystal);
     // Scale difficulty with rarity: 3x3 with 3 cells → 5x5 with 8 cells
     const size = Math.min(3 + Math.floor(crystal.rarity / 3), 5);
