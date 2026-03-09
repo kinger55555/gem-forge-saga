@@ -63,7 +63,8 @@ export function PressureHold({ crystals, coins, onEarnCoins, onConsumeCrystal, o
     setSelectedCrystal(crystal);
     setFillPercent(0);
     // Higher rarity = faster fill = harder
-    speedRef.current = 1 + crystal.rarity * 0.15;
+    // Random duration between 50-150ms
+    speedRef.current = 2000 / (50 + Math.random() * 100);
     setPhase('ready');
   }, []);
 
