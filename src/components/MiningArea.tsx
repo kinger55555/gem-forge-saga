@@ -13,6 +13,27 @@ interface MiningAreaProps {
   language?: 'en' | 'ru';
 }
 
+const t = {
+  en: {
+    mine: 'Mine',
+    clickToMine: 'Click to start mining',
+    selectPickaxe: 'Select a pickaxe to start',
+    dig: 'Mine',
+    crystalFound: 'Crystal found!',
+    showCrystal: 'Show crystal',
+    takeCrystal: 'Take crystal',
+  },
+  ru: {
+    mine: 'Шахта',
+    clickToMine: 'Кликните, чтобы начать добычу',
+    selectPickaxe: 'Выберите кирку для начала',
+    dig: 'Добывать',
+    crystalFound: 'Кристалл найден!',
+    showCrystal: 'Показать кристалл',
+    takeCrystal: 'Забрать кристалл',
+  },
+};
+
 export function MiningArea({ 
   miningState, 
   onMine, 
@@ -21,18 +42,19 @@ export function MiningArea({
   canMine,
   language = 'ru'
 }: MiningAreaProps) {
+  const l = t[language];
+
   return (
     <Card className="relative p-8 bg-gradient-cave border-2 border-border/50 min-h-[300px] overflow-hidden">
-      {/* Background cave effects */}
       <div className="absolute inset-0 bg-gradient-glow opacity-30" />
       
       <div className="relative z-10 flex flex-col items-center justify-center h-full gap-6">
         {miningState === MiningState.IDLE && (
           <>
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Шахта</h2>
+              <h2 className="text-2xl font-bold mb-2">{l.mine}</h2>
               <p className="text-muted-foreground">
-                {canMine ? 'Кликните, чтобы начать добычу' : 'Выберите кирку для начала'}
+                {canMine ? l.clickToMine : l.selectPickaxe}
               </p>
             </div>
             
@@ -47,10 +69,9 @@ export function MiningArea({
               "
             >
               <Hammer className="w-6 h-6 mr-2" />
-              Добывать
+              {l.dig}
             </Button>
             
-            {/* Decorative sparkles */}
             <div className="absolute top-4 left-4">
               <Sparkles className="w-4 h-4 text-primary/50 animate-sparkle" />
             </div>
@@ -72,7 +93,7 @@ export function MiningArea({
             >
               <Sparkles className="w-12 h-12" />
             </div>
-            <p className="text-lg font-medium mb-4">Кристалл найден!</p>
+            <p className="text-lg font-medium mb-4">{l.crystalFound}</p>
             <Button
               onClick={onMine}
               size="lg"
@@ -80,7 +101,7 @@ export function MiningArea({
               className="border-current"
               style={{ borderColor: rarityColor, color: rarityColor }}
             >
-              Показать кристалл
+              {l.showCrystal}
             </Button>
           </div>
         )}
@@ -116,7 +137,7 @@ export function MiningArea({
                 text-primary-foreground font-semibold
               "
             >
-              Забрать кристалл
+              {l.takeCrystal}
             </Button>
           </div>
         )}

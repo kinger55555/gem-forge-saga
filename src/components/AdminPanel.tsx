@@ -37,21 +37,138 @@ const TIER_INDEX: Record<PickaxeRarity, number> = {
 
 const DAILY_LIMIT = 2500;
 
+const tr = {
+  en: {
+    admin: 'Admin',
+    moderator: 'Moderator',
+    adminPanel: 'Admin Panel',
+    modPanel: 'Moderator Panel',
+    sendCoins: 'Send coins to player',
+    remainingToday: 'Remaining today',
+    playerEmail: 'Player email',
+    coinAmount: 'Coin amount',
+    sending: 'Sending...',
+    sendCoinsBtn: 'Send coins',
+    historyToday: 'Today\'s history',
+    coins: 'coins',
+    createPickaxeLink: 'Create pickaxe link',
+    nameOptional: 'Name (optional)',
+    customName: 'Custom name...',
+    createCoinLink: 'Create coin link',
+    coinAmountLabel: 'Coin amount',
+    createLink: 'Create link',
+    giveSelf: 'Give to self',
+    createCrystalLink: 'Create crystal link',
+    byRarity: 'By rarity',
+    byRgb: 'By RGB',
+    rarity09: 'Rarity (0-9)',
+    cleanup: 'Cleanup',
+    deleteAllCrystals: 'Delete all crystals',
+    createdLinks: 'Created links',
+    code: 'Code',
+    value: 'Value',
+    copyLink: 'Copy link',
+    delete: 'Delete',
+    // toast messages
+    errorCreating: 'Error creating link!',
+    createdCoinLink: (v: number) => `Created link for ${v} coins!`,
+    createdPickaxeLink: (name: string) => `Created link for ${name} pickaxe!`,
+    errorActivating: 'Error activating!',
+    receivedCoins: (v: number) => `Received ${v} coins!`,
+    receivedPickaxe: (name: string) => `Received ${name} pickaxe!`,
+    confirmDeleteCrystals: 'Delete ALL crystals? This is irreversible!',
+    errorDeleting: 'Error deleting!',
+    allCrystalsDeleted: 'All crystals deleted!',
+    linkCopied: 'Link copied to clipboard!',
+    errorDeletingLink: 'Error deleting link!',
+    linkDeleted: 'Link deleted!',
+    unexpectedError: 'Unexpected error!',
+    enterEmail: 'Enter player email!',
+    enterValidAmount: 'Enter a valid amount!',
+    dailyLimitExceeded: (remaining: number) => `Daily limit exceeded! Remaining: ${remaining} coins`,
+    userNotFound: 'User not found!',
+    cannotSendSelf: 'Cannot send to yourself!',
+    dailyLimitReached: 'Daily limit reached!',
+    sendError: 'Send error!',
+    sentCoins: (amount: number, email: string) => `Sent ${amount} coins to ${email}!`,
+    crystalLinkCreated: 'Crystal link created!',
+    crystalReceived: 'Crystal received!',
+    error: 'Error!',
+    coinsLabel: 'Coins',
+  },
+  ru: {
+    admin: 'Админ',
+    moderator: 'Модератор',
+    adminPanel: 'Админ-панель',
+    modPanel: 'Модератор-панель',
+    sendCoins: 'Отправить монеты игроку',
+    remainingToday: 'Осталось сегодня',
+    playerEmail: 'Email игрока',
+    coinAmount: 'Количество монет',
+    sending: 'Отправка...',
+    sendCoinsBtn: 'Отправить монеты',
+    historyToday: 'История сегодня',
+    coins: 'монет',
+    createPickaxeLink: 'Создать ссылку на кирку',
+    nameOptional: 'Название (необязательно)',
+    customName: 'Кастомное название...',
+    createCoinLink: 'Создать ссылку на монеты',
+    coinAmountLabel: 'Количество монет',
+    createLink: 'Создать ссылку',
+    giveSelf: 'Дать себе',
+    createCrystalLink: 'Создать ссылку на кристалл',
+    byRarity: 'По редкости',
+    byRgb: 'По RGB',
+    rarity09: 'Редкость (0-9)',
+    cleanup: 'Очистка',
+    deleteAllCrystals: 'Удалить все кристаллы',
+    createdLinks: 'Созданные ссылки',
+    code: 'Код',
+    value: 'Значение',
+    copyLink: 'Копировать ссылку',
+    delete: 'Удалить',
+    errorCreating: 'Ошибка при создании ссылки!',
+    createdCoinLink: (v: number) => `Создана ссылка на ${v} монет!`,
+    createdPickaxeLink: (name: string) => `Создана ссылка на ${name} кирку!`,
+    errorActivating: 'Ошибка активации!',
+    receivedCoins: (v: number) => `Получено ${v} монет!`,
+    receivedPickaxe: (name: string) => `Получена ${name} кирка!`,
+    confirmDeleteCrystals: 'Удалить ВСЕ кристаллы? Это действие необратимо!',
+    errorDeleting: 'Ошибка удаления!',
+    allCrystalsDeleted: 'Все кристаллы удалены!',
+    linkCopied: 'Ссылка скопирована в буфер обмена!',
+    errorDeletingLink: 'Ошибка при удалении ссылки!',
+    linkDeleted: 'Ссылка удалена!',
+    unexpectedError: 'Неожиданная ошибка!',
+    enterEmail: 'Введите email игрока!',
+    enterValidAmount: 'Введите корректную сумму!',
+    dailyLimitExceeded: (remaining: number) => `Превышен дневной лимит! Осталось: ${remaining} монет`,
+    userNotFound: 'Пользователь не найден!',
+    cannotSendSelf: 'Нельзя отправить себе!',
+    dailyLimitReached: 'Дневной лимит исчерпан!',
+    sendError: 'Ошибка отправки!',
+    sentCoins: (amount: number, email: string) => `Отправлено ${amount} монет на ${email}!`,
+    crystalLinkCreated: 'Ссылка на кристалл создана!',
+    crystalReceived: 'Кристалл получен!',
+    error: 'Ошибка!',
+    coinsLabel: 'Монеты',
+  },
+};
+
 export function AdminPanel({ language = 'ru', onRefreshData, visible = false, onToggle }: AdminPanelProps) {
   const { user } = useAuth();
+  const l = tr[language];
   const [adminLinks, setAdminLinks] = useState<AdminLink[]>([]);
   const [customName, setCustomName] = useState('');
   const [coinAmount, setCoinAmount] = useState('100');
   const [isLoadingLinks, setIsLoadingLinks] = useState(false);
 
-  // Crystal link state
   const [crystalMode, setCrystalMode] = useState<'rgb' | 'rarity'>('rarity');
   const [crystalR, setCrystalR] = useState('128');
   const [crystalG, setCrystalG] = useState('0');
   const [crystalB, setCrystalB] = useState('255');
   const [crystalRarity, setCrystalRarity] = useState('5');
 
-  // Moderator state
   const [targetEmail, setTargetEmail] = useState('');
   const [modCoinAmount, setModCoinAmount] = useState('100');
   const [todaySent, setTodaySent] = useState(0);
@@ -125,12 +242,11 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
     return (
       <Button onClick={onToggle} variant="outline" size="sm" className="gap-1">
         <Settings className="w-4 h-4" />
-        {isAdminUser ? 'Админ' : 'Модератор'}
+        {isAdminUser ? l.admin : l.moderator}
       </Button>
     );
   }
 
-  // Admin handlers
   const handleCreateLink = async (type: PickaxeRarity | 'coins') => {
     let value: number | undefined;
     if (type === 'coins') {
@@ -141,14 +257,14 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
       const { error } = await supabase
         .from('admin_links')
         .insert({ code: link.code, type: link.type, name: link.name, used: false, value: link.value });
-      if (error) { toast.error('Ошибка при создании ссылки!'); return; }
+      if (error) { toast.error(l.errorCreating); return; }
       setAdminLinks(prev => [link, ...prev]);
       setCustomName('');
       toast.success(type === 'coins'
-        ? `Создана ссылка на ${value} монет!`
-        : `Создана ссылка на ${getRarityName(TIER_INDEX[type as PickaxeRarity], language)} кирку!`
+        ? l.createdCoinLink(value!)
+        : l.createdPickaxeLink(getRarityName(TIER_INDEX[type as PickaxeRarity], language))
       );
-    } catch { toast.error('Неожиданная ошибка при создании ссылки!'); }
+    } catch { toast.error(l.unexpectedError); }
   };
 
   const handleGiveToSelf = async (type: PickaxeRarity | 'coins') => {
@@ -159,30 +275,30 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
       const { error: insertError } = await supabase
         .from('admin_links')
         .insert({ code: link.code, type: link.type, name: link.name, used: false, value: link.value });
-      if (insertError) { toast.error('Ошибка создания!'); return; }
+      if (insertError) { toast.error(l.errorCreating); return; }
       const { error: redeemError } = await supabase.rpc('redeem_admin_link', { p_code: link.code });
-      if (redeemError) { toast.error('Ошибка активации!'); return; }
+      if (redeemError) { toast.error(l.errorActivating); return; }
       onRefreshData?.();
       toast.success(type === 'coins'
-        ? `Получено ${value} монет!`
-        : `Получена ${getRarityName(TIER_INDEX[type as PickaxeRarity], language)} кирка!`
+        ? l.receivedCoins(value!)
+        : l.receivedPickaxe(getRarityName(TIER_INDEX[type as PickaxeRarity], language))
       );
-    } catch { toast.error('Ошибка!'); }
+    } catch { toast.error(l.error); }
   };
 
   const handleClearCrystals = async () => {
-    if (!confirm('Удалить ВСЕ кристаллы? Это действие необратимо!')) return;
+    if (!confirm(l.confirmDeleteCrystals)) return;
     try {
       const { error } = await supabase.from('crystals').delete().eq('user_id', user!.id);
-      if (error) { toast.error('Ошибка удаления!'); return; }
+      if (error) { toast.error(l.errorDeleting); return; }
       onRefreshData?.();
-      toast.success('Все кристаллы удалены!');
-    } catch { toast.error('Ошибка!'); }
+      toast.success(l.allCrystalsDeleted);
+    } catch { toast.error(l.error); }
   };
 
   const handleCopyLink = (code: string) => {
     navigator.clipboard.writeText(getActivationUrl(code));
-    toast.success('Ссылка скопирована в буфер обмена!');
+    toast.success(l.linkCopied);
   };
 
   const handleDeleteLink = async (id: string) => {
@@ -190,19 +306,18 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
       const linkToDelete = adminLinks.find(link => link.id === id);
       if (!linkToDelete) return;
       const { error } = await supabase.from('admin_links').delete().eq('code', linkToDelete.code);
-      if (error) { toast.error('Ошибка при удалении ссылки!'); return; }
+      if (error) { toast.error(l.errorDeletingLink); return; }
       setAdminLinks(prev => prev.filter(link => link.id !== id));
-      toast.success('Ссылка удалена!');
-    } catch { toast.error('Неожиданная ошибка при удалении ссылки!'); }
+      toast.success(l.linkDeleted);
+    } catch { toast.error(l.unexpectedError); }
   };
 
-  // Moderator handler
   const handleSendCoins = async () => {
-    if (!targetEmail.trim()) { toast.error('Введите email игрока!'); return; }
+    if (!targetEmail.trim()) { toast.error(l.enterEmail); return; }
     const amount = parseInt(modCoinAmount) || 0;
-    if (amount <= 0) { toast.error('Введите корректную сумму!'); return; }
+    if (amount <= 0) { toast.error(l.enterValidAmount); return; }
     if (isModUser && todaySent + amount > DAILY_LIMIT) {
-      toast.error(`Превышен дневной лимит! Осталось: ${DAILY_LIMIT - todaySent} монет`);
+      toast.error(l.dailyLimitExceeded(DAILY_LIMIT - todaySent));
       return;
     }
 
@@ -214,26 +329,26 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
       });
 
       if (error) {
-        if (error.message.includes('user_not_found')) toast.error('Пользователь не найден!');
-        else if (error.message.includes('cannot_send_to_self')) toast.error('Нельзя отправить себе!');
-        else if (error.message.includes('daily_limit_exceeded')) toast.error('Дневной лимит исчерпан!');
-        else toast.error('Ошибка отправки!');
+        if (error.message.includes('user_not_found')) toast.error(l.userNotFound);
+        else if (error.message.includes('cannot_send_to_self')) toast.error(l.cannotSendSelf);
+        else if (error.message.includes('daily_limit_exceeded')) toast.error(l.dailyLimitReached);
+        else toast.error(l.sendError);
         return;
       }
 
-      toast.success(`Отправлено ${amount} монет на ${targetEmail}!`);
+      toast.success(l.sentCoins(amount, targetEmail));
       setTargetEmail('');
       setModCoinAmount('100');
       loadModTransfers();
     } catch {
-      toast.error('Ошибка!');
+      toast.error(l.error);
     } finally {
       setIsSending(false);
     }
   };
 
   const getTypeLabel = (link: AdminLink) => {
-    if (link.type === 'coins') return 'Монеты';
+    if (link.type === 'coins') return l.coinsLabel;
     return getRarityName(TIER_INDEX[link.type as PickaxeRarity], language);
   };
 
@@ -249,22 +364,22 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Settings className="w-5 h-5" />
-          {isAdminUser ? 'Админ-панель' : 'Модератор-панель'}
+          {isAdminUser ? l.adminPanel : l.modPanel}
         </h2>
         <Button onClick={onToggle} variant="ghost" size="sm">✕</Button>
       </div>
 
       <div className="space-y-6">
-        {/* === MODERATOR: Send Coins Section (shown to both admin and mod) === */}
+        {/* Send Coins Section */}
         <div className="space-y-3">
           <h3 className="font-medium flex items-center gap-2">
             <Send className="w-4 h-4" />
-            Отправить монеты игроку
+            {l.sendCoins}
           </h3>
 
           {isModUser && (
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground">Осталось сегодня:</span>
+              <span className="text-muted-foreground">{l.remainingToday}:</span>
               <Badge variant={remaining > 0 ? 'outline' : 'destructive'}>
                 {remaining} / {DAILY_LIMIT}
               </Badge>
@@ -272,7 +387,7 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
           )}
 
           <div>
-            <Label htmlFor="targetEmail">Email игрока</Label>
+            <Label htmlFor="targetEmail">{l.playerEmail}</Label>
             <Input
               id="targetEmail"
               type="email"
@@ -284,7 +399,7 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
           </div>
 
           <div>
-            <Label htmlFor="modCoinAmount">Количество монет</Label>
+            <Label htmlFor="modCoinAmount">{l.coinAmount}</Label>
             <Input
               id="modCoinAmount"
               type="number"
@@ -303,17 +418,17 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
             className="w-full gap-2"
           >
             <Coins className="w-4 h-4" />
-            {isSending ? 'Отправка...' : 'Отправить монеты'}
+            {isSending ? l.sending : l.sendCoinsBtn}
           </Button>
 
           {transferHistory.length > 0 && (
             <div className="space-y-1 mt-2">
-              <p className="text-xs text-muted-foreground font-medium">История сегодня:</p>
+              <p className="text-xs text-muted-foreground font-medium">{l.historyToday}:</p>
               <div className="max-h-32 overflow-y-auto space-y-1">
                 {transferHistory.map((t, i) => (
                   <div key={i} className="text-xs text-muted-foreground flex justify-between">
                     <span>{t.target_user_id.slice(0, 8)}...</span>
-                    <span>{t.amount} монет</span>
+                    <span>{t.amount} {l.coins}</span>
                   </div>
                 ))}
               </div>
@@ -321,21 +436,21 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
           )}
         </div>
 
-        {/* === ADMIN-ONLY SECTIONS === */}
+        {/* ADMIN-ONLY SECTIONS */}
         {isAdminUser && (
           <>
             <Separator />
 
             {/* Create Pickaxe Links */}
             <div className="space-y-3">
-              <h3 className="font-medium">Создать ссылку на кирку</h3>
+              <h3 className="font-medium">{l.createPickaxeLink}</h3>
               <div>
-                <Label htmlFor="customName">Название (необязательно)</Label>
+                <Label htmlFor="customName">{l.nameOptional}</Label>
                 <Input
                   id="customName"
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
-                  placeholder="Кастомное название..."
+                  placeholder={l.customName}
                   className="mt-1"
                 />
               </div>
@@ -360,7 +475,7 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
                         size="sm"
                         className="text-xs px-2"
                         style={{ backgroundColor: color, color: 'hsl(var(--background))' }}
-                        title="Дать себе"
+                        title={l.giveSelf}
                       >
                         +
                       </Button>
@@ -374,9 +489,9 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
 
             {/* Create Coin Links */}
             <div className="space-y-3">
-              <h3 className="font-medium">Создать ссылку на монеты</h3>
+              <h3 className="font-medium">{l.createCoinLink}</h3>
               <div>
-                <Label htmlFor="coinAmount">Количество монет</Label>
+                <Label htmlFor="coinAmount">{l.coinAmountLabel}</Label>
                 <Input
                   id="coinAmount"
                   type="number"
@@ -390,11 +505,11 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
               <div className="flex gap-2">
                 <Button onClick={() => handleCreateLink('coins')} variant="outline" className="flex-1 gap-2">
                   <Coins className="w-4 h-4" />
-                  Создать ссылку
+                  {l.createLink}
                 </Button>
                 <Button onClick={() => handleGiveToSelf('coins')} className="gap-2">
                   <Coins className="w-4 h-4" />
-                  Дать себе
+                  {l.giveSelf}
                 </Button>
               </div>
             </div>
@@ -405,7 +520,7 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
             <div className="space-y-3">
               <h3 className="font-medium flex items-center gap-2">
                 <Gem className="w-4 h-4" />
-                Создать ссылку на кристалл
+                {l.createCrystalLink}
               </h3>
               <div className="flex gap-2">
                 <Button
@@ -413,20 +528,20 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
                   size="sm"
                   onClick={() => setCrystalMode('rarity')}
                 >
-                  По редкости
+                  {l.byRarity}
                 </Button>
                 <Button
                   variant={crystalMode === 'rgb' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setCrystalMode('rgb')}
                 >
-                  По RGB
+                  {l.byRgb}
                 </Button>
               </div>
 
               {crystalMode === 'rarity' ? (
                 <div>
-                  <Label>Редкость (0-9)</Label>
+                  <Label>{l.rarity09}</Label>
                   <Input
                     type="number"
                     value={crystalRarity}
@@ -482,12 +597,12 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
                       });
                       if (error) throw error;
                       loadAdminLinks();
-                      toast.success('Ссылка на кристалл создана!');
-                    } catch { toast.error('Ошибка!'); }
+                      toast.success(l.crystalLinkCreated);
+                    } catch { toast.error(l.error); }
                   }}
                 >
                   <Link className="w-4 h-4" />
-                  Создать ссылку
+                  {l.createLink}
                 </Button>
                 <Button
                   className="gap-2"
@@ -512,12 +627,12 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
                       const { error: redeemErr } = await supabase.rpc('redeem_admin_link', { p_code: code });
                       if (redeemErr) throw redeemErr;
                       onRefreshData?.();
-                      toast.success('Кристалл получен!');
-                    } catch { toast.error('Ошибка!'); }
+                      toast.success(l.crystalReceived);
+                    } catch { toast.error(l.error); }
                   }}
                 >
                   <Gem className="w-4 h-4" />
-                  Дать себе
+                  {l.giveSelf}
                 </Button>
               </div>
             </div>
@@ -525,10 +640,10 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
             <Separator />
 
             <div className="space-y-3">
-              <h3 className="font-medium">Очистка</h3>
+              <h3 className="font-medium">{l.cleanup}</h3>
               <Button onClick={handleClearCrystals} variant="destructive" size="sm" className="w-full gap-2">
                 <Trash2 className="w-4 h-4" />
-                Удалить все кристаллы
+                {l.deleteAllCrystals}
               </Button>
             </div>
 
@@ -536,7 +651,7 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
               <>
                 <Separator />
                 <div className="space-y-3">
-                  <h3 className="font-medium">Созданные ссылки</h3>
+                  <h3 className="font-medium">{l.createdLinks}</h3>
                   <div className="space-y-2 max-h-60 overflow-y-auto">
                     {adminLinks.map((link) => (
                       <div key={link.id} className="p-3 bg-muted/50 rounded-lg">
@@ -550,17 +665,17 @@ export function AdminPanel({ language = 'ru', onRefreshData, visible = false, on
                           </Badge>
                         </div>
                         <div className="text-xs text-muted-foreground mb-2">
-                          Код: {link.code}
-                          {link.value && ` • Значение: ${link.value}`}
+                          {l.code}: {link.code}
+                          {link.value && ` • ${l.value}: ${link.value}`}
                         </div>
                         <div className="flex gap-2">
                           <Button onClick={() => handleCopyLink(link.code)} size="sm" variant="outline" className="flex-1 gap-1">
                             <Copy className="w-3 h-3" />
-                            Копировать ссылку
+                            {l.copyLink}
                           </Button>
                           <Button onClick={() => handleDeleteLink(link.id)} size="sm" variant="destructive" className="gap-1">
                             <Trash2 className="w-3 h-3" />
-                            Удалить
+                            {l.delete}
                           </Button>
                         </div>
                       </div>

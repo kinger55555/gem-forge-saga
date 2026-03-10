@@ -313,7 +313,7 @@ export function GameInterface() {
                     </div>
                   </div>
                 </Card>
-                <Shop coins={gameData.coins} onBuyPickaxe={gameData.buyPickaxe} />
+                <Shop coins={gameData.coins} onBuyPickaxe={gameData.buyPickaxe} language={language} />
                 <DailyRewards onRewardClaimed={gameData.refreshData} language={language} />
                 <PickaxeCodeInput onRedeemCode={activateAdminLinkFromCode} language={language} />
               </div>
