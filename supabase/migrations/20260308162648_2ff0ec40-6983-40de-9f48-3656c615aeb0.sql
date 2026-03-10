@@ -1,4 +1,3 @@
-
 -- Create mod_transfers table
 CREATE TABLE public.mod_transfers (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -48,7 +47,8 @@ DECLARE
   v_role text;
   v_target_user_id uuid;
   v_already_sent integer;
-  v_daily_limit integer := 2500;
+  v_mod_coins numeric;
+  v_sendable_limit numeric;
 BEGIN
   -- Check caller role
   v_role := (auth.jwt() -> 'app_metadata') ->> 'role';
@@ -73,14 +73,24 @@ BEGIN
     RAISE EXCEPTION 'invalid_amount';
   END IF;
 
-  -- Check daily limit (skip for admins)
+  -- Check 5% sendable limit for moderators (skip for admins)
   IF v_role = 'moderator' THEN
+    -- Get moderator's current coins
+    SELECT COALESCE(coins, 0) INTO v_mod_coins
+    FROM game_state
+    WHERE user_id = auth.uid();
+
+    -- Calculate 5% of their coins as sendable limit
+    v_sendable_limit := FLOOR(v_mod_coins * 0.05);
+
+    -- Get how much they've already sent today
     SELECT COALESCE(SUM(amount), 0) INTO v_already_sent
     FROM mod_transfers
     WHERE mod_user_id = auth.uid()
       AND created_at >= date_trunc('day', now());
 
-    IF v_already_sent + p_amount > v_daily_limit THEN
+    -- Check if they can send this amount
+    IF v_already_sent + p_amount > v_sendable_limit THEN
       RAISE EXCEPTION 'daily_limit_exceeded';
     END IF;
   END IF;
@@ -104,7 +114,7 @@ BEGIN
     'success', true,
     'amount', p_amount,
     'target_email', p_target_email,
-    'remaining', CASE WHEN v_role = 'admin' THEN -1 ELSE v_daily_limit - v_already_sent - p_amount END
+    'remaining', CASE WHEN v_role = 'admin' THEN -1 ELSE v_sendable_limit - v_already_sent - p_amount END
   );
 END;
 $$;

@@ -21,6 +21,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useGameData } from '@/hooks/useGameData';
 
 interface AdminPanelProps {
   language?: 'en' | 'ru';
@@ -35,7 +36,8 @@ const TIER_INDEX: Record<PickaxeRarity, number> = {
   trash: 0, normal: 1, rare: 2, epic: 3, mythic: 4, legendary: 5, insane: 6, demonic: 7, silent: 8, artifact: 9,
 };
 
-const DAILY_LIMIT = 2500;
+// For moderators: 5% of their current coins is sendable per day
+const calculateModeratorLimit = (coins: number) => Math.floor(coins * 0.05);
 
 const tr = {
   en: {
