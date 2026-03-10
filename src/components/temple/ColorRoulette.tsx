@@ -127,8 +127,8 @@ export function ColorRoulette({ crystals, coins, onEarnCoins, onConsumeCrystal, 
     const acc = Math.max(0, 1 - dist / MAX_DIST);
     setAccuracy(acc);
 
-    // Win threshold: 50% accuracy (about half the wheel)
-    const isWin = acc >= 0.5;
+    // Win threshold: 30% accuracy
+    const isWin = acc >= 0.30;
     setWon(isWin);
 
     // Bonus scales with accuracy: 0% at threshold, up to 60% at perfect match
