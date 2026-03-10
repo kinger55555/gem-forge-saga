@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { user_id, secret, role } = await req.json();
+    const { user_id, email, secret, role } = await req.json();
 
     // Simple secret to prevent unauthorized access
     const envSecret = Deno.env.get("ADMIN_SETUP_SECRET");
@@ -38,15 +38,39 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    let targetUserId = user_id;
+
+    // If email is provided instead of user_id, look up the user
+    if (!targetUserId && email) {
+      const { data: users, error: lookupError } = await supabaseAdmin.auth.admin.listUsers();
+      if (lookupError) throw lookupError;
+
+      const user = users.users.find(u => u.email === email);
+      if (!user) {
+        return new Response(JSON.stringify({ error: "User not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      targetUserId = user.id;
+    }
+
+    if (!targetUserId) {
+      return new Response(JSON.stringify({ error: "user_id or email required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
-      user_id,
+      targetUserId,
       { app_metadata: { role: targetRole } }
     );
 
     if (error) throw error;
 
     return new Response(
-      JSON.stringify({ success: true, user: data.user?.id }),
+      JSON.stringify({ success: true, user: data.user?.id, email: data.user?.email }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

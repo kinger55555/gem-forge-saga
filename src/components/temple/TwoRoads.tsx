@@ -84,7 +84,7 @@ export function TwoRoads({ crystals, coins, onEarnCoins, onConsumeCrystal, onBac
     setPhase('result');
 
     if (isWin) {
-      const bonus = Math.floor(selectedCrystal.price * 0.1);
+      const bonus = Math.floor(selectedCrystal.price * 0.02);
       await onEarnCoins(bonus);
     } else {
       await onConsumeCrystal(selectedCrystal.id);
@@ -129,7 +129,7 @@ export function TwoRoads({ crystals, coins, onEarnCoins, onConsumeCrystal, onBac
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[300px] overflow-y-auto">
           {crystals.map(crystal => {
             const rarityColor = getRarityColor(crystal.rarity);
-            const bonus = Math.floor(crystal.price * 0.1);
+            const bonus = Math.floor(crystal.price * 0.02);
             return (
               <button
                 key={crystal.id}
@@ -156,7 +156,7 @@ export function TwoRoads({ crystals, coins, onEarnCoins, onConsumeCrystal, onBac
   if (!selectedCrystal) return null;
 
   const rarityColor = getRarityColor(selectedCrystal.rarity);
-  const bonus = Math.floor(selectedCrystal.price * 0.1);
+  const bonus = Math.floor(selectedCrystal.price * 0.02);
 
   return (
     <Card className="p-6">

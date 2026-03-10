@@ -154,7 +154,7 @@ export function ShellGame({ crystals, coins, onEarnCoins, onConsumeCrystal, onBa
     setRevealedCup(correctIdx);
     setPhase('result');
     if (isCorrect) {
-      const bonus = Math.floor(selectedCrystal.price * 0.5);
+      const bonus = Math.floor(selectedCrystal.price * 0.1);
       await onEarnCoins(bonus);
     } else {
       await onConsumeCrystal(selectedCrystal.id);
@@ -203,7 +203,7 @@ export function ShellGame({ crystals, coins, onEarnCoins, onConsumeCrystal, onBa
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[400px] overflow-y-auto">
           {crystals.map(crystal => {
             const rarityColor = getRarityColor(crystal.rarity);
-            const bonus = Math.floor(crystal.price * 0.5);
+            const bonus = Math.floor(crystal.price * 0.1);
             const diff = getDifficulty(crystal.rarity);
             return (
               <button
@@ -235,7 +235,7 @@ export function ShellGame({ crystals, coins, onEarnCoins, onConsumeCrystal, onBa
   if (!selectedCrystal) return null;
 
   const rarityColor = getRarityColor(selectedCrystal.rarity);
-  const bonus = Math.floor(selectedCrystal.price * 0.5);
+  const bonus = Math.floor(selectedCrystal.price * 0.1);
   const cupWidth = 72;
   const cupGap = 12;
 

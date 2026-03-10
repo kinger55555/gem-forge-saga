@@ -59,9 +59,9 @@ export function getTierName(tier: number, lang: 'en' | 'ru'): string {
 }
 
 export const BATTLE_DIFFICULTIES: BattleDifficulty[] = [
-  { id: 'easy', name: { en: 'Easy', ru: 'Лёгкий' }, monsterDice: [1, 1, 1, 2, 2], reward: { coins: 500 } },
-  { id: 'medium', name: { en: 'Medium', ru: 'Средний' }, monsterDice: [2, 2, 3, 3, 4], reward: { coins: 2000 } },
-  { id: 'hard', name: { en: 'Hard', ru: 'Тяжёлый' }, monsterDice: [3, 4, 4, 5, 5], reward: { coins: 10000 } },
-  { id: 'nightmare', name: { en: 'Nightmare', ru: 'Кошмар' }, monsterDice: [5, 6, 6, 7, 7], reward: { coins: 50000 } },
-  { id: 'inferno', name: { en: 'Inferno', ru: 'Инферно' }, monsterDice: [7, 7, 8, 8, 9], reward: { coins: 250000 } },
+  { id: 'easy', name: { en: 'Easy', ru: 'Лёгкий' }, monsterDice: [1, 1, 1, 2, 2], reward: { coins: 100 } },
+  { id: 'medium', name: { en: 'Medium', ru: 'Средний' }, monsterDice: [2, 2, 3, 3, 4], reward: { coins: 400 } },
+  { id: 'hard', name: { en: 'Hard', ru: 'Тяжёлый' }, monsterDice: [3, 4, 4, 5, 5], reward: { coins: 2000 } },
+  { id: 'nightmare', name: { en: 'Nightmare', ru: 'Кошмар' }, monsterDice: [5, 6, 6, 7, 7], reward: { coins: 10000 } },
+  { id: 'inferno', name: { en: 'Inferno', ru: 'Инферно' }, monsterDice: [7, 7, 8, 8, 9], reward: { coins: 50000 } },
 ];
