@@ -8,28 +8,43 @@ import { getRarityName, getRarityColor } from '@/utils/crystalUtils';
 interface ShopProps {
   coins: number;
   onBuyPickaxe: (type: PickaxeRarity, price: number) => Promise<boolean>;
+  language?: 'en' | 'ru';
 }
+
+const t = {
+  en: {
+    title: 'Pickaxe Shop',
+    rarity: 'Rarity',
+    buy: 'Buy',
+  },
+  ru: {
+    title: 'Магазин кирок',
+    rarity: 'Редкость',
+    buy: 'Купить',
+  },
+};
 
 // Pickaxe price = crystal base price (5 * 10^tier) * 1.5, rounded up
 const PICKAXE_SHOP_ITEMS: { type: PickaxeRarity; price: number; tierIndex: number }[] = [
-  { type: 'trash', price: Math.ceil(5 * 1.5), tierIndex: 0 },           // 8
-  { type: 'normal', price: Math.ceil(50 * 1.5), tierIndex: 1 },         // 75
-  { type: 'rare', price: Math.ceil(500 * 1.5), tierIndex: 2 },          // 750
-  { type: 'epic', price: Math.ceil(5000 * 1.5), tierIndex: 3 },         // 7,500
-  { type: 'mythic', price: Math.ceil(50000 * 1.5), tierIndex: 4 },      // 75,000
-  { type: 'legendary', price: Math.ceil(500000 * 1.5), tierIndex: 5 },  // 750,000
-  { type: 'insane', price: Math.ceil(5000000 * 1.5), tierIndex: 6 },    // 7,500,000
-  { type: 'demonic', price: Math.ceil(50000000 * 1.5), tierIndex: 7 },  // 75,000,000
-  { type: 'silent', price: Math.ceil(500000000 * 1.5), tierIndex: 8 },  // 750,000,000
-  // artifact removed from shop — will be obtainable through other means
+  { type: 'trash', price: Math.ceil(5 * 1.5), tierIndex: 0 },
+  { type: 'normal', price: Math.ceil(50 * 1.5), tierIndex: 1 },
+  { type: 'rare', price: Math.ceil(500 * 1.5), tierIndex: 2 },
+  { type: 'epic', price: Math.ceil(5000 * 1.5), tierIndex: 3 },
+  { type: 'mythic', price: Math.ceil(50000 * 1.5), tierIndex: 4 },
+  { type: 'legendary', price: Math.ceil(500000 * 1.5), tierIndex: 5 },
+  { type: 'insane', price: Math.ceil(5000000 * 1.5), tierIndex: 6 },
+  { type: 'demonic', price: Math.ceil(50000000 * 1.5), tierIndex: 7 },
+  { type: 'silent', price: Math.ceil(500000000 * 1.5), tierIndex: 8 },
 ];
 
-export function Shop({ coins, onBuyPickaxe }: ShopProps) {
+export function Shop({ coins, onBuyPickaxe, language = 'ru' }: ShopProps) {
+  const l = t[language];
+
   return (
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-4">
         <ShoppingCart className="w-5 h-5" />
-        <h2 className="text-xl font-semibold">Магазин кирок</h2>
+        <h2 className="text-xl font-semibold">{l.title}</h2>
         <Badge variant="outline" className="ml-auto gap-1">
           <Coins className="w-3 h-3" />
           {coins.toLocaleString()}
@@ -40,7 +55,7 @@ export function Shop({ coins, onBuyPickaxe }: ShopProps) {
         {PICKAXE_SHOP_ITEMS.map((item) => {
           const canAfford = coins >= item.price;
           const rarityColor = getRarityColor(item.tierIndex);
-          const rarityName = getRarityName(item.tierIndex, 'ru');
+          const rarityName = getRarityName(item.tierIndex, language);
 
           return (
             <div
@@ -59,7 +74,7 @@ export function Shop({ coins, onBuyPickaxe }: ShopProps) {
                   {rarityName}
                 </h3>
                 <p className="text-[10px] text-muted-foreground">
-                  Редкость: {Math.max(0, item.tierIndex - 1)}–{Math.min(5, item.tierIndex + 2)}
+                  {l.rarity}: {Math.max(0, item.tierIndex - 1)}–{Math.min(5, item.tierIndex + 2)}
                 </p>
                 <p className="text-sm font-bold text-primary mt-1">
                   {item.price.toLocaleString()}
@@ -71,7 +86,7 @@ export function Shop({ coins, onBuyPickaxe }: ShopProps) {
                 className="w-full"
                 size="sm"
               >
-                Купить
+                {l.buy}
               </Button>
             </div>
           );

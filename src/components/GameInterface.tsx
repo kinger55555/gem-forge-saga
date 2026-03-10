@@ -101,9 +101,9 @@ export function GameInterface() {
 
       const link = data as any;
       if (link.type === 'coins') {
-        toast.success(`💰 Получено ${link.value || 100} монет!`, { duration: 4000 });
+        toast.success(language === 'ru' ? `💰 Получено ${link.value || 100} монет!` : `💰 Received ${link.value || 100} coins!`, { duration: 4000 });
       } else {
-        toast.success(`🎁 Получена ${link.type} кирка!`, { duration: 4000 });
+        toast.success(language === 'ru' ? `🎁 Получена ${link.type} кирка!` : `🎁 Received ${link.type} pickaxe!`, { duration: 4000 });
       }
 
       gameData.refreshData();
@@ -313,7 +313,7 @@ export function GameInterface() {
                     </div>
                   </div>
                 </Card>
-                <Shop coins={gameData.coins} onBuyPickaxe={gameData.buyPickaxe} />
+                <Shop coins={gameData.coins} onBuyPickaxe={gameData.buyPickaxe} language={language} />
                 <DailyRewards onRewardClaimed={gameData.refreshData} language={language} />
                 <PickaxeCodeInput onRedeemCode={activateAdminLinkFromCode} language={language} />
               </div>
