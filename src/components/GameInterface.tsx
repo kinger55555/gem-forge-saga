@@ -101,9 +101,9 @@ export function GameInterface() {
 
       const link = data as any;
       if (link.type === 'coins') {
-        toast.success(`💰 Получено ${link.value || 100} монет!`, { duration: 4000 });
+        toast.success(language === 'ru' ? `💰 Получено ${link.value || 100} монет!` : `💰 Received ${link.value || 100} coins!`, { duration: 4000 });
       } else {
-        toast.success(`🎁 Получена ${link.type} кирка!`, { duration: 4000 });
+        toast.success(language === 'ru' ? `🎁 Получена ${link.type} кирка!` : `🎁 Received ${link.type} pickaxe!`, { duration: 4000 });
       }
 
       gameData.refreshData();
