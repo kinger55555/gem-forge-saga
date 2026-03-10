@@ -148,8 +148,8 @@ export function SpamRace({ crystals, coins, onEarnCoins, onConsumeCrystal, onBac
     const isWin = avg >= MIN_CPS && consistency >= 40;
     setWon(isWin);
 
-    // Bonus scales with consistency: 40% consistency → 10%, 100% → 45%
-    const bonus = isWin ? Math.round(10 + (consistency - 40) / 60 * 35) : 0;
+    // Bonus scales with consistency: 40% consistency → 2%, 100% → 9%
+    const bonus = isWin ? Math.round(2 + (consistency - 40) / 60 * 7) : 0;
     setBonusPercent(bonus);
     setPhase('result');
 

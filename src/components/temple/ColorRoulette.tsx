@@ -131,8 +131,8 @@ export function ColorRoulette({ crystals, coins, onEarnCoins, onConsumeCrystal, 
     const isWin = acc >= 0.30;
     setWon(isWin);
 
-    // Bonus scales with accuracy: 0% at threshold, up to 60% at perfect match
-    const bonus = isWin ? Math.round(acc * 60) : 0;
+    // Bonus scales with accuracy: 0% at threshold, up to 12% at perfect match
+    const bonus = isWin ? Math.round(acc * 12) : 0;
     setBonusPercent(bonus);
 
     setPhase('result');

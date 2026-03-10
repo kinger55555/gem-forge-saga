@@ -104,11 +104,11 @@ export function NovaCollapse({ crystals, coins, onEarnCoins, onConsumeCrystal, o
     let bonus: number;
 
     if (diff <= PERFECT_ZONE) {
-      g = 'perfect'; bonus = 55;
+      g = 'perfect'; bonus = 11;
     } else if (diff <= GREAT_ZONE) {
-      g = 'great'; bonus = 35;
+      g = 'great'; bonus = 7;
     } else if (diff <= GOOD_ZONE) {
-      g = 'good'; bonus = 15;
+      g = 'good'; bonus = 3;
     } else {
       g = 'miss'; bonus = 0;
     }

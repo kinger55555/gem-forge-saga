@@ -72,7 +72,7 @@ export function MemoryGame({ crystals, coins, onEarnCoins, onConsumeCrystal, onB
   const [targetCount, setTargetCount] = useState(3);
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const BONUS = 0.4;
+  const BONUS = 0.08;
 
   const startGame = useCallback((crystal: Crystal) => {
     supabase.rpc('increment_game_play', { p_game_id: 'memory' });

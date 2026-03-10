@@ -104,13 +104,13 @@ export function PressureHold({ crystals, coins, onEarnCoins, onConsumeCrystal, o
     setWon(isWin);
 
     // Bonus scales with how close to 100% without exploding
-    // 90-99% = 50% bonus, 70-89% = 30%, 50-69% = 20%, <50% = 10%
+    // 90-99% = 10% bonus, 70-89% = 6%, 50-69% = 4%, <50% = 2%
     let bonus = 0;
     if (isWin) {
-      if (pct >= 90) bonus = 50;
-      else if (pct >= 70) bonus = 30;
-      else if (pct >= 50) bonus = 20;
-      else bonus = 10;
+      if (pct >= 90) bonus = 10;
+      else if (pct >= 70) bonus = 6;
+      else if (pct >= 50) bonus = 4;
+      else bonus = 2;
     }
     setBonusPercent(bonus);
     setPhase('result');

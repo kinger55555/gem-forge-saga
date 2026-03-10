@@ -135,7 +135,7 @@ export function CrystalClicker({ crystals, coins, onEarnCoins, onConsumeCrystal,
     setPhase('result');
 
     if (isWin && selectedCrystal) {
-      const bonus = Math.floor(selectedCrystal.price * 0.3);
+      const bonus = Math.floor(selectedCrystal.price * 0.06);
       await onEarnCoins(bonus);
     } else if (selectedCrystal) {
       await onConsumeCrystal(selectedCrystal.id);
@@ -179,7 +179,7 @@ export function CrystalClicker({ crystals, coins, onEarnCoins, onConsumeCrystal,
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[400px] overflow-y-auto">
           {crystals.map(crystal => {
             const rarityColor = getRarityColor(crystal.rarity);
-            const bonus = Math.floor(crystal.price * 0.3);
+            const bonus = Math.floor(crystal.price * 0.06);
             const diff = getDifficulty(crystal.rarity);
             return (
               <button

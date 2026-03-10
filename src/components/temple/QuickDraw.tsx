@@ -111,8 +111,8 @@ export function QuickDraw({ crystals, coins, onEarnCoins, onConsumeCrystal, onBa
       const isWin = rt < 800;
       setWon(isWin);
 
-      // Bonus: 50% at 100ms, scaling down to 10% at 800ms
-      const bonus = isWin ? Math.max(10, Math.round(50 - (rt / 800) * 40)) : 0;
+      // Bonus: 10% at 100ms, scaling down to 2% at 800ms
+      const bonus = isWin ? Math.max(2, Math.round(10 - (rt / 800) * 8)) : 0;
       setBonusPercent(bonus);
 
       setPhase('result');

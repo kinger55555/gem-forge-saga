@@ -93,7 +93,7 @@ const t = {
   },
 };
 
-const WAGER = 5000;
+const WAGER = 1000;
 
 export function DiceDuel({ dice, onDuelEnd, language }: DiceDuelProps) {
   const l = t[language];
